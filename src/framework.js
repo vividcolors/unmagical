@@ -51,28 +51,34 @@ const isComponent = (tag) => {
 }
 
 export const render = (view, env, actions, state) => {
-  if (isComponent(view[0])) {
-    return renderTable[view[0]](view, env, actions, state)
-  } else {
-    return (
-      h(
-        view[0], 
-        view[1], 
-        view.slice(2).map(v => render(v, env, actions, state))
+  //console.log('render', view, env)
+  if (Array.isArray(view)) {
+    if (isComponent(view[0])) {
+      return renderTable[view[0]](view, env, actions, state)
+    } else {
+      return (
+        h(
+          view[0], 
+          view[1], 
+          view.slice(2).map(v => render(v, env, actions, state))
+        )
       )
-    )
+    }
+  } else {
+    return view
   }
 }
 
 export const start = (data, schema, evolve, view, el) => {
+  console.log('start/0', data, schema, view)
   const customActions = {
-    AddItem: (i, props, baseEnv) => {
+    Add: (i, props, baseEnv) => {
       const path = props[`action${i}path`]
       const tplName = props[`action${i}data`]
       baseEnv = E.add(path, data[tplName], baseEnv)
       return baseEnv
     }, 
-    RemoveItem: (i, props, baseEnv) => {
+    Remove: (i, props, baseEnv) => {
       const path = props[`action${i}path`]
       baseEnv = E.remove(path, baseEnv)
       return baseEnv
@@ -140,7 +146,7 @@ export const start = (data, schema, evolve, view, el) => {
   env = E.goTo("", env)
   
   const render0 = (state, actions) => {
-    console.log('render', state.env)
+    console.log('render0', state.env)
     return render(view, state.env, actions, state)
   }
   const state = {
