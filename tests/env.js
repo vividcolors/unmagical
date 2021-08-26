@@ -1,8 +1,8 @@
 
-import * as E from './env'
+import * as E from '../src/env'
 
 const validate = (value, path) => {
-  console.log('validate called', value, path)
+  //console.log('validate called', value, path)
   return {'@value':value}
 }
 
@@ -31,7 +31,7 @@ const assertError = (ident, thunk, match) => {
   console.log('ASSERT', ident, 'NG', status)
 }
 
-export const testEnv = () => {
+export const run = () => {
   const json = {
     name: 'Bob', 
     age: 24, 
@@ -72,4 +72,3 @@ export const testEnv = () => {
   assert(8, () => E.getm('/name', 'invalid', false, env), true)
 }
 
-testEnv()
