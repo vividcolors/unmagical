@@ -40,24 +40,33 @@ const normPath = (frags) => {
   return rv
 }
 
-const wrap = (json, path, validate) => {
-  switch (json === null ? 'null' : Array.isArray(json) ? 'array' : typeof json) {
-    case 'array': 
-      const es = []
-      const path2 = path + '/*'
-      for (let i = 0; i < json.length; i++) {
-        es[i] = wrap(json[i], path2, validate)
-      }
-      return validate(es, path)
-    case 'object': 
-      const rec = {}
-      for (let p in json) {
-        rec[p] = wrap(json[p], path + '/' + p, validate)
-      }
-      return validate(rec, path)
-    default: 
-      return validate(json, path)
+const wrap = (json, serial, path, validate) => {
+  const inner = (json, path) => {
+    switch (json === null ? 'null' : Array.isArray(json) ? 'array' : typeof json) {
+      case 'array': 
+        const es = []
+        const path2 = path + '/*'
+        for (let i = 0; i < json.length; i++) {
+          es[i] = inner(json[i], path2)
+        }
+        const xa = validate(es, path)
+        xa.key = serial++
+        return xa
+      case 'object': 
+        const rec = {}
+        for (let p in json) {
+          rec[p] = inner(json[p], path + '/' + p)
+        }
+        const xo = validate(rec, path)
+        xo.key = serial++
+        return xo
+      default: 
+        const xs = validate(json, path)
+        xs.key = serial++
+        return xs
+    }
   }
+  return [inner(json, path), serial]
 }
 
 const strip = (data) => {
@@ -81,9 +90,11 @@ const strip = (data) => {
 }
 
 export const fromJson = (json, validate) => {
+  const [data, serial] = wrap(json, 1, "", validate)
   return {
-    data: wrap(json, "", validate), 
-    path: []
+    data, 
+    path: [], 
+    serial
   }
 }
 
@@ -196,9 +207,11 @@ export const setm = (path, meta, value, env) => {
 
 export const sets = (path, slot, env) => {
   const epath = compose(env.path, path)
-  if (! hasPath(epath, env.data)) {
+  const slot0 = R.path(epath, env.data)
+  if (! slot0) {
     throw new Error('sets/1: not found: ' + path)
   }
+  slot.key = slot0.key
   const data = R.assocPath(epath, slot, env.data)
   return {...env, data}
 }
@@ -249,18 +262,21 @@ export const add = (path, value, validate, env) => {
     if (index < 0 || index > slot0['@value'].length) {
       throw new Error('add/3 out of range: ' + path)
     }
-    const lis = R.insert(index, wrap(value, normPath(epath), validate), slot0['@value'])
+    const [value1, serial] = wrap(value, env.serial, normPath(epath), validate)
+    const lis = R.insert(index, value1, slot0['@value'])
     const slot = validate(lis, normPath(location))
+    slot.key = slot0.key
     const data = R.assocPath(location, slot, env.data)
-    return {...env, data}
+    return {...env, data, serial}
   } else {
     // define or set into record
     if (typeof name != 'string') {
       throw new Error('add/4 invalid name: ' + path)
     }
-    const value1 = wrap(value, normPath(epath), validate)
+    const [value1, serial] = wrap(value, env.serial, normPath(epath), validate)
     const rec = {...slot0['@value'], [name]:value1}
     const slot = validate(rec, normPath(location))
+    slot.key = slot0.key
     const data = R.assocPath(location, slot, env.data)
     return {...env, data}
   }
@@ -284,6 +300,7 @@ export const remove = (path, validate, env) => {
     }
     const lis = R.remove(name, 1, slot0['@value'])
     const slot = validate(lis, normPath(location))
+    slot.key = slot0.key
     const data = R.assocPath(location, slot, env.data)
     return {...env, data}
   } else {
@@ -293,6 +310,7 @@ export const remove = (path, validate, env) => {
     }
     const rec = R.dissoc(name, slot0['@value'])
     const slot = validate(rec, normPath(location))
+    slot.key = slot0.key
     const data = R.assocPath(location, slot, env.data)
     return {...env, data}
   }

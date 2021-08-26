@@ -123,8 +123,8 @@ const master = {
         ['th', {}, '数量'], 
         ['th', {}, '金額']
       ], 
-      ['List', {path:'/quotation/lines', astbody:true}, 
-        ['tr', {}, 
+      ['List', {path:'/quotation/lines', astable:true}, 
+        ['ListItem', {astable:true}, 
           ['td', {}, ['Text', {path:'0/category'}]], 
           ['td', {}, ['Text', {path:'0/description'}]], 
           ['td', {}, ['Text', {path:'0/unitPrice'}]], 

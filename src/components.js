@@ -57,33 +57,52 @@ addComponent('Field', ([_tag, props, ...children], env, actions) => {
       {props.label ? (
         <label>{props.label}</label>
       ) : null}
-      <div class="qp--body">
+      <div class="mg--body">
         {children.map(c => render(c, env2, actions))}
       </div>
       {invalid ? (
-        <span class="qp--message">{slot.message}</span>
+        <span class="mg--message">{slot.message}</span>
       ) : null}
     </div>
   )
 })
 
 // TODO disabled, invalid, message, etc.
-// props = {path, astbody?}
+// props = {path, astable?}
 addComponent('List', ([_tag, props, child], env, actions) => {
   env = E.goTo(props.path, env)
   const length = E.length('0', env)
-  const astbody = props.hasOwnProperty('astbody') ? props.astbody : false
-  if (astbody) {
+  const astable = props.hasOwnProperty('astable') ? props.astable : false
+  if (astable) {
     return (
-      <tbody class="qp-List">
+      <tbody class="mg-List mg-astable">
         {range(0, length).map(i => render(child, E.goTo('0/' + i, env), actions))}
       </tbody>
     )
   } else {
     return (
-      <ul class="qp-List">
+      <ul class="mg-List mg-aslist">
         {range(0, length).map(i => render(child, E.goTo('0/' + i, env), actions))}
       </ul>
+    )
+  }
+})
+
+// props = {astable}
+addComponent('ListItem', ([_tag, props, ...children], env, actions) => {
+  const key = E.getm('0', 'key', 0, env)
+  const astable = props.hasOwnProperty('astable') ? props.astable : false
+  if (astable) {
+    return (
+      <tr class={`mg-ListItem mg-astable mg-key${key}`} key={key}>
+        {children.map(c => render(c, env, actions))}
+      </tr>
+    )
+  } else {
+    return (
+      <li class="mg-ListItem mg-astable" key={key}>
+        {children.map(c => render(c, env, actions))}
+      </li>
     )
   }
 })
