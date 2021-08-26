@@ -151,7 +151,7 @@ const master = {
   
   const findByProp = (name, value, lis) => {
     for (let i = 0; i < lis.length; i++) {
-      if (lis[i].name === value) return lis[i]
+      if (lis[i][name] == value) return lis[i]
     }
     return undefined
   }
@@ -215,4 +215,4 @@ const master = {
     return env
   }
   
-  window.start(data, schema, evolve, view, document.getElementById('app'))
+  window.unmagical(data, schema, evolve, view, document.getElementById('app'))

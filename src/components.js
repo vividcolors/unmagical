@@ -119,4 +119,4 @@ addComponent('Text', ([_tag, props], env) => {
   )
 })
 
-window.start = start
+window.unmagical = start
