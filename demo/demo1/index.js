@@ -155,10 +155,10 @@ const master = {
     }
     return undefined
   }
-  const evolve = (env, E) => {
+  const evolve = (env, validate, E) => {
     const addLine = (category, x, env) => {
       const line = {category, description:x.name, unitPrice:x.price, quantity:1, amount:x.price}
-      return E.add('/quotation/lines/-', line, env)
+      return E.add('/quotation/lines/-', line, validate, env)
     }
     let subtotal = 0
     let isPro = false
@@ -184,7 +184,7 @@ const master = {
       memoryOptions = memoryOptions.filter(m => m != '32G')
       if (detail.memory && detail.memory == '32G') {
         const initialMemory = data.initial.detail.memory
-        env = E.add('/detail/memory', initialMemory, env)
+        env = E.add('/detail/memory', initialMemory, validate, env)
         detail.memory = initialMemory
       }
     }
@@ -209,9 +209,9 @@ const master = {
     } else {
       env = E.setm('/detail/bonus', 'disabled', true, env)
     }
-    env = E.add('/quotation/subtotal', subtotal, env)
-    env = E.add('/quotation/tax', subtotal / 10, env)
-    env = E.add('/quotation/total', subtotal + subtotal / 10, env)
+    env = E.add('/quotation/subtotal', subtotal, validate, env)
+    env = E.add('/quotation/tax', subtotal / 10, validate, env)
+    env = E.add('/quotation/total', subtotal + subtotal / 10, validate, env)
     return env
   }
   

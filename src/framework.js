@@ -75,12 +75,12 @@ export const start = (data, schema, evolve, view, el) => {
     Add: (i, props, baseEnv) => {
       const path = props[`action${i}path`]
       const tplName = props[`action${i}data`]
-      baseEnv = E.add(path, data[tplName], baseEnv)
+      baseEnv = E.add(path, data[tplName], validate, baseEnv)
       return baseEnv
     }, 
     Remove: (i, props, baseEnv) => {
       const path = props[`action${i}path`]
-      baseEnv = E.remove(path, baseEnv)
+      baseEnv = E.remove(path, validate, baseEnv)
       return baseEnv
     }
   }
@@ -97,7 +97,7 @@ export const start = (data, schema, evolve, view, el) => {
       const slot0 = {touched:true, input:ev.currentTarget.value}
       const slot = S.coerce(slot0, schemaDb[npath])
       let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = evolve(baseEnv, E)
+      let env = evolve(baseEnv, validate, E)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }, 
@@ -107,7 +107,7 @@ export const start = (data, schema, evolve, view, el) => {
       const slot0 = {touched:true, input:ev.currentTarget.value}
       const slot = S.coerce(slot0, schemaDb[npath])
       let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = evolve(baseEnv, E)
+      let env = evolve(baseEnv, validate, E)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }, 
@@ -117,7 +117,7 @@ export const start = (data, schema, evolve, view, el) => {
       const slot0 = {touched:true, input:ev.currentTarget.checked ? "true" : "false"}
       const slot = S.coerce(slot0, schemaDb[npath])
       let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = evolve(baseEnv, E)
+      let env = evolve(baseEnv, validate, E)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }, 
@@ -128,7 +128,7 @@ export const start = (data, schema, evolve, view, el) => {
       for (let i = 0; i < length; i++) {
         baseEnv = customActions[dataset[`action${i}name`]](i, dataset, baseEnv)
       }
-      let env = evolve(baseEnv, E)
+      let env = evolve(baseEnv, validate, E)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }
@@ -142,7 +142,7 @@ export const start = (data, schema, evolve, view, el) => {
 
   let baseEnv = E.fromJson(data.initial, validate)
   baseEnv = E.goTo("", baseEnv)
-  let env = evolve(baseEnv, E)
+  let env = evolve(baseEnv, validate, E)
   env = E.goTo("", env)
   
   const render0 = (state, actions) => {

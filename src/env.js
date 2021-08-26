@@ -83,25 +83,12 @@ const strip = (data) => {
 export const fromJson = (json, validate) => {
   return {
     data: wrap(json, "", validate), 
-    path: [], 
-    validate
+    path: []
   }
 }
 
 export const toJson = (env) => {
   return strip(env.data)
-}
-
-export const serialize = (env) => {
-  return {data:env.data, path:env.path}
-}
-
-export const unserialize = (serialized, validate) => {
-  return {
-    data: serialized.data, 
-    path: serialized.path, 
-    validate
-  }
 }
 
 export const path = (env) => {
@@ -245,7 +232,7 @@ export const replace = (path, value, env) => {
 }
 
 // generates new metas
-export const add = (path, value, env) => {
+export const add = (path, value, validate, env) => {
   const epath = compose(env.path, path)
   const location = init2(epath)
   const name = R.last(epath)
@@ -262,8 +249,8 @@ export const add = (path, value, env) => {
     if (index < 0 || index > slot0['@value'].length) {
       throw new Error('add/3 out of range: ' + path)
     }
-    const lis = R.insert(index, wrap(value, normPath(epath), env.validate), slot0['@value'])
-    const slot = env.validate(lis, normPath(location))
+    const lis = R.insert(index, wrap(value, normPath(epath), validate), slot0['@value'])
+    const slot = validate(lis, normPath(location))
     const data = R.assocPath(location, slot, env.data)
     return {...env, data}
   } else {
@@ -271,15 +258,15 @@ export const add = (path, value, env) => {
     if (typeof name != 'string') {
       throw new Error('add/4 invalid name: ' + path)
     }
-    const value1 = wrap(value, normPath(epath), env.validate)
+    const value1 = wrap(value, normPath(epath), validate)
     const rec = {...slot0['@value'], [name]:value1}
-    const slot = env.validate(rec, normPath(location))
+    const slot = validate(rec, normPath(location))
     const data = R.assocPath(location, slot, env.data)
     return {...env, data}
   }
 }
 
-export const remove = (path, env) => {
+export const remove = (path, validate, env) => {
   const epath = compose(env.path, path)
   const location = init2(epath)
   const name = R.last(epath)
@@ -296,7 +283,7 @@ export const remove = (path, env) => {
       throw new Error('remove/3 out of range: ' + path)
     }
     const lis = R.remove(name, 1, slot0['@value'])
-    const slot = env.validate(lis, normPath(location))
+    const slot = validate(lis, normPath(location))
     const data = R.assocPath(location, slot, env.data)
     return {...env, data}
   } else {
@@ -305,7 +292,7 @@ export const remove = (path, env) => {
       throw new Error('remove/4: property not found: ' + path)
     }
     const rec = R.dissoc(name, slot0['@value'])
-    const slot = env.validate(rec, normPath(location))
+    const slot = validate(rec, normPath(location))
     const data = R.assocPath(location, slot, env.data)
     return {...env, data}
   }
