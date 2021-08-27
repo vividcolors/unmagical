@@ -117,28 +117,6 @@ addComponent('ListItem', ([_tag, props, ...children], env, actions) => {
   }
 })
 
-// TODO disabledにしたいときにどうするか
-// props = {label, actions}
-//   actions = [action, ...]
-//   action = {name, [paramName]:paramValue, ...}
-addComponent('ActionButton', ([_tag, props], env, actions) => {
-  const dataProps = {'data-actionlength':props.actions.length}
-  for (let i = 0; i < props.actions.length; i++) {
-    const spec = props.actions[i]
-    for (let p in spec) {
-      // TODO pathだけ動的に解決するのはどうか。fromだったら解決しないのか
-      if (p == 'path') {
-        dataProps[`data-action${i}${p}`] = E.makePath(spec[p], env)
-      } else {
-        dataProps[`data-action${i}${p}`] = spec[p]
-      }
-    }
-  }
-  return (
-    <button type="button" class="mg-Button" onclick={actions.onExecute} {...dataProps}>{props.label}</button>
-  )
-})
-
 // props = {path?, addKey?}
 addComponent('Text', ([_tag, props], env) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
@@ -147,6 +125,15 @@ addComponent('Text', ([_tag, props], env) => {
   if (props.addKey) xprops.key = E.getm(path, 'key', 0, env)
   return (
     <span class="wq-Text" {...xprops}>{value}</span>
+  )
+})
+
+// TODO disabledにしたいときにどうするか
+// props = {label, path?, hook, prepare?}
+addComponent('Button', ([_tag, props], env, actions) => {
+  const path = props.hasOwnProperty('path') ? props.path : '0'
+  return (
+    <button type="button" class={`mg-Button`} onclick={actions.onCallHook} data-path={path} data-hook={props.hook} data-prepare={props.prepare || ''}>{props.label}</button>
   )
 })
 

@@ -69,21 +69,8 @@ export const render = (view, env, actions, state) => {
   }
 }
 
-export const start = (data, schema, evolve, view, el) => {
+export const start = (data, schema, hooks, view, el) => {
   console.log('start/0', data, schema, view)
-  const customActions = {
-    Add: (i, props, baseEnv) => {
-      const path = props[`action${i}path`]
-      const tplName = props[`action${i}data`]
-      baseEnv = E.add(path, data[tplName], validate, baseEnv)
-      return baseEnv
-    }, 
-    Remove: (i, props, baseEnv) => {
-      const path = props[`action${i}path`]
-      baseEnv = E.remove(path, validate, baseEnv)
-      return baseEnv
-    }
-  }
   const actions0 = {
     onTextInput: (ev) => (state, actions) => {
       const path = ev.currentTarget.dataset.path
@@ -97,7 +84,7 @@ export const start = (data, schema, evolve, view, el) => {
       const slot0 = {touched:true, input:ev.currentTarget.value}
       const slot = S.coerce(slot0, schemaDb[npath])
       let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = evolve(baseEnv, validate, E)
+      let env = hooks.evolve(baseEnv, validate, E)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }, 
@@ -107,7 +94,7 @@ export const start = (data, schema, evolve, view, el) => {
       const slot0 = {touched:true, input:ev.currentTarget.value}
       const slot = S.coerce(slot0, schemaDb[npath])
       let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = evolve(baseEnv, validate, E)
+      let env = hooks.evolve(baseEnv, validate, E)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }, 
@@ -117,18 +104,19 @@ export const start = (data, schema, evolve, view, el) => {
       const slot0 = {touched:true, input:ev.currentTarget.checked ? "true" : "false"}
       const slot = S.coerce(slot0, schemaDb[npath])
       let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = evolve(baseEnv, validate, E)
+      let env = hooks.evolve(baseEnv, validate, E)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }, 
-    onExecute: (ev) => (state, actions) => {
-      const dataset = ev.currentTarget.dataset
-      const length = +dataset['actionlength']
+    onCallHook: (ev) => (state, actions) => {
+      const prepare = ev.currentTarget.dataset.prepare
+      const hook = ev.currentTarget.dataset.hook
+      const path = ev.currentTarget.dataset.path
       let baseEnv = state.baseEnv
-      for (let i = 0; i < length; i++) {
-        baseEnv = customActions[dataset[`action${i}name`]](i, dataset, baseEnv)
-      }
-      let env = evolve(baseEnv, validate, E)
+      if (prepare) baseEnv = hooks[prepare](baseEnv, validate, E)
+      let env = hooks.evolve(baseEnv, validate, E)
+      env = E.goTo("", env)
+      env = hooks[hook](env, validate, E)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }
@@ -140,9 +128,9 @@ export const start = (data, schema, evolve, view, el) => {
     return S.validate(value, schemaDb[path])
   }
 
-  let baseEnv = E.fromJson(data.initial, validate)
-  baseEnv = E.goTo("", baseEnv)
-  let env = evolve(baseEnv, validate, E)
+  let baseEnv = E.fromJson(data, validate)
+  console.log('start/2', baseEnv)
+  let env = hooks.evolve(baseEnv, validate, E)
   env = E.goTo("", env)
   
   const render0 = (state, actions) => {

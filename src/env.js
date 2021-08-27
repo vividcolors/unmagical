@@ -1,6 +1,8 @@
 
 import * as R from 'ramda'
 
+const typeOf = (x) => x === null ? 'null' : Array.isArray(x) ? 'array' : typeof x
+
 const append2 = (name1, name2, list) => {
   return R.append(name2, R.append(name1, list))
 }
@@ -40,9 +42,21 @@ const normPath = (frags) => {
   return rv
 }
 
+const showPath = (frags) => {
+  let rv = ""
+  for (let i = 0; i < frags.length; i++) {
+    if (frags[i] == '@value') {
+      rv += "/"
+    } else {
+      rv += frags[i]
+    }
+  }
+  return rv
+}
+
 const wrap = (json, serial, path, validate) => {
   const inner = (json, path) => {
-    switch (json === null ? 'null' : Array.isArray(json) ? 'array' : typeof json) {
+    switch (typeOf(json)) {
       case 'array': 
         const es = []
         const path2 = path + '/*'
@@ -71,7 +85,7 @@ const wrap = (json, serial, path, validate) => {
 
 const strip = (data) => {
   const root = data['@value']
-  switch (root === null ? 'null' : Array.isArray(root) ? 'array' : typeof root) {
+  switch (typeOf(root)) {
     case 'array': 
       const es = []
       for (let i = 0; i < root.length; i++) {
@@ -103,15 +117,7 @@ export const toJson = (env) => {
 }
 
 export const path = (env) => {
-  let rv = ""
-  for (let i = 0; i < env.path.length; i++) {
-    if (env.path[i] == '@value') {
-      rv += "/"
-    } else {
-      rv += env.path[i]
-    }
-  }
-  return rv
+  return showPath(env.path)
 }
 
 export const basename = (env) => {
@@ -154,18 +160,8 @@ const compose = (base, path) => {
 
 export const makePath = (path, env) => {
   const epath = compose(env.path, path)
-  //if (! hasPath(epath, env.data)) {
-  //  throw new Error('makePath/1: not found: ' + path)
-  //}
-  let rv = ""
-  for (let i = 0; i < epath.length; i++) {
-    if (epath[i] == '@value') {
-      rv += "/"
-    } else {
-      rv += epath[i]
-    }
-  }
-  return rv
+  // We don't care about the existence of the epath location.
+  return showPath(epath)
 }
 
 export const goTo = (path, env) => {
@@ -324,4 +320,60 @@ export const move = (from, path, env) => {
 export const copy = (from, path, env) => {
   // TODO implement
   throw new Error('impelement!')
+}
+
+export const mapMeta = (f, path, env) => {
+  const inner = (slot0, path) => {
+    const value0 = slot0['@value']
+    switch (typeOf(value0)) {
+      case 'array': 
+        const lis = []
+        for (let i = 0; i < value0.length; i++) {
+          lis[0] = inner(value0[i], path + '/' + i)
+        }
+        return {...f(slot0, path), '@value':lis, key:slot0.key}
+      case 'object': 
+        const rec = {}
+        for (let p in value0) {
+          rec[p] = inner(value0[p], path + '/' + p)
+        }
+        return {...f(slot0, path), '@value':rec, key:slot0.key}
+      default: 
+        return {...f(slot0, path), '@value':value0, key:slot0.key}
+    }
+  }
+  const epath = compose(env.path, path)
+  const slot0 = R.path(epath, env.data)
+  if (! slot0) {
+    throw new Error('mapMeta/1: not found: ' + path)
+  }
+  const slot = inner(slot0, showPath(epath))
+  const data = R.assocPath(epath, slot, env.data)
+  return {...env, data}
+}
+
+export const reduce = (f, cur, path, env) => {
+  const inner = (cur, slot, path) => {
+    const value0 = slot['@value']
+    switch (typeOf(value0)) {
+      case 'array': 
+        for (let i = 0; i < value0.length; i++) {
+          cur = inner(cur, value0[i], path + '/' + i)
+        }
+        return f(cur, slot, path)
+      case 'object': 
+        for (let p in value0) {
+          cur = inner(cur, value0[p], path + '/' + p)
+        }
+        return f(cur, slot, path)
+      default: 
+        return f(cur, slot, path)
+    }
+  }
+  const epath = compose(env.path, path)
+  const slot = R.path(epath, env.data)
+  if (! slot) {
+    throw new Error('mapMeta/1: not found: ' + path)
+  }
+  return inner(cur, slot, showPath(epath))
 }
