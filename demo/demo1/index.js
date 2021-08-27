@@ -155,14 +155,14 @@ const findByProp = (name, value, lis) => {
   }
   return undefined
 }
-const evolve = (env, validate, E) => {
+const evolve = (env, API) => {
   const addLine = (category, x, env) => {
     const line = {category, description:x.name, unitPrice:x.price, quantity:1, amount:x.price}
-    return E.add('/quotation/lines/-', line, validate, env)
+    return API.add('/quotation/lines/-', line, API.validate, env)
   }
   let subtotal = 0
   let isPro = false
-  const detail = E.lookup('/detail', env)
+  const detail = API.lookup('/detail', env)
   if (detail.frame) {
     const frame = findByProp('name', detail.frame, master.frame)
     env = addLine('筐体', frame, env)
@@ -184,11 +184,11 @@ const evolve = (env, validate, E) => {
     memoryOptions = memoryOptions.filter(m => m != '32G')
     if (detail.memory && detail.memory == '32G') {
       const initialMemory = data.initial.detail.memory
-      env = E.add('/detail/memory', initialMemory, validate, env)
+      env = API.add('/detail/memory', initialMemory, API.validate, env)
       detail.memory = initialMemory
     }
   }
-  env = E.setm('/detail/memory', 'options', memoryOptions, env)
+  env = API.setm('/detail/memory', 'options', memoryOptions, env)
   if (detail.memory) {
     const memory = findByProp('name', detail.memory, master.memory)
     env = addLine('メモリ', memory, env)
@@ -207,23 +207,20 @@ const evolve = (env, validate, E) => {
       subtotal += bonus.price
     }
   } else {
-    env = E.setm('/detail/bonus', 'disabled', true, env)
+    env = API.setm('/detail/bonus', 'disabled', true, env)
   }
-  env = E.add('/quotation/subtotal', subtotal, validate, env)
-  env = E.add('/quotation/tax', subtotal / 10, validate, env)
-  env = E.add('/quotation/total', subtotal + subtotal / 10, validate, env)
+  env = API.add('/quotation/subtotal', subtotal, API.validate, env)
+  env = API.add('/quotation/tax', subtotal / 10, API.validate, env)
+  env = API.add('/quotation/total', subtotal + subtotal / 10, API.validate, env)
   return env
 }
 
-const prepare = (env, validate, E) => {
-  console.log('prepare', env)
-  return E.mapMeta((slot, path) => ({...slot, touched:true}), '/detail', env)
+const prepare = (env, API) => {
+  return API.touchAll('/detail', env)
 }
 
-const submit = (env, validate, E) => {
-  const numErrors = E.reduce((cur, slot, path) => {
-    return (!slot.disabled && slot.invalid) ? (cur + 1) : cur
-  }, 0, '/detail', env)
+const submit = (env, API) => {
+  const numErrors = API.countValidationErrors('/detail', env)
   console.log('submit/1', numErrors)
   if (numErrors) {
     window.setTimeout(() => {

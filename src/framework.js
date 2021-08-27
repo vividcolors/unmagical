@@ -70,7 +70,32 @@ export const render = (view, env, actions, state) => {
 }
 
 export const start = (data, schema, hooks, view, el) => {
-  console.log('start/0', data, schema, view)
+  //console.log('start/0', data, schema, view)
+  console.log('start', E)
+  const API = {
+    ...E, 
+    validate: (value, path) => {
+      return S.validate(value, schemaDb[path])
+    }, 
+    touchAll: (path, env) => {
+      return E.mapMeta((slot, _path) => ({...slot, touched:true}), path, env)
+    }, 
+    countValidationErrors: (path, env) => {
+      return E.reduce((cur, slot, _path) => {
+        return (!slot.disabled && slot.touched && slot.invalid) ? (cur + 1) : cur
+      }, 0, path, env)
+    }, 
+    validationErrors: (path, env) => {
+      let errors = []
+      E.reduce((cur, slot, path) => {
+        if (!slot.disabled && slot.touched && slot.invalid) {
+          errors.push(path)
+        }
+        return null
+      }, null, path, env)
+      return errors
+    }
+  }
   const actions0 = {
     onTextInput: (ev) => (state, actions) => {
       const path = ev.currentTarget.dataset.path
@@ -84,7 +109,7 @@ export const start = (data, schema, hooks, view, el) => {
       const slot0 = {touched:true, input:ev.currentTarget.value}
       const slot = S.coerce(slot0, schemaDb[npath])
       let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = hooks.evolve(baseEnv, validate, E)
+      let env = hooks.evolve(baseEnv, API)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }, 
@@ -94,7 +119,7 @@ export const start = (data, schema, hooks, view, el) => {
       const slot0 = {touched:true, input:ev.currentTarget.value}
       const slot = S.coerce(slot0, schemaDb[npath])
       let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = hooks.evolve(baseEnv, validate, E)
+      let env = hooks.evolve(baseEnv, API)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }, 
@@ -104,7 +129,7 @@ export const start = (data, schema, hooks, view, el) => {
       const slot0 = {touched:true, input:ev.currentTarget.checked ? "true" : "false"}
       const slot = S.coerce(slot0, schemaDb[npath])
       let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = hooks.evolve(baseEnv, validate, E)
+      let env = hooks.evolve(baseEnv, API)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }, 
@@ -113,10 +138,10 @@ export const start = (data, schema, hooks, view, el) => {
       const hook = ev.currentTarget.dataset.hook
       const path = ev.currentTarget.dataset.path
       let baseEnv = state.baseEnv
-      if (prepare) baseEnv = hooks[prepare](baseEnv, validate, E)
-      let env = hooks.evolve(baseEnv, validate, E)
+      if (prepare) baseEnv = hooks[prepare](baseEnv, API)
+      let env = hooks.evolve(baseEnv, API)
       env = E.goTo("", env)
-      env = hooks[hook](env, validate, E)
+      env = hooks[hook](env, API)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }
@@ -124,13 +149,10 @@ export const start = (data, schema, hooks, view, el) => {
   }
 
   const schemaDb = buildSchemaDb(schema)
-  const validate = (value, path) => {
-    return S.validate(value, schemaDb[path])
-  }
 
-  let baseEnv = E.fromJson(data, validate)
+  let baseEnv = E.fromJson(data, API.validate)
   console.log('start/2', baseEnv)
-  let env = hooks.evolve(baseEnv, validate, E)
+  let env = hooks.evolve(baseEnv, API)
   env = E.goTo("", env)
   
   const render0 = (state, actions) => {
