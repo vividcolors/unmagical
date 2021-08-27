@@ -98,7 +98,7 @@ addComponent('List', ([_tag, props, child], env, actions) => {
   }
 })
 
-// props = {astable}
+// props = {astable?}
 addComponent('ListItem', ([_tag, props, ...children], env, actions) => {
   const key = E.getm('0', 'key', 0, env)
   const astable = props.hasOwnProperty('astable') ? props.astable : false
@@ -131,9 +131,22 @@ addComponent('Text', ([_tag, props], env) => {
 // TODO disabledにしたいときにどうするか
 // props = {label, path?, hook, prepare?}
 addComponent('Button', ([_tag, props], env, actions) => {
+  console.log('Button', props)
   const path = props.hasOwnProperty('path') ? props.path : '0'
   return (
-    <button type="button" class={`mg-Button`} onclick={actions.onCallHook} data-path={path} data-hook={props.hook} data-prepare={props.prepare || ''}>{props.label}</button>
+    <button type="button" class={`mg-Button`} onclick={actions.onCallHook} data-path={E.makePath(path, env)} data-hook={props.hook} data-effect={props.effect || ''}>{props.label}</button>
+  )
+})
+
+// props = {path}
+addComponent('Modal', ([_tag, props, ...children], env, actions) => {
+  env = E.goTo(props.path, env)
+  const slot = E.gets('0', env)
+  if (! slot['@value']) return null
+  return (
+    <div class={`mg-Modal`} key={slot.key}>
+      {children.map(c => render(c, env, actions))}
+    </div>
   )
 })
 

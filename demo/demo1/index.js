@@ -146,7 +146,7 @@ const view =
     ]
   ], 
   ["hr", {}], 
-  ["Button", {label:"確定", hook:"submit", prepare:'prepare'}]
+  ["Button", {label:"確定", hook:"prepare", effect:'submit'}]
 ]
 
 const findByProp = (name, value, lis) => {
@@ -215,11 +215,11 @@ const evolve = (env, API) => {
   return env
 }
 
-const prepare = (env, API) => {
+const prepare = (env, _path, API) => {
   return API.touchAll('/detail', env)
 }
 
-const submit = (env, API) => {
+const submit = (env, _path, API) => {
   const numErrors = API.countValidationErrors('/detail', env)
   console.log('submit/1', numErrors)
   if (numErrors) {

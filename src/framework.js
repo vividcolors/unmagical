@@ -51,7 +51,7 @@ const isComponent = (tag) => {
 }
 
 export const render = (view, env, actions, state) => {
-  //console.log('render', view, env)
+  console.log('render', view)
   if (Array.isArray(view)) {
     if (isComponent(view[0])) {
       return renderTable[view[0]](view, env, actions, state)
@@ -134,14 +134,14 @@ export const start = (data, schema, hooks, view, el) => {
       return {...state, env, baseEnv}
     }, 
     onCallHook: (ev) => (state, actions) => {
-      const prepare = ev.currentTarget.dataset.prepare
       const hook = ev.currentTarget.dataset.hook
+      const effect = ev.currentTarget.dataset.effect
       const path = ev.currentTarget.dataset.path
       let baseEnv = state.baseEnv
-      if (prepare) baseEnv = hooks[prepare](baseEnv, API)
+      if (hook) baseEnv = hooks[hook](baseEnv, path, API)
       let env = hooks.evolve(baseEnv, API)
       env = E.goTo("", env)
-      env = hooks[hook](env, API)
+      if (effect) env = hooks[effect](env, path, API)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }
@@ -157,7 +157,9 @@ export const start = (data, schema, hooks, view, el) => {
   
   const render0 = (state, actions) => {
     console.log('render0', state.env)
-    return render(view, state.env, actions, state)
+    const vdom = render(view, state.env, actions, state)
+    console.log('render0/1', vdom)
+    return vdom
   }
   const state = {
     baseEnv, 
