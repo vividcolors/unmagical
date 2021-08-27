@@ -4,17 +4,19 @@ import * as E from '/env'
 import {start, render, addComponent} from './framework'
 import {range} from 'ramda'
 
-// props = {path?}
+// props = {path?, addKey?}
 addComponent('TextInput', ([_tag, props], env, actions) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
   const slot = E.gets(path, env)
   const invalid = !(slot.disabled || false) && (slot.touched || false) && (slot.invalid || false)
+  const xprops = {}
+  if (props.addKey) xprops.key = slot.key
   return (
-    <input type="text" class={`mg-TextInput ${invalid ? 'mg-invalid' : ''}`} oninput={actions.onTextInput} onblur={actions.onTextBlur} data-path={E.makePath(path, env)} value={slot.input || ''} disabled={slot.disabled || false} />
+    <input type="text" class={`mg-TextInput ${invalid ? 'mg-invalid' : ''}`} oninput={actions.onTextInput} onblur={actions.onTextBlur} data-path={E.makePath(path, env)} value={slot.input || ''} disabled={slot.disabled || false} {...xprops} />
   )
 })
 
-// props = {path?, name, value, label, testOptions}
+// props = {path?, name, value, label, testOptions, addKey?}
 // testOptionsを真にすると、optionsメタを使って当部品のenabilityを判断するようになる。
 addComponent('Radio', ([_tag, props], env, actions) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
@@ -25,35 +27,41 @@ addComponent('Radio', ([_tag, props], env, actions) => {
     disabled = (slot.options || []).indexOf(props.value) == -1
   }
   const invalid = !disabled && (slot.touched || false) && (slot.invalid || false)
+  const xprops = {}
+  if (props.addKey) xprops.key = slot.key
   return (
-    <label>
-      <input type="radio" class={`mg-Radio ${invalid ? 'mg-invalid' : ''}`} name={props.name} onchange={actions.onSelectionChange} value={props.value} checked={(slot.input || '') == props.value} disabled={disabled} data-path={epath} />
-      <span>{props.label}</span>
+    <label class="mg-Radio" {...xprops}>
+      <input type="radio" class={`mg--input ${invalid ? 'mg-invalid' : ''}`} name={props.name} onchange={actions.onSelectionChange} value={props.value} checked={(slot.input || '') == props.value} disabled={disabled} data-path={epath} />
+      <span class="mg--label">{props.label}</span>
     </label>
   )
 })
 
-// props = {path?, label}
+// props = {path?, label, addKey?}
 addComponent('Checkbox', ([_tag, props], env, actions) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
   const slot = E.gets(path, env)
   const invalid = !(slot.disabled || false) && (slot.touched || false) && (slot.invalid || false)
+  const xprops = {}
+  if (props.addKey) xprops.key = slot.key
   return (
-    <label>
-      <input type="checkbox" class={`mg-Checkbox ${invalid ? 'mg-invalid' : ''}`} onchange={actions.onToggleChange} checked={slot['@value'] || false} data-path={E.makePath(path, env)} disabled={slot.disabled || false} />
-      <span>{props.label}</span>
+    <label class="mg-Checkbox" {...xprops}>
+      <input type="checkbox" class={`mg--input ${invalid ? 'mg-invalid' : ''}`} onchange={actions.onToggleChange} checked={slot['@value'] || false} data-path={E.makePath(path, env)} disabled={slot.disabled || false} />
+      <span class="mg--label">{props.label}</span>
     </label>
   )
 })
 
-// props = {path, label?}
+// props = {path, label?, addKey?}
 addComponent('Field', ([_tag, props, ...children], env, actions) => {
   const env2 = E.goTo(props.path, env)
   const slot = E.gets('0', env2)
   if (slot.disabled) return null
   const invalid = slot.touched && slot.invalid
+  const xprops = {}
+  if (props.addKey) xprops.key = slot.key
   return (
-    <div class={`mg-Field ${invalid ? 'mg-invalid' : ''}`}>
+    <div class={`mg-Field ${invalid ? 'mg-invalid' : ''}`} {...xprops}>
       {props.label ? (
         <label>{props.label}</label>
       ) : null}
@@ -68,20 +76,22 @@ addComponent('Field', ([_tag, props, ...children], env, actions) => {
 })
 
 // TODO disabled, invalid, message, etc.
-// props = {path, astable?}
+// props = {path, astable?, addKey?}
 addComponent('List', ([_tag, props, child], env, actions) => {
   env = E.goTo(props.path, env)
   const length = E.length('0', env)
   const astable = props.hasOwnProperty('astable') ? props.astable : false
+  const xprops = {}
+  if (props.addKey) xprops.key = E.getm('0', 'key', 0, env)
   if (astable) {
     return (
-      <tbody class="mg-List mg-astable">
+      <tbody class="mg-List mg-astable" {...xprops}>
         {range(0, length).map(i => render(child, E.goTo('0/' + i, env), actions))}
       </tbody>
     )
   } else {
     return (
-      <ul class="mg-List mg-aslist">
+      <ul class="mg-List mg-aslist" {...xprops}>
         {range(0, length).map(i => render(child, E.goTo('0/' + i, env), actions))}
       </ul>
     )
@@ -125,16 +135,18 @@ addComponent('ActionButton', ([_tag, props], env, actions) => {
     }
   }
   return (
-    <button type="button" onclick={actions.onExecute} {...dataProps}>{props.label}</button>
+    <button type="button" class="mg-Button" onclick={actions.onExecute} {...dataProps}>{props.label}</button>
   )
 })
 
-// props = {path?}
+// props = {path?, addKey?}
 addComponent('Text', ([_tag, props], env) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
   const value = E.lookup(path, env)
+  const xprops = {}
+  if (props.addKey) xprops.key = E.getm(path, 'key', 0, env)
   return (
-    <span class="wq-Text">{value}</span>
+    <span class="wq-Text" {...xprops}>{value}</span>
   )
 })
 
