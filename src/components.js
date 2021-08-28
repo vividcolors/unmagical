@@ -8,6 +8,7 @@ import {range} from 'ramda'
 addComponent('TextInput', ([_tag, props], env, actions) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
   const slot = E.gets(path, env)
+  if (! slot) return null
   const invalid = !(slot.disabled || false) && (slot.touched || false) && (slot.invalid || false)
   const xprops = {}
   if (props.addKey) xprops.key = slot.key
@@ -22,6 +23,7 @@ addComponent('Radio', ([_tag, props], env, actions) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
   const epath = E.makePath(path, env)
   const slot = E.gets(path, env)
+  if (! slot) return null
   let disabled = slot.disabled || false
   if (!disabled && props.hasOwnProperty('testOptions') && props.testOptions) {
     disabled = (slot.options || []).indexOf(props.value) == -1
@@ -41,6 +43,7 @@ addComponent('Radio', ([_tag, props], env, actions) => {
 addComponent('Checkbox', ([_tag, props], env, actions) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
   const slot = E.gets(path, env)
+  if (! slot) return null
   const invalid = !(slot.disabled || false) && (slot.touched || false) && (slot.invalid || false)
   const xprops = {}
   if (props.addKey) xprops.key = slot.key
@@ -56,7 +59,7 @@ addComponent('Checkbox', ([_tag, props], env, actions) => {
 addComponent('Field', ([_tag, props, ...children], env, actions) => {
   const env2 = E.goTo(props.path, env)
   const slot = E.gets('0', env2)
-  if (slot.disabled) return null
+  if (!slot || slot.disabled) return null
   const invalid = slot.touched && slot.invalid
   const xprops = {}
   if (props.addKey) xprops.key = slot.key
@@ -79,6 +82,8 @@ addComponent('Field', ([_tag, props, ...children], env, actions) => {
 // props = {path, astable?, addKey?}
 addComponent('List', ([_tag, props, child], env, actions) => {
   env = E.goTo(props.path, env)
+  const slot = E.gets('0', env)
+  if (!slot || slot['@value'] === null) return null
   const length = E.length('0', env)
   const astable = props.hasOwnProperty('astable') ? props.astable : false
   const xprops = {}
@@ -117,21 +122,40 @@ addComponent('ListItem', ([_tag, props, ...children], env, actions) => {
   }
 })
 
-// props = {path?, addKey?}
+// props = {path?, addKey?, dic?}
 addComponent('Text', ([_tag, props], env) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
-  const value = E.lookup(path, env)
+  const value0 = E.lookup(path, env)
+  const value = props.dic ? props.dic[value0] : value0
   const xprops = {}
   if (props.addKey) xprops.key = E.getm(path, 'key', 0, env)
   return (
-    <span class="wq-Text" {...xprops}>{value}</span>
+    <span class="mg-Text" {...xprops}>{value}</span>
   )
+})
+
+// props = {path?, addKey?, dic?, asspan?}
+addComponent('Icon', ([_tag, props], env) => {
+  const path = props.hasOwnProperty('path') ? props.path : '0'
+  const value0 = E.lookup(path, env)
+  const value = props.dic ? props.dic[value0] : value0
+  const xprops = {}
+  const asspan = props.asspan || false
+  if (props.addKey) xprops.key = E.getm(path, 'key', 0, env)
+  if (asspan) {
+    return (
+      <span class={`mg-Icon ${value}`} data-icon={value} {...xprops}></span>
+    )
+  } else {
+    return (
+      <i class={`mg-Icon ${value}`} data-icon={value} {...xprops}></i>
+    )
+  }
 })
 
 // TODO disabledにしたいときにどうするか
 // props = {label, path?, hook, prepare?}
 addComponent('Button', ([_tag, props], env, actions) => {
-  console.log('Button', props)
   const path = props.hasOwnProperty('path') ? props.path : '0'
   return (
     <button type="button" class={`mg-Button`} onclick={actions.onCallHook} data-path={E.makePath(path, env)} data-hook={props.hook} data-effect={props.effect || ''}>{props.label}</button>
@@ -142,7 +166,7 @@ addComponent('Button', ([_tag, props], env, actions) => {
 addComponent('Modal', ([_tag, props, ...children], env, actions) => {
   env = E.goTo(props.path, env)
   const slot = E.gets('0', env)
-  if (! slot['@value']) return null
+  if (!slot || !slot['@value']) return null
   return (
     <div class={`mg-Modal`} key={slot.key}>
       {children.map(c => render(c, env, actions))}
