@@ -16,9 +16,21 @@ const ruleFuns = {
     return 'should be %s'
   }, 
   required: (param, value) => {
+    if (typeof value != 'object') return true
     for (let i = 0; i < param.length; i++) {
       if (! value.hasOwnProperty(param[i])) return 'no field ' + param[i]
     }
+    return true
+  }, 
+  requiredOneOf: (param, value) => {
+    if (typeof value != 'object') return true
+    const test = f => value.hasOwnProperty(f)
+    let count = 0
+    for (let fs of param) {
+      if (fs.every(test)) count++
+    }
+    if (count != 0) return 'should match to any of patterns'
+    else if (count != 1) return 'should match exact 1 of patterns'
     return true
   }, 
   // TODO multipleOf(number/integer)
