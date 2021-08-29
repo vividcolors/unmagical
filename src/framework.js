@@ -1,6 +1,7 @@
 
 import * as E from './env'
 import * as S from './schema'
+import {evalXpath} from './filters'
 import {app, h} from 'hyperapp'
 
 const buildSchemaDb = (schema) => {
@@ -56,10 +57,18 @@ export const render = (view, env, actions, state) => {
     if (isComponent(view[0])) {
       return renderTable[view[0]](view, env, actions, state)
     } else {
+      let props = view[1]
+      if (view[1].hasOwnProperty('showIf')) {
+        const shown = evalXpath(view[1].showIf, env)
+        console.log('showIf', view[1].showIf, shown)
+        if (! shown) return null
+        props = {...view[1]}
+        delete props.showIf
+      }
       return (
         h(
           view[0], 
-          view[1], 
+          props, 
           view.slice(2).map(v => render(v, env, actions, state))
         )
       )
@@ -169,3 +178,5 @@ export const start = (data, schema, hooks, view, el) => {
   const actions = app(state, actions0, render0, el)
   return actions
 }
+
+export {evalXpath}

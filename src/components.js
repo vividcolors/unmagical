@@ -1,7 +1,7 @@
 
 import {h} from 'hyperapp'
 import * as E from '/env'
-import {start, render, addComponent} from './framework'
+import {start, render, addComponent, evalXpath} from './framework'
 import {range} from 'ramda'
 
 // props = {path?, addKey?}
@@ -122,9 +122,12 @@ addComponent('ListItem', ([_tag, props, ...children], env, actions) => {
   }
 })
 
-// props = {path?, addKey?, dic?}
+// props = {path?, addKey?, dic?, showIf?}
 addComponent('Text', ([_tag, props], env) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
+  if (props.hasOwnProperty('showIf')) {
+    const shown = evalXpath(props.showIf, env)
+  }
   const value0 = E.lookup(path, env)
   const value = props.dic ? props.dic[value0] : value0
   const xprops = {}
@@ -134,9 +137,12 @@ addComponent('Text', ([_tag, props], env) => {
   )
 })
 
-// props = {path?, addKey?, dic?, asspan?}
+// props = {path?, addKey?, dic?, asspan?, showIf?}
 addComponent('Icon', ([_tag, props], env) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
+  if (props.hasOwnProperty('showIf')) {
+    const shown = evalXpath(props.showIf, env)
+  }
   const value0 = E.lookup(path, env)
   const value = props.dic ? props.dic[value0] : value0
   const xprops = {}
@@ -166,7 +172,7 @@ addComponent('Button', ([_tag, props], env, actions) => {
 addComponent('Modal', ([_tag, props, ...children], env, actions) => {
   env = E.goTo(props.path, env)
   const slot = E.gets('0', env)
-  if (!slot || !slot['@value']) return null
+  if (!slot || slot['@value'] === null) return null
   return (
     <div class={`mg-Modal`} key={slot.key}>
       {children.map(c => render(c, env, actions))}

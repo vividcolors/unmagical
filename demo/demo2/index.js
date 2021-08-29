@@ -73,12 +73,17 @@ const hooks = {
 
 const view = 
 ['div', {}, 
-  ['List', {path:'/todos'}, 
-    ['ListItem', {}, 
-      ['Checkbox', {path:'0/done', label:''}], 
-      ['Text', {path:'0/subject'}], 
-      ['Button', {path:'0', label:'開く', hook:'open'}], 
-      ['Button', {path:'0', label:'削除', hook:'remove'}], 
+  ['div', {showIf:'/todos|empty'}, 
+    ['p', {}, 'TODOはまだありません。']
+  ], 
+  ['div', {showIf:'/todos|empty|not'}, 
+    ['List', {path:'/todos'}, 
+      ['ListItem', {}, 
+        ['Checkbox', {path:'0/done', label:''}], 
+        ['Text', {path:'0/subject'}], 
+        ['Button', {path:'0', label:'開く', hook:'open'}], 
+        ['Button', {path:'0', label:'削除', hook:'remove'}], 
+      ]
     ]
   ], 
   ['Button', {label:'新規追加', hook:'openToAdd'}], 
