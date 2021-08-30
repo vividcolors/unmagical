@@ -91,7 +91,7 @@ const view =
     ['Field', {path:'0/subject', label:'件名'}, 
       ['TextInput', {}]
     ], 
-    ['div', {}, 
+    ['InputGroup', {class:'mg-alignRight'}, 
       ['Button', {label:'キャンセル', hook:'cancel'}], 
       ['Button', {label:'確定', hook:'commit'}]
     ]

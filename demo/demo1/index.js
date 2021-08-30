@@ -97,21 +97,31 @@ const data = {
 
 const view = 
 ['div', {}, 
-  ['Field', {path:'/detail/os', label:'OS'}].concat(
-    master.os.map(x => ['Radio', {name:'os', value:x.name, label:`${x.name} ${x.price}円`}])
-  ), 
-  ['Field', {path:'/detail/cpu', label:'CPU'}].concat(
-    master.cpu.map(x => ['Radio', {name:'cpu', value:x.name, label:`${x.name} ${x.price}円`}])
-  ), 
-  ['Field', {path:'/detail/memory', label:'メモリ'}].concat(
-    master.memory.map(x => ['Radio', {name:'memory', value:x.name, label:`${x.name} ${x.price}円`, testOptions:true}])
-  ), 
-  ['Field', {path:'/detail/accessories', label:'アクセサリー'}].concat(
-    master.accessory.map((x, i) => ['Checkbox', {path:`/detail/accessories/a${i}`, label:`${x.name} ${x.price}円`}])
-  ), 
-  ['Field', {path:'/detail/bonus', label:'ボーナス'}].concat(
-    master.bonus.map(x => ['Radio', {name:'bonus', value:x.name, label:`${x.name}`}])
-  ), 
+  ['Field', {path:'/detail/os', label:'OS'}, 
+    ['InputGroup', {}, 
+      ...master.os.map(x => ['Radio', {name:'os', value:x.name, label:`${x.name} ${x.price}円`}])
+    ]
+  ], 
+  ['Field', {path:'/detail/cpu', label:'CPU'}, 
+    ['InputGroup', {}, 
+      ...master.cpu.map(x => ['Radio', {name:'cpu', value:x.name, label:`${x.name} ${x.price}円`}])
+    ]
+  ], 
+  ['Field', {path:'/detail/memory', label:'メモリ'}, 
+    ['InputGroup', {}, 
+      ...master.memory.map(x => ['Radio', {name:'memory', value:x.name, label:`${x.name} ${x.price}円`, testOptions:true}])
+    ]
+  ], 
+  ['Field', {path:'/detail/accessories', label:'アクセサリー'}, 
+    ['InputGroup', {}, 
+      ...master.accessory.map((x, i) => ['Checkbox', {path:`/detail/accessories/a${i}`, label:`${x.name} ${x.price}円`}])
+    ]
+  ], 
+  ['Field', {path:'/detail/bonus', label:'ボーナス'}, 
+    ['InputGroup', {}, 
+      ...master.bonus.map(x => ['Radio', {name:'bonus', value:x.name, label:`${x.name}`}])
+    ]
+  ], 
   ['hr', {}], 
   ['table', {}, 
     ['thead', {}, 

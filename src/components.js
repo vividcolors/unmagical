@@ -29,12 +29,16 @@ addComponent('Radio', ([_tag, props], env, actions) => {
     disabled = (slot.options || []).indexOf(props.value) == -1
   }
   const invalid = !disabled && (slot.touched || false) && (slot.invalid || false)
+  const checked = (slot.input || '') == props.value
   const xprops = {}
   if (props.addKey) xprops.key = slot.key
   return (
     <label class="mg-Radio" {...xprops}>
-      <input type="radio" class={`mg--input ${invalid ? 'mg-invalid' : ''}`} name={props.name} onchange={actions.onSelectionChange} value={props.value} checked={(slot.input || '') == props.value} disabled={disabled} data-path={epath} />
-      <span class="mg--label">{props.label}</span>
+      <input type="radio" class={`mg--input ${invalid ? 'mg-invalid' : ''}`} name={props.name} onchange={actions.onSelectionChange} value={props.value} checked={checked} disabled={disabled} data-path={epath} />
+      <span class="mg--display">
+        <span class="mg--graphic material-icons">{checked ? 'radio_button_checked' : 'radio_button_unchecked'}</span>
+        <span class="mg--label">{props.label}</span>
+      </span>
     </label>
   )
 })
@@ -45,13 +49,27 @@ addComponent('Checkbox', ([_tag, props], env, actions) => {
   const slot = E.gets(path, env)
   if (! slot) return null
   const invalid = !(slot.disabled || false) && (slot.touched || false) && (slot.invalid || false)
+  const checked = slot['@value'] || false
   const xprops = {}
   if (props.addKey) xprops.key = slot.key
   return (
     <label class="mg-Checkbox" {...xprops}>
-      <input type="checkbox" class={`mg--input ${invalid ? 'mg-invalid' : ''}`} onchange={actions.onToggleChange} checked={slot['@value'] || false} data-path={E.makePath(path, env)} disabled={slot.disabled || false} />
-      <span class="mg--label">{props.label}</span>
+      <input type="checkbox" class={`mg--input ${invalid ? 'mg-invalid' : ''}`} onchange={actions.onToggleChange} checked={checked} data-path={E.makePath(path, env)} disabled={slot.disabled || false} />
+      <span class="mg--display">
+        <span class="mg--graphic material-icons">check</span>
+        <span class="mg--label">{props.label}</span>
+      </span>
     </label>
+  )
+})
+
+addComponent('InputGroup', ([_tag, props, ...children], env, actions) => {
+  return (
+    <div class={`mg-InputGroup ${props.class || ''}`}>
+      <div class="mg--inner">
+        {children.map(c => render(c, env, actions))}
+      </div>
+    </div>
   )
 })
 
@@ -66,7 +84,7 @@ addComponent('Field', ([_tag, props, ...children], env, actions) => {
   return (
     <div class={`mg-Field ${invalid ? 'mg-invalid' : ''}`} {...xprops}>
       {props.label ? (
-        <label>{props.label}</label>
+        <div class="mg--header"><span class="mg--label">{props.label}</span></div>
       ) : null}
       <div class="mg--body">
         {children.map(c => render(c, env2, actions))}
@@ -109,13 +127,13 @@ addComponent('ListItem', ([_tag, props, ...children], env, actions) => {
   const astable = props.hasOwnProperty('astable') ? props.astable : false
   if (astable) {
     return (
-      <tr class={`mg-ListItem mg-astable mg-key${key}`} key={key}>
+      <tr class={`mg-ListItem mg-astable`} key={key}>
         {children.map(c => render(c, env, actions))}
       </tr>
     )
   } else {
     return (
-      <li class="mg-ListItem mg-astable" key={key}>
+      <li class="mg-ListItem mg-aslist" key={key}>
         {children.map(c => render(c, env, actions))}
       </li>
     )
@@ -137,7 +155,7 @@ addComponent('Text', ([_tag, props], env) => {
   )
 })
 
-// props = {path?, addKey?, dic?, asspan?, showIf?}
+// props = {path?, addKey?, dic?, showIf?}
 addComponent('Icon', ([_tag, props], env) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
   if (props.hasOwnProperty('showIf')) {
@@ -146,17 +164,10 @@ addComponent('Icon', ([_tag, props], env) => {
   const value0 = E.lookup(path, env)
   const value = props.dic ? props.dic[value0] : value0
   const xprops = {}
-  const asspan = props.asspan || false
   if (props.addKey) xprops.key = E.getm(path, 'key', 0, env)
-  if (asspan) {
-    return (
-      <span class={`mg-Icon ${value}`} data-icon={value} {...xprops}></span>
-    )
-  } else {
-    return (
-      <i class={`mg-Icon ${value}`} data-icon={value} {...xprops}></i>
-    )
-  }
+  return (
+    <span class={`mg-Icon material-icons ${value}`} {...xprops}>{value}</span>
+  )
 })
 
 // TODO disabledにしたいときにどうするか
@@ -175,7 +186,9 @@ addComponent('Modal', ([_tag, props, ...children], env, actions) => {
   if (!slot || slot['@value'] === null) return null
   return (
     <div class={`mg-Modal`} key={slot.key}>
-      {children.map(c => render(c, env, actions))}
+      <div class="mg--frame">
+        {children.map(c => render(c, env, actions))}
+      </div>
     </div>
   )
 })

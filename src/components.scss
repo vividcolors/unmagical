@@ -1,0 +1,275 @@
+
+$input-font-size: 16px;
+$input-height: 40px;
+$fgcolor: hsl(0, 0%, 0%);
+$bgcolor: hsl(0, 0%, 100%);
+$input-bgcolor: hsl(0, 0%, 100%);
+$button-bgcolor: hsl(226, 15%, 86%);
+$fore-alpha: 0.8;
+$disabled-alpha: 0.26;
+$glow-alpha: 0.6;
+$obscure-alpha: 0.6;
+$line-height: 1.5;
+$gutter: 4px;
+$space: 10px;
+$focus-fgcolor: hsl(226, 100%, 53%);
+$error-fgcolor: hsl(4, 95%, 48%);
+$small-font-size: 13px;
+
+@function ipd($border-width) {
+    @return ($input-height - $input-font-size * $line-height - $border-width * 2) * 0.5;
+}
+
+@function emphasize($color, $amount) {
+    @return scale-color($color, $saturation: -10% * $amount, $lightness: -10% * $amount);
+}
+
+@mixin icon {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+
+.mg-Component {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    outline: none;
+    max-width: 100%;
+    color: rgba($fgcolor, $fore-alpha);
+    background-clip: border-box;
+}
+
+.mg-Container {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    padding: 0;
+    margin: 0;
+}
+
+.mg-TextInput {
+    @extend .mg-Component;
+    border: 1px solid rgba($fgcolor, $disabled-alpha);
+    font-size: $input-font-size;
+    line-height: $line-height;
+    padding: ipd(1px);
+    transition: box-shadow 0.1s linear, border-color 0.1s linear;
+    &::placeholder, 
+    &:-ms-input-placeholder, 
+    &::-ms-input-placeholder {
+        font-size: $input-font-size;
+        color: rgba($fgcolor, $disabled-alpha);
+    }
+    &:hover {
+        box-shadow: 0 0 0 $gutter rgba($focus-fgcolor, $disabled-alpha);
+    }
+    &.mg-invalid {
+        border-color: rgba($error-fgcolor, $fore-alpha);
+    }
+    &:focus {
+        border-color: rgba($fgcolor, $disabled-alpha);
+        box-shadow: 0 0 0 $gutter rgba($focus-fgcolor, $glow-alpha);
+    }
+    &:disabled {
+        box-shadow: none;
+        border-color: rgba($fgcolor, $disabled-alpha);
+        opacity: $disabled-alpha;
+    }
+}
+
+.mg-Radio, 
+.mg-Checkbox {
+    @extend .mg-Component;
+    position: relative;
+    & > .mg--input {
+        display:block;
+        position: absolute;
+        opacity: 0;
+        margin: 0;
+        padding: 0;
+        max-width: 1px;
+        max-height: 1px;
+    }
+    & > .mg--display {
+        @extend .mg-Container;
+        flex-direction: row;
+        border: 1px solid rgba($fgcolor, $disabled-alpha);
+        font-size: $input-font-size;
+        line-height: $line-height;
+        padding: ipd(1px) ipd(1px) + 0.5 * $input-font-size;
+        transition: box-shadow 0.1s linear, border-color 0.1s linear;
+        border-radius: 100px;
+        & > .mg--graphic {
+            margin-right: $gutter;
+            color: rgba($fgcolor, $disabled-alpha);
+            font-size: 18px;
+            align-self: center;
+        }
+        & > .mg--label {
+            @extend .mg-Component;
+        }
+    }
+    & > .mg--input:checked + .mg--display {
+        & > .mg--graphic {
+            color: rgba($focus-fgcolor, $fore-alpha);
+        }
+    }
+    &:hover > .mg--display {
+        box-shadow: 0 0 0 $gutter rgba($focus-fgcolor, $disabled-alpha);
+    }
+    & > .mg--input.mg-invalid + .mg--display {
+        border-color: rgba($error-fgcolor, $fore-alpha);
+    }
+    & > .mg--input:focus-visible + .mg--display {
+        border-color: rgba($fgcolor, $disabled-alpha);
+        box-shadow: 0 0 0 $gutter rgba($focus-fgcolor, $glow-alpha);
+    }
+    & > .mg--input:disabled + .mg--display {
+        box-shadow: none;
+        border-color: rgba($fgcolor, $disabled-alpha);
+        opacity: $disabled-alpha;
+    }
+}
+
+.mg-InputGroup {
+    @extend .mg-Component;
+    width: 100%;
+    & > .mg--inner {
+        @extend .mg-Container;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 0.5 * $gutter;
+        & > * {
+            margin: 0.5 * $gutter;
+        }
+    }
+    &.mg-alignRight > .mg--inner {
+        justify-content: flex-end;
+    }
+}
+
+.mg-Field {
+    @extend .mg-Component;
+    position: relative;
+    width: 100%;
+    & > .mg--header {
+        & > .mg--label {
+            font-size: $small-font-size;
+            font-weight: bold;
+            color: rgba($fgcolor, $fore-alpha);
+        }
+    }
+    & > .mg--body {
+
+    }
+    & > .mg--message {
+        position: absolute;
+        color: rgba($error-fgcolor, $fore-alpha);
+        font-size: $small-font-size;
+        line-height: $line-height;
+        top: 0;
+        right: 0;
+        &::before {
+            @include icon;
+            content: "info";
+            display: inline-block;
+            margin-right: 2px;
+            //font-size: $small-font-size;
+            font-size: 18px;
+            vertical-align: top;
+            line-height: $small-font-size * $line-height;
+        }
+    }
+}
+
+.mg-List.mg-astable {
+
+}
+
+.mg-List.mg-aslist {
+    
+}
+
+.mg-ListItem.mg-astable {
+
+}
+
+.mg-ListItem.mg-aslist {
+
+}
+
+.mg-Text {
+
+}
+
+.mg-Icon.mg-asspan {
+
+}
+
+.mg-Icon.mg-asi {
+
+}
+
+.mg-Button {
+    @extend .mg-Component;
+    border: 1px solid rgba($fgcolor, $disabled-alpha);
+    font-size: $input-font-size;
+    line-height: $line-height;
+    padding: ipd(1px) ipd(1px) + $input-font-size;
+    transition: box-shadow 0.1s linear, border-color 0.1s linear;
+    background-color: $button-bgcolor;
+    color: rgba($fgcolor, $fore-alpha);
+    transition: background-color 0.1s linear;
+    &:hover {
+        background-color: emphasize($button-bgcolor, 1);
+    }
+    &:focus-visible {
+        box-shadow: 0 0 0 $gutter rgba($focus-fgcolor, $glow-alpha);
+    }
+    &:active {
+        background-color: emphasize($button-bgcolor, 2);
+    }
+    &:disabled {
+        background-color: $button-bgcolor;
+        opacity: $disabled-alpha;
+        box-shadow: none;
+    }
+}
+
+.mg-Modal {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 10000;
+    background-color: rgba($fgcolor, $obscure-alpha);
+    & > .mg--frame {
+        @extend .mg-Container;
+        position: absolute;
+        background-color: hsl(0, 0%, 100%);
+        width: 40em;
+        top: 4em;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+        z-index: 10;
+        box-shadow: 0 3px 6px rgba(0,0,0, 0.2);
+        padding: $space;
+    }
+}
