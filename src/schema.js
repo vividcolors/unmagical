@@ -1,5 +1,6 @@
 
 const nullable = (type) => {
+  if (! type) return true
   const lastChar = type.charAt(type.length - 1)
   return type == 'null' || lastChar == '?'
 }
@@ -66,9 +67,9 @@ const ruleFuns = {
     if (new RegExp(param).test(value)) return true
     return 'schema.ruleError.pattern'
   }
-  // TODO? maxItems
-  // TODO? minItems
-  // TODO? format
+  // TODO maxItems
+  // TODO minItems
+  // TODO formats of email, url, ipv4, ...
 }
 
 const emptyObject = {}
@@ -86,6 +87,7 @@ const cook = (value, slot, schema) => {
 }
 
 const testType = (value, type) => {
+  if (! type) return true
   if (value === null) {
     if (! nullable(type)) {
       return false
@@ -119,8 +121,8 @@ const testType = (value, type) => {
 // shallow validation
 // @return {input, @value, invalid, touched, ecode, eparam}
 export const validate = (value, schema) => {
-  const slot = testType(value, schema.type)
-    ? cook(value, emptyObject, schema)
+  const slot = !schema ? {'@value':value, invalid:false, touched:value !== null && value !== "", ecode:'', eparam:null} 
+    : testType(value, schema.type) ? cook(value, emptyObject, schema)
     : {'@value':value, invalid:true, touched:value !== null && value !== "", ecode:'schema.typeError', eparam:null}
 
   if (! slot.hasOwnProperty('input')) {
@@ -149,6 +151,12 @@ export const validate = (value, schema) => {
 
 // {input, touched} => {input, @value, invalid, touched, ecode, eparam}
 export const coerce = (slot, schema) => {
+  if (! schema) {
+    throw new Error('coerce/0: no schema')
+  }
+  if (! schema.type) {
+    throw new Error('coerce/1: type not specified')
+  }
   if (slot.input == "") {
     if (nullable(schema.type)) {
       return cook(null, slot, schema)
