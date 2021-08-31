@@ -142,7 +142,7 @@ export const start = (data, schema, hooks, view, el) => {
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }, 
-    onCallHook: (ev) => (state, actions) => {
+    onButtonClick: (ev) => (state, actions) => {
       const hook = ev.currentTarget.dataset.hook
       const effect = ev.currentTarget.dataset.effect
       const path = ev.currentTarget.dataset.path
@@ -151,6 +151,15 @@ export const start = (data, schema, hooks, view, el) => {
       let env = hooks.evolve(baseEnv, API)
       env = E.goTo("", env)
       if (effect) env = hooks[effect](env, path, API)
+      env = E.goTo("", env)
+      return {...state, env, baseEnv}
+    }, 
+    onCall: ({hook, effect, data}) => (state, actions) => {
+      let baseEnv = state.baseEnv
+      if (hook) baseEnv = hooks[hook](baseEnv, data, API)
+      let env = hooks.evolve(baseEnv, API)
+      env = E.goTo("", env)
+      if (effect) env = hooks[effect](env, data, API)
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }
@@ -176,7 +185,7 @@ export const start = (data, schema, hooks, view, el) => {
     // TODO internal state
   }
   const actions = app(state, actions0, render0, el)
-  return actions
+  return actions.onCall
 }
 
 const defaultDict = {

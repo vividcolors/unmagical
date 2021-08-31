@@ -175,7 +175,7 @@ addComponent('Icon', ([_tag, props], env) => {
 addComponent('Button', ([_tag, props], env, actions) => {
   const path = props.hasOwnProperty('path') ? props.path : '0'
   return (
-    <button type="button" class={`mg-Button`} onclick={actions.onCallHook} data-path={E.makePath(path, env)} data-hook={props.hook} data-effect={props.effect || ''}>{props.label}</button>
+    <button type="button" class={`mg-Button`} onclick={actions.onButtonClick} data-path={E.makePath(path, env)} data-hook={props.hook} data-effect={props.effect || ''}>{props.label}</button>
   )
 })
 
