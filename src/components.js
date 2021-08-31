@@ -1,7 +1,7 @@
 
 import {h} from 'hyperapp'
 import * as E from '/env'
-import {start, render, addComponent, evalXpath} from './framework'
+import {start, render, addComponent, evalXpath, applyDict} from './framework'
 import {range} from 'ramda'
 
 // props = {path?, addKey?}
@@ -73,7 +73,7 @@ addComponent('InputGroup', ([_tag, props, ...children], env, actions) => {
   )
 })
 
-// props = {path, label?, addKey?}
+// props = {path, label?, addKey?, dict?}
 addComponent('Field', ([_tag, props, ...children], env, actions) => {
   const env2 = E.goTo(props.path, env)
   const slot = E.gets('0', env2)
@@ -90,7 +90,7 @@ addComponent('Field', ([_tag, props, ...children], env, actions) => {
         {children.map(c => render(c, env2, actions))}
       </div>
       {invalid ? (
-        <span class="mg--message">{slot.message}</span>
+        <span class="mg--message">{applyDict(props.dict, slot.ecode, slot.eparam)}</span>
       ) : null}
     </div>
   )

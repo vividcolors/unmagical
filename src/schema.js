@@ -9,65 +9,62 @@ const ruleFuns = {
     for (let i = 0; i < param.length; i++) {
       if (param[i] === value) return true
     }
-    return 'should be either of candidates'
+    return 'schema.ruleError.enum'
   }, 
   'const': (param, value) => {
     if (param === value) return true
-    return 'should be %s'
+    return 'schema.ruleError.const'
   }, 
   required: (param, value) => {
     if (typeof value != 'object') return true
     for (let i = 0; i < param.length; i++) {
-      if (! value.hasOwnProperty(param[i])) return 'no field ' + param[i]
+      if (! value.hasOwnProperty(param[i])) return 'schema.ruleError.required'
     }
     return true
   }, 
-  requiredOneOf: (param, value) => {
+  requiredAnyOf: (param, value) => {
     if (typeof value != 'object') return true
     const test = f => value.hasOwnProperty(f)
-    let count = 0
     for (let fs of param) {
-      if (fs.every(test)) count++
+      if (fs.every(test)) return true
     }
-    if (count != 0) return 'should match to any of patterns'
-    else if (count != 1) return 'should match exact 1 of patterns'
-    return true
+    return 'schema.ruleError.requiredAnyOf'
   }, 
   // TODO multipleOf(number/integer)
   maximum: (param, value) => {
     if (typeof value != 'number') return true
     if (param >= value) return true
-    return 'should be lower than or equals to %s'
+    return 'schema.ruleError.maximum'
   }, 
   exclusiveMaximum: (param, value) => {
     if (typeof value != 'number') return true
     if (param > value) return true
-    return 'should be lower than %s'
+    return 'schema.ruleError.exclusiveMaximum'
   }, 
   minimum: (param, value) => {
     if (typeof value != 'number') return true
     if (param <= value) return true
-    return 'should be greater than or equals to %s'
+    return 'schema.ruleError.minimum'
   }, 
   exclusiveMinimum: (param, value) => {
     if (typeof value != 'number') return true
     if (param < value) return true
-    return 'should be greater than %s'
+    return 'schema.ruleError.exclusiveMinimum'
   }, 
   maxLength: (param, value) => {
     if (typeof value != 'string') return true
     if (value.length <= param) return true
-    return 'should be shorter than %s'
+    return 'schema.ruleError.maxLength'
   }, 
   minLength: (param, value) => {
     if (typeof value != 'string') return true
     if (value.length >= param) return true
-    return 'should be longer than %s'
+    return (param == 1) ? 'schema.ruleError.minLength0' : 'schema.ruleError.minLength'
   }, 
   'pattern': (param, value) => {
     if (typeof value != 'string') return true
     if (new RegExp(param).test(value)) return true
-    return 'pattern unmatched'
+    return 'schema.ruleError.pattern'
   }
   // TODO? maxItems
   // TODO? minItems
@@ -82,10 +79,10 @@ const cook = (value, slot, schema) => {
     if (! f) continue
     const result = ruleFuns[p](schema[p], value)
     if (result !== true) {
-      return {...slot, '@value':value, invalid:true, message:result}
+      return {...slot, '@value':value, invalid:true, ecode:result, eparam:schema[p]}
     }
   }
-  return {...slot, '@value':value, invalid:false, message:''}
+  return {...slot, '@value':value, invalid:false, ecode:'', eparam:null}
 }
 
 const testType = (value, type) => {
@@ -120,11 +117,11 @@ const testType = (value, type) => {
 }
 
 // shallow validation
-// @return {input, @value, invalid, touched, message}
+// @return {input, @value, invalid, touched, ecode, eparam}
 export const validate = (value, schema) => {
   const slot = testType(value, schema.type)
     ? cook(value, emptyObject, schema)
-    : {'@value':value, invalid:true, touched:value !== null && value !== "", message:'invalid type'}
+    : {'@value':value, invalid:true, touched:value !== null && value !== "", ecode:'schema.typeError', eparam:null}
 
   if (! slot.hasOwnProperty('input')) {
     // add input meta if possible
@@ -150,7 +147,7 @@ export const validate = (value, schema) => {
   return slot
 }
 
-// {input, touched} => {input, @value, invalid, touched, message}
+// {input, touched} => {input, @value, invalid, touched, ecode, eparam}
 export const coerce = (slot, schema) => {
   if (slot.input == "") {
     if (nullable(schema.type)) {
@@ -158,7 +155,7 @@ export const coerce = (slot, schema) => {
     } else if (schema.type == "string") {
       return cook("", slot, schema)
     } else {
-      return {...slot, invalid:true, message:"Input here"}
+      return {...slot, invalid:true, ecode:'schema.scanError.empty', eparam:null}
     }
   }
   switch (schema.type) {
@@ -166,16 +163,14 @@ export const coerce = (slot, schema) => {
     case 'number?': 
       const n = +slot.input
       if ("" + n !== slot.input) {
-        return {...slot, invalid:true, message:"Not a number"}
+        return {...slot, invalid:true, ecode:'schema.scanError.number', eparam:null}
       }
       return cook(n, slot, schema)
     case 'integer':  // FALLTHRU
     case 'integer?': 
       const i = +slot.input
-      if ("" + i !== slot.input) {
-        return {...slot, invalid:true, message:"Not an integer"}
-      } else if (i % 1 !== 0) {
-        return {...slot, invalid:true, message:"Not an integer"}
+      if ("" + i !== slot.input || i % 1 !== 0) {
+        return {...slot, invalid:true, ecode:'schema.scanError.integer', eparam:null}
       }
       return cook(n, slot, schema)
     case 'string': 
@@ -186,7 +181,7 @@ export const coerce = (slot, schema) => {
               : (slot.input === "false") ? false
               : null
       if (b === null) {
-        return {...slot, invalid:true, message:"Not a boolean"}
+        return {...slot, invalid:true, ecode:'schema.scanError.boolean', eparam:null}
       }
       return cook(b, slot, schema)
     default: 

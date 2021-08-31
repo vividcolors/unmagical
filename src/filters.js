@@ -14,7 +14,7 @@ export const evalXpath = (xpath, env) => {
     throw new Error('evalXpath/1: invalid xpath: ' + xpath)
   }
   const path = matches[1]
-  const defaults = {raw:'', touched:false, invalid:false, message:'', disabled:false, key:0}
+  const defaults = {raw:'', touched:false, invalid:false, ecode:'', eparam:null, disabled:false, key:0}
   if (matches[3] && !defaults.hasOwnProperty(matches[3])) {
     throw new Error('evalXpath/2: unkdnown meta: ' + matches[3])
   }

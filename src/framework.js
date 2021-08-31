@@ -179,4 +179,29 @@ export const start = (data, schema, hooks, view, el) => {
   return actions
 }
 
+const defaultDict = {
+  'schema.ruleError.enum': 'Invalid input',   // 不正な入力です
+  'schema.ruleError.const': 'Invalid input',   // 不正な入力です
+  'schema.ruleError.required': 'Missing fields',  // フィールドが不足しています
+  'schema.ruleError.requiredAnyOf': 'Unknown instance',  // 未知のインスタンスです
+  'schema.ruleError.maximum': 'Please enter {{0}} or less',  // %s以下を入力してください
+  'schema.ruleError.exclusiveMaximum': 'Please enter a number less than {{0}}',  // %sより小さい数を入力してください
+  'schema.ruleError.minimum': 'Please enter {{0}} or more',  // %s以上を入力してください
+  'schema.ruleError.exclusiveMinimum': 'Please enter a number more than {{0}}',  // %sより大きい数を入力してください
+  'schema.ruleError.maxLength': 'Please enter no more than {{0}} characters',  // %s文字以下で入力してください
+  'schema.ruleError.minLength0': 'Please enter',  // 入力してください
+  'schema.ruleError.minLength': 'Please enter at least {{0}} characters',  // %s文字以上で入力してください
+  'schema.ruleError.pattern': 'Invalid format',  // 形式が不正です
+  'schema.typeError': 'Invalid type',  // 不正な型です
+  'schema.scanError.empty': 'Please select',  // 選択してください
+  'schema.scanError.number': "Please enter a number",  // 数値を入力してください
+  'schema.scanError.integer': "Please enter an integer",  // 整数を入力してください
+  'schema.scanError.boolean': "Please enter a boolean value"  // 真偽値を入力してください
+}
+
+export const applyDict = (dict, code, arg = null) => {
+  const format = dict[code] || defaultDict[code] || code
+  return format.replace('{{0}}', '' + arg)
+}
+
 export {evalXpath}
