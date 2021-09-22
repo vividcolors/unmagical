@@ -1,8 +1,7 @@
 
 import * as E from './env'
 import * as S from './schema'
-import {evalXpath} from './filters'
-import {app, h} from 'hyperapp'
+import {app} from 'hyperapp'
 
 const buildSchemaDb = (schema) => {
   const db = {}
@@ -38,46 +37,6 @@ const normPath = (path) => {
   return frag.join('/')
 }
 
-const renderTable = {}
-
-export const addComponent = (name, f) => {
-  renderTable[name] = f
-}
-
-const isComponent = (tag) => {
-  const code = tag.charCodeAt(0)
-  const a = 'A'.charCodeAt(0)
-  const z = 'Z'.charCodeAt(0)
-  return (a <= code && code <= z)
-}
-
-export const render = (view, env, actions, state) => {
-  console.log('render', view)
-  if (Array.isArray(view)) {
-    if (isComponent(view[0])) {
-      return renderTable[view[0]](view, env, actions, state)
-    } else {
-      let props = view[1]
-      if (view[1].hasOwnProperty('showIf')) {
-        const shown = evalXpath(view[1].showIf, env)
-        console.log('showIf', view[1].showIf, shown)
-        if (! shown) return null
-        props = {...view[1]}
-        delete props.showIf
-      }
-      return (
-        h(
-          view[0], 
-          props, 
-          view.slice(2).map(v => render(v, env, actions, state))
-        )
-      )
-    }
-  } else {
-    return view
-  }
-}
-
 export const start = (data, schema, hooks, view, el) => {
   //console.log('start/0', data, schema, view)
   console.log('start', E)
@@ -91,13 +50,13 @@ export const start = (data, schema, hooks, view, el) => {
     }, 
     countValidationErrors: (path, env) => {
       return E.reduce((cur, slot, _path) => {
-        return (!slot.disabled && slot.touched && slot.invalid) ? (cur + 1) : cur
+        return (slot.touched && slot.invalid) ? (cur + 1) : cur
       }, 0, path, env)
     }, 
     validationErrors: (path, env) => {
       let errors = []
       E.reduce((cur, slot, path) => {
-        if (!slot.disabled && slot.touched && slot.invalid) {
+        if (slot.touched && slot.invalid) {
           errors.push(path)
         }
         return null
@@ -122,7 +81,7 @@ export const start = (data, schema, hooks, view, el) => {
       env = E.goTo("", env)
       return {...state, env, baseEnv}
     }, 
-    onSelectionChange: (ev) => (state, actions) => {
+    onSelectChange: (ev) => (state, actions) => {
       const path = ev.currentTarget.dataset.path
       const npath = normPath(path)
       const slot0 = {touched:true, input:ev.currentTarget.value}
@@ -172,19 +131,14 @@ export const start = (data, schema, hooks, view, el) => {
   console.log('start/2', baseEnv)
   let env = hooks.evolve(baseEnv, API)
   env = E.goTo("", env)
+  console.log('start/2', env)
   
-  const render0 = (state, actions) => {
-    console.log('render0', state.env)
-    const vdom = render(view, state.env, actions, state)
-    console.log('render0/1', vdom)
-    return vdom
-  }
   const state = {
     baseEnv, 
     env
     // TODO internal state
   }
-  const actions = app(state, actions0, render0, el)
+  const actions = app(state, actions0, view, el)
   return actions.onCall
 }
 
@@ -213,4 +167,116 @@ export const applyDict = (dict, code, arg = null) => {
   return format.replace('{{0}}', '' + arg)
 }
 
-export {evalXpath}
+const bindingType = (name, inputType) => {
+  switch (name) {
+    case 'textarea': return 'text'
+    case 'select': return 'select'
+    case 'input': 
+      switch (inputType) {
+        case 'text': return 'text'
+        case 'password': return 'text'
+        case 'number': return 'text'
+        case 'radio': return 'radio'
+        case 'checkbox': return 'checkbox'
+        case 'file': return 'file'
+        // TODO: color, date, ...
+        default: 'text'
+      }
+    default: return ''
+  }
+}
+
+export function h(name, attributes) {
+  //console.log('h/0', typeof name == 'function' ? name.name : name)
+  var rest = []
+  var children = []
+  var length = arguments.length
+
+  while (length-- > 2) rest.push(arguments[length])
+
+  while (rest.length) {
+    var node = rest.pop()
+    if (node && node.pop) {
+      for (length = node.length; length--; ) {
+        rest.push(node[length])
+      }
+    } else if (node != null && node !== true && node !== false) {
+      children.push(node)
+    }
+  }
+
+  if (typeof name == 'function') {
+    const rv = name(attributes || {}, children)
+    //console.log('h/1', name.name, rv)
+    return rv
+  } else {
+    if (attributes && attributes.path) {
+      const rv = (state, actions) => {
+        //console.log('h/2.0', name)
+        const path = attributes.path
+        delete attributes.path
+        const env = E.goTo(path, state.env)
+        attributes['data-path'] = path
+        const slot = E.gets(path, state.env)
+        attributes.key = slot.key
+        const invalidClass = ' mg-invalid'  // TODO
+        switch (bindingType(name, attributes.type)) {
+          case 'text': 
+            attributes.oninput = actions.onTextInput
+            attributes.onblur = actions.onTextBlur
+            attributes.value = slot.input
+            if ((slot.touched || false) && (slot.invalid || false)) {
+              attributes.class += invalidClass
+            }
+            break
+          case 'select': 
+            attributes.onchange = actions.onSelectChange
+            attributes.checked = attributes.value == slot['@value']
+            if ((slot.touched || false) && (slot.invalid || false)) {
+              attributes.class += invalidClass
+            }
+            children.forEach((option) => {
+              option.attributes.selected = option.attributes.value == slot['@value']
+            })
+            break
+          case 'radio': 
+            attributes.onchange = actions.onSelectChange
+            attributes.checked = attributes.value == slot['@value']
+            if ((slot.touched || false) && (slot.invalid || false)) {
+              attributes.class += invalidClass
+            }
+            break
+          case 'checkbox': 
+            attributes.onchange = actions.onToggleChange
+            attributes.checked = slot['@value']
+            if ((slot.touched || false) && (slot.invalid || false)) {
+              attributes.class += invalidClass
+            }
+            break
+          default: 
+            // TODO: file, number, date, color, ...
+            break
+        }
+        const rv = {
+          nodeName: name,
+          attributes: attributes || {},
+          children: children,
+          key: attributes && attributes.key
+        }
+        //console.log('h/2.1', name, rv)
+        return rv
+      }
+      //console.log('h/2', name, rv)
+      return rv
+    } else {
+      const rv = {
+        nodeName: name,
+        attributes: attributes || {},
+        children: children,
+        key: attributes && attributes.key
+      }
+      //console.log('h/3', name, rv)
+      return rv
+    }
+  }
+}

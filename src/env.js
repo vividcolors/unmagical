@@ -172,6 +172,11 @@ export const goTo = (path, env) => {
   return {...env, path:epath}
 }
 
+export const test = (path, env) => {
+  const epath = compose(env.path, path)
+  return hasPath(epath, env.data)
+}
+
 export const getm = (path, meta, value, env) => {
   const epath = compose(env.path, path)
   const slot = R.path(epath, env.data)

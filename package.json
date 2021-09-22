@@ -6,8 +6,9 @@
     "ramda": "^0.27.1"
   },
   "scripts": {
-    "build": "parcel build -d asset src/components.js src/components.scss", 
-    "test": "parcel build --target node -d asset/test tests/_index.js && node asset/test/_index"
+    "build": "parcel build -d asset src/framework.js", 
+    "test": "parcel build --target node -d asset/test tests/_index.js && node asset/test/_index", 
+    "demo1": "parcel build -d demo/demo1 --out-file index.js demo/demo1/src.js"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",

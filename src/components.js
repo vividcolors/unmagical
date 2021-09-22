@@ -194,3 +194,27 @@ addComponent('Modal', ([_tag, props, ...children], env, actions) => {
 })
 
 window.unmagical = start
+
+
+export const render = (view, env, actions, state) => {
+  console.log('render', view)
+  if (Array.isArray(view)) {
+    let props = view[1]
+    if (view[1].hasOwnProperty('showIf')) {
+      const shown = evalXpath(view[1].showIf, env)
+      console.log('showIf', view[1].showIf, shown)
+      if (! shown) return null
+      props = {...view[1]}
+      delete props.showIf
+    }
+    if (view)
+    return {
+      nodeName: view[0], 
+      attributes: props, 
+      children: view.slice(2).map(v => render(v, env, actions, state)), 
+      key: props.addKey ? E.getm(path, 'key', 0, env) : null
+    }
+  } else {
+    return view
+  }
+}
