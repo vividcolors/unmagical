@@ -1,193 +1,245 @@
 
+import { normalizePath } from './utils'
 import * as E from './env'
 import * as S from './schema'
-import {app} from 'hyperapp'
+import { app } from 'hyperapp'
 
-const buildSchemaDb = (schema) => {
-  const db = {}
-  const inner = (schema, path) => {
-    db[path] = schema
-    switch (schema.type) {
-      case 'record': 
-      case 'record?': 
-        for (let p in schema.fields) {
-          inner(schema.fields[p], path + '/' + p)
-        }
-        break
-      case 'list': 
-      case 'list?': 
-        inner(schema.items, path + '/*')
-        break
-      default: 
-        break
-    }
+/**
+ * 
+ * @typedef {import("./schema").Json} Json
+ * @typedef {import("./schema").Schema} Schema
+ * @typedef {import("./schema").Slot} Slot
+ * @typedef {import("./schema").SchemaDb} SchemaDb
+ * @typedef {import("./env").Env} Env
+ */
+
+
+ /**
+  * @namespace
+  */
+export const API = {
+  // re-export from env
+  test: E.test, 
+  extract: E.extract, 
+  getSlot: E.getSlot, 
+  setSlot: E.setSlot, 
+  add: E.add, 
+  remove: E.remove, 
+  replace: E.replace, 
+  move: E.move, 
+  copy: E.copy, 
+  mapDeep: E.mapDeep, 
+  reduceDeep: E.reduceDeep, 
+
+  /**
+   * 
+   * @param {string} path 
+   * @param {Env} env
+   * @returns {Env} 
+   */
+  touchAll: (path, env) => {
+    return E.mapDeep((slot, _path) => ({...slot, touched:true}), path, env)
+  }, 
+
+  /**
+   * 
+   * @param {string} path 
+   * @param {Env} env
+   * @returns {Env} 
+   */
+  countValidationErrors: (path, env) => {
+    return E.reduceDeep((cur, slot, _path) => {
+      const d = slot.touched && slot.invalid ? 1 : 0
+      return cur + d
+    }, 0, path, env)
+  }, 
+
+  /**
+   * 
+   * @param {string} path 
+   * @param {Env} env
+   * @returns {string[]} 
+   */
+  validationErrors: (path, env) => {
+    const errors = []
+    E.reduceDeep((_cur, slot, path) => {
+      if (slot.touched && slot.invalid) {
+        errors.push(path)
+      }
+      return null
+    }, null, path, env)
+    return errors
   }
-  inner(schema, "")
-  return db
 }
 
-const normPath = (path) => {
-  let frag = path.split('/')
-  for (let i = 0; i < frag.length; i++) {
-    const n = +frag[i]
-    if ("" + n === frag[i]) {
-      frag[i] = '*'
-    }
-  }
-  return frag.join('/')
-}
+/**
+ * @param {Object} params
+ * @param {Json} params.data
+ * @param {Schema} params.schema
+ * @param {(any, any) => any} params.view
+ * @param {Element} params.containerEl
+ * @param {((string, Env) => Env) | null} params.evolve
+ * @param {{[name:string]:(any)}} params.updates
+ * @param {((value:any, schema:Schema) => Slot) | null} params.validate
+ * @param {((slot:Slot, schema:Schema) => Slot) | null} params.coerce
+ * @param {Object} params.bindingMap
+ */
+export const start = (
+    {
+      data, 
+      schema, 
+      view, 
+      containerEl, 
+      evolve = null, 
+      updates = {}, 
+      validate = null, 
+      coerce = null, 
+      bindingMap = null 
+    }) => {
+  // complements reasonable defaults
+  if (! evolve) evolve = (_path, env) => env
+  if (! validate) validate = S.validate(S.defaultRules, S.defaultMessages)
+  if (! coerce) coerce = S.coerce(S.defaultRules, S.defaultMessages)
+  if (! bindingMap) bindingMap = defaultBindingMap
 
-export const start = (data, schema, hooks, view, el) => {
-  //console.log('start/0', data, schema, view)
-  console.log('start', E)
-  const API = {
-    ...E, 
-    validate: (value, path) => {
-      return S.validate(value, schemaDb[path])
-    }, 
-    touchAll: (path, env) => {
-      return E.mapMeta((slot, _path) => ({...slot, touched:true}), path, env)
-    }, 
-    countValidationErrors: (path, env) => {
-      return E.reduce((cur, slot, _path) => {
-        return (slot.touched && slot.invalid) ? (cur + 1) : cur
-      }, 0, path, env)
-    }, 
-    validationErrors: (path, env) => {
-      let errors = []
-      E.reduce((cur, slot, path) => {
-        if (slot.touched && slot.invalid) {
-          errors.push(path)
-        }
-        return null
-      }, null, path, env)
-      return errors
-    }
-  }
+  const schemaDb = S.buildDb(schema)
+
   const actions0 = {
     onTextInput: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.path
-      let baseEnv = E.setm(path, 'input', ev.currentTarget.value, state.baseEnv)
-      let env = E.setm(path, 'input', ev.currentTarget.value, state.env)
+      const path = ev.currentTarget.dataset.mgPath
+      const slot0 = E.getSlot(path, state.baseEnv)
+      const slot = {...slot0, input:ev.currentTarget.value}
+      const baseEnv = E.setSlot(path, slot, state.baseEnv)
+      const slotb0 = E.getSlot(path, state.env)
+      const slotb = {...slotb0, input:ev.currentTarget.value}
+      const env = E.setSlot(path, slotb, state.env)
       return {...state, baseEnv, env}
     }, 
     onTextBlur: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.path
-      const npath = normPath(path)
+      const path = ev.currentTarget.dataset.mgPath
+      const npath = normalizePath(path)
       const slot0 = {touched:true, input:ev.currentTarget.value}
-      const slot = S.coerce(slot0, schemaDb[npath])
-      let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = hooks.evolve(baseEnv, API)
-      env = E.goTo("", env)
-      return {...state, env, baseEnv}
+      const slot = coerce(slot0, schemaDb[npath])
+      let baseEnv = E.setSlot(path, slot, state.baseEnv)
+      let env = evolve(path, baseEnv)
+      return {...state, baseEnv, env}
     }, 
     onSelectChange: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.path
-      const npath = normPath(path)
+      const path = ev.currentTarget.dataset.mgPath
+      const npath = normalizePath(path)
       const slot0 = {touched:true, input:ev.currentTarget.value}
-      const slot = S.coerce(slot0, schemaDb[npath])
-      let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = hooks.evolve(baseEnv, API)
-      env = E.goTo("", env)
-      return {...state, env, baseEnv}
+      const slot = coerce(slot0, schemaDb[npath])
+      let baseEnv = E.setSlot(path, slot, state.baseEnv)
+      let env = evolve(path, baseEnv)
+      return {...state, baseEnv, env}
     }, 
     onToggleChange: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.path
-      const npath = normPath(path)
+      const path = ev.currentTarget.dataset.mgPath
+      const npath = normalizePath(path)
       const slot0 = {touched:true, input:ev.currentTarget.checked ? "true" : "false"}
-      const slot = S.coerce(slot0, schemaDb[npath])
-      let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = hooks.evolve(baseEnv, API)
-      env = E.goTo("", env)
-      return {...state, env, baseEnv}
+      const slot = coerce(slot0, schemaDb[npath])
+      let baseEnv = E.setSlot(path, slot, state.baseEnv)
+      let env = evolve(path, baseEnv)
+      return {...state, baseEnv, env}
     }, 
-    onButtonClick: (ev) => (state, actions) => {
-      const hook = ev.currentTarget.dataset.hook
-      const effect = ev.currentTarget.dataset.effect
-      const path = ev.currentTarget.dataset.path
+    onUpdate: (ev) => (state, actions) => {
+      const update = (ev instanceof Event) ? ev.currentTarget.dataset.mgUpdate : ev.update
+      const context = (ev instanceof Event) ? JSON.parse(ev.currentTarget.dataset.mgContext || "null") :  ev.context
       let baseEnv = state.baseEnv
-      if (hook) baseEnv = hooks[hook](baseEnv, path, API)
-      let env = hooks.evolve(baseEnv, API)
-      env = E.goTo("", env)
-      if (effect) env = hooks[effect](env, path, API)
-      env = E.goTo("", env)
-      return {...state, env, baseEnv}
-    }, 
-    onCall: ({hook, effect, data}) => (state, actions) => {
-      let baseEnv = state.baseEnv
-      if (hook) baseEnv = hooks[hook](baseEnv, data, API)
-      let env = hooks.evolve(baseEnv, API)
-      env = E.goTo("", env)
-      if (effect) env = hooks[effect](env, data, API)
-      env = E.goTo("", env)
-      return {...state, env, baseEnv}
+      let env = state.env
+      if (! update || ! updates[update]) throw new Error('onUpdate/0: no update or unknown update')
+      const callEvolve = (path, baseEnv0) => {
+        if (baseEnv0 && baseEnv0 !== baseEnv) {
+          baseEnv = baseEnv0
+          env = evolve(path, baseEnv)
+        } else {
+          // do nothing because `env' will not change.
+        }
+        return env
+      }
+      let env0 = updates[update](context, callEvolve, baseEnv)
+      if (env0 && env0 !== env) env = env0
+      return {...state, baseEnv, env}
     }
-    // TODO implement
   }
 
-  const schemaDb = buildSchemaDb(schema)
-
-  let baseEnv = E.fromJson(data, API.validate)
-  console.log('start/2', baseEnv)
-  let env = hooks.evolve(baseEnv, API)
-  env = E.goTo("", env)
-  console.log('start/2', env)
-  
+  let baseEnv = E.makeEnv(data, schemaDb, validate)
+  let env = evolve("", baseEnv)
   const state = {
     baseEnv, 
-    env
-    // TODO internal state
+    env, 
+    bindingMap
   }
-  const actions = app(state, actions0, view, el)
-  return actions.onCall
+  const actions = app(state, actions0, view, containerEl)
 }
 
-const defaultDict = {
-  'schema.ruleError.enum': 'Invalid input',   // 不正な入力です
-  'schema.ruleError.const': 'Invalid input',   // 不正な入力です
-  'schema.ruleError.required': 'Missing fields',  // フィールドが不足しています
-  'schema.ruleError.requiredAnyOf': 'Unknown instance',  // 未知のインスタンスです
-  'schema.ruleError.maximum': 'Please enter {{0}} or less',  // %s以下を入力してください
-  'schema.ruleError.exclusiveMaximum': 'Please enter a number less than {{0}}',  // %sより小さい数を入力してください
-  'schema.ruleError.minimum': 'Please enter {{0}} or more',  // %s以上を入力してください
-  'schema.ruleError.exclusiveMinimum': 'Please enter a number more than {{0}}',  // %sより大きい数を入力してください
-  'schema.ruleError.maxLength': 'Please enter no more than {{0}} characters',  // %s文字以下で入力してください
-  'schema.ruleError.minLength0': 'Please enter',  // 入力してください
-  'schema.ruleError.minLength': 'Please enter at least {{0}} characters',  // %s文字以上で入力してください
-  'schema.ruleError.pattern': 'Invalid format',  // 形式が不正です
-  'schema.typeError': 'Invalid type',  // 不正な型です
-  'schema.scanError.empty': 'Please select',  // 選択してください
-  'schema.scanError.number': "Please enter a number",  // 数値を入力してください
-  'schema.scanError.integer': "Please enter an integer",  // 整数を入力してください
-  'schema.scanError.boolean': "Please enter a boolean value"  // 真偽値を入力してください
+const extractPath = (attributes) => {
+  if ('mg-path' in attributes) {
+    const path = attributes['mg-path']
+    delete attributes['mg-path']
+    attributes['data-mg-path'] = path
+    return path
+  } else {
+    return null
+  }
 }
 
-export const applyDict = (dict, code, arg = null) => {
-  const format = dict[code] || defaultDict[code] || code
-  return format.replace('{{0}}', '' + arg)
-}
-
-const bindingType = (name, inputType) => {
-  switch (name) {
-    case 'textarea': return 'text'
-    case 'select': return 'select'
-    case 'input': 
-      switch (inputType) {
-        case 'text': return 'text'
-        case 'password': return 'text'
-        case 'number': return 'text'
-        case 'radio': return 'radio'
-        case 'checkbox': return 'checkbox'
-        case 'file': return 'file'
-        // TODO: color, date, ...
-        default: 'text'
+const modifyNode = (attributes, children, state, actions) => {
+  const map = state.bindingMap
+  const role = attributes['mg-role']
+  delete attributes['mg-role']
+  const path = extractPath(attributes)
+  const slot = (path !== null) ? E.getSlot(path, state.env) : null
+  switch (role) {
+    case 'textbox': 
+      attributes[map.textbox.oninput] = actions.onTextInput
+      attributes[map.textbox.onblur] = actions.onTextBlur
+      attributes[map.textbox.value] = slot.input
+      if ((slot.touched || false) && (slot.invalid || false)) {
+        attributes[map.textbox.class] += ' ' + map.textbox.invalidClass
+        attributes[map.textbox.invalid] = true
       }
-    default: return ''
+      break
+    case 'listbox': 
+      attributes[map.listbox.onchange] = actions.onSelectChange
+      if ((slot.touched || false) && (slot.invalid || false)) {
+        attributes[map.listbox.class] += ' ' + map.listbox.invalidClass
+        attributes[map.listbox.invalid] = true
+      }
+      children.forEach((o) => {
+        o.attributes[map.option.selected] = o.attributes[map.option.value] == slot['@value']
+      })
+      break
+    case 'radio': 
+      attributes[map.radio.onchange] = actions.onSelectChange
+      attributes[map.radio.checked] = attributes[map.radio.value] == slot['@value']
+      if ((slot.touched || false) && (slot.invalid || false)) {
+        attributes[map.radio.class] += ' ' + map.radio.invalidClass
+        attributes[map.radio.invalid] = true
+      }
+      break
+    case 'checkbox': 
+      attributes[map.checkbox.onchange] = actions.onToggleChange
+      attributes[map.checkbox.checked] = slot['@value']
+      if ((slot.touched || false) && (slot.invalid || false)) {
+        attributes[map.checkbox.class] += ' ' + map.checkbox.invalidClass
+        attributes[map.checkbox.invalid] = true
+      }
+      break
+    // TODO: file, number, date, color, ...
+    case 'button': 
+      attributes[map.button.update] = attributes['mg-update']
+      if ('mg-context' in attributes) {
+        attributes[map.button.context] = JSON.stringify(attributes['mg-context'])
+      }
+      attributes[map.button.onclick] = actions.onUpdate
+      break
+    default: 
+      break
   }
 }
 
 export function h(name, attributes) {
-  //console.log('h/0', typeof name == 'function' ? name.name : name)
   var rest = []
   var children = []
   var length = arguments.length
@@ -204,69 +256,22 @@ export function h(name, attributes) {
       children.push(node)
     }
   }
-
+  
   if (typeof name == 'function') {
     const rv = name(attributes || {}, children)
-    //console.log('h/1', name.name, rv)
     return rv
   } else {
-    if (attributes && attributes.path) {
+    if (attributes && attributes['mg-role']) {
       const rv = (state, actions) => {
-        //console.log('h/2.0', name)
-        const path = attributes.path
-        delete attributes.path
-        const env = E.goTo(path, state.env)
-        attributes['data-path'] = path
-        const slot = E.gets(path, state.env)
-        attributes.key = slot.key
-        const invalidClass = ' mg-invalid'  // TODO
-        switch (bindingType(name, attributes.type)) {
-          case 'text': 
-            attributes.oninput = actions.onTextInput
-            attributes.onblur = actions.onTextBlur
-            attributes.value = slot.input
-            if ((slot.touched || false) && (slot.invalid || false)) {
-              attributes.class += invalidClass
-            }
-            break
-          case 'select': 
-            attributes.onchange = actions.onSelectChange
-            attributes.checked = attributes.value == slot['@value']
-            if ((slot.touched || false) && (slot.invalid || false)) {
-              attributes.class += invalidClass
-            }
-            children.forEach((option) => {
-              option.attributes.selected = option.attributes.value == slot['@value']
-            })
-            break
-          case 'radio': 
-            attributes.onchange = actions.onSelectChange
-            attributes.checked = attributes.value == slot['@value']
-            if ((slot.touched || false) && (slot.invalid || false)) {
-              attributes.class += invalidClass
-            }
-            break
-          case 'checkbox': 
-            attributes.onchange = actions.onToggleChange
-            attributes.checked = slot['@value']
-            if ((slot.touched || false) && (slot.invalid || false)) {
-              attributes.class += invalidClass
-            }
-            break
-          default: 
-            // TODO: file, number, date, color, ...
-            break
-        }
+        modifyNode(attributes, children, state, actions)
         const rv = {
           nodeName: name,
           attributes: attributes || {},
           children: children,
           key: attributes && attributes.key
         }
-        //console.log('h/2.1', name, rv)
         return rv
       }
-      //console.log('h/2', name, rv)
       return rv
     } else {
       const rv = {
@@ -275,8 +280,48 @@ export function h(name, attributes) {
         children: children,
         key: attributes && attributes.key
       }
-      //console.log('h/3', name, rv)
       return rv
     }
+  }
+}
+
+export const defaultBindingMap = {
+  textbox: {
+    oninput: 'oninput', 
+    onblur: 'onblur', 
+    value: 'value', 
+    class: 'class', 
+    invalidClass: 'mg-invalid', 
+    invalid: 'data-mg-invalid'
+  }, 
+  listbox: {
+    onchange: 'onchange', 
+    class: 'class', 
+    invalidClass: 'mg-invalid', 
+    invalid: 'data-mg-invalid'
+  }, 
+  option: {
+    selected: 'selected', 
+    value: 'value'
+  }, 
+  radio: {
+    onchange: 'onchange', 
+    checked: 'checked', 
+    value: 'value', 
+    class: 'class', 
+    invalidClass: 'mg-invalid', 
+    invalid: 'data-mg-invalid'
+  }, 
+  checkbox: {
+    onchange: 'onchange', 
+    checked: 'checked', 
+    class: 'class', 
+    invalidClass: 'mg-invalid', 
+    invalid: 'data-mg-invalid'
+  }, 
+  button: {
+    onclick: 'onclick', 
+    update: 'data-mg-update', 
+    context: 'data-mg-context'
   }
 }

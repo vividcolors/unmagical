@@ -1,13 +1,12 @@
 
-import {start, h, applyDict} from '../../src/framework'
-import * as E from '../../src/env'
+import {start, h, API} from '../../src/framework'
 
 const Field = ({path, label, env}, children) => {
-  if (! E.test(path, env)) return null
-  const slot = E.gets(path, env)
+  if (! API.test(path, env)) return null
+  const slot = API.getSlot(path, env)
   const invalid = slot.touched && slot.invalid
   return (
-    <div class={`mg-Field ${invalid ? 'mg-invalid' : ''}`}>
+    <div class={`mg-Field ${invalid ? 'mg-invalid' : ''}`} key={path}>
       {label ? (
         <div class="mg--header"><span class="mg--label">{label}</span></div>
       ) : null}
@@ -15,7 +14,7 @@ const Field = ({path, label, env}, children) => {
         {children}
       </div>
       {invalid ? (
-        <span class="mg--message">{applyDict({}, slot.ecode, slot.eparam)}</span>
+        <span class="mg--message">{slot.message}</span>
       ) : null}
     </div>
   )
@@ -34,7 +33,7 @@ const InputGroup = ({class:clazz, ...props}, children) => {
 const Radio = ({path, name, value, label, disabled = false}) => {
   return (
     <label>
-      <input type="radio" path={path} name={name} value={value} disabled={disabled} />
+      <input type="radio" mg-role="radio" mg-path={path} name={name} value={value} disabled={disabled} />
       <span>{label}</span>
     </label>
   )
@@ -43,7 +42,7 @@ const Radio = ({path, name, value, label, disabled = false}) => {
 const Checkbox = ({path, label, disabled = false}) => {
   return (
     <label>
-      <input type="checkbox" path={path} disabled={disabled} />
+      <input type="checkbox" mg-role="checkbox" mg-path={path} disabled={disabled} />
       <span>{label}</span>
     </label>
   )
@@ -83,18 +82,18 @@ const master = {
 }
 
 const schema = {
-  type: 'record', 
-  fields: {
+  type: 'object', 
+  properties: {
     detail: {
-      type: 'record', 
-      fields: {
+      type: 'object', 
+      properties: {
         frame: {type:'string', minLength:1}, 
         os: {type:'string', minLength:1}, 
         cpu: {type:'string', minLength:1}, 
         memory: {type:'string', minLength:1}, 
         accessories: {
-          type: 'record', 
-          fields: master.accessory.reduce((cur, a, i) => {
+          type: 'object', 
+          properties: master.accessory.reduce((cur, a, i) => {
             return {...cur, [`a${i}`]:{type:'boolean'}}
           }, {})
         }, 
@@ -102,20 +101,20 @@ const schema = {
       }
     }, 
     flags: {
-      type: 'record', 
-      fields: {
+      type: 'object', 
+      properties: {
         isPro: {type:'boolean'}, 
         bigDeal: {type:'boolean'}
       }
     }, 
     quotation: {
-      type: 'record', 
-      fields: {
+      type: 'object', 
+      properties: {
         lines: {
-          type: 'list', 
+          type: 'array', 
           items: {
-            type: 'record', 
-            fields: {
+            type: 'object', 
+            properties: {
               category: {type:'string'}, 
               description: {type:'string'}, 
               unitPrice: {type:'integer'}, 
@@ -156,8 +155,8 @@ const data = {
 }
 
 const view = (state, actions) => {
-  const flags = E.lookup('/flags', state.env)
-  const lines = E.lookup('/quotation/lines', state.env)
+  const flags = API.extract('/flags', state.env)
+  const quotation = API.extract('/quotation', state.env)
   return (
     <div id="rootMarker">
       <Field path="/detail/os" label="OS" env={state.env}>
@@ -195,8 +194,8 @@ const view = (state, actions) => {
           <th>金額</th>
         </thead>
         <tbody>
-          {lines.map(line => (
-            <tr>
+          {quotation.lines.map(line => (
+            <tr key={`${line.category}-${line.description}-${line.unitPrice}-${line.quantity}`}>
               <td>{line.category}</td>
               <td>{line.description}</td>
               <td>{line.unitPrice}</td>
@@ -209,19 +208,19 @@ const view = (state, actions) => {
       <table>
         <tr>
           <th>小計</th>
-          <td>{E.lookup('/quotation/subtotal', state.env)}</td>
+          <td>{quotation.subtotal}</td>
         </tr>
         <tr>
           <th>税</th>
-          <td>{E.lookup('/quotation/tax', state.env)}</td>
+          <td>{quotation.tax}</td>
         </tr>
         <tr>
           <th>合計</th>
-          <td>{E.lookup('/quotation/total', state.env)}</td>
+          <td>{quotation.total}</td>
         </tr>
       </table>
       <hr />
-      <button type="button" hook="prepare" effect={submit}>確定</button>
+      <button type="button" mg-role="button" mg-update="submit">確定</button>
     </div>
   )
 }
@@ -232,14 +231,14 @@ const findByProp = (name, value, lis) => {
   }
   return undefined
 }
-const evolve = (env, API) => {
+const evolve = (path, env) => {
   const addLine = (category, x, env) => {
     const line = {category, description:x.name, unitPrice:x.price, quantity:1, amount:x.price}
-    return API.add('/quotation/lines/-', line, API.validate, env)
+    return API.add('/quotation/lines/-', line, env)
   }
   let subtotal = 0
   let isPro = false
-  let detail = API.lookup('/detail', env)
+  let detail = API.extract('/detail', env)
   if (detail.frame) {
     const frame = findByProp('name', detail.frame, master.frame)
     env = addLine('筐体', frame, env)
@@ -256,10 +255,10 @@ const evolve = (env, API) => {
     env = addLine('CPU', cpu, env)
     subtotal += cpu.price
   }
-  env = API.add('/flags/isPro', isPro, API.validate, env)
+  env = API.add('/flags/isPro', isPro, env)
   if (! isPro && detail.memory && detail.memory == '32G') {
-    env = API.add('/detail/memory', '', API.validate, env)
-    detail = API.lookup('/detail', env)  // we modified `/detail' so load again.
+    env = API.add('/detail/memory', '', env)
+    detail = API.extract('/detail', env)  // we modified `/detail' so load again.
   }
   if (detail.memory) {
     const memory = findByProp('name', detail.memory, master.memory)
@@ -273,40 +272,41 @@ const evolve = (env, API) => {
     }
   })
   const bigDeal = subtotal >= 70000
-  env = API.add('/flags/bigDeal', bigDeal, API.validate, env)
+  env = API.add('/flags/bigDeal', bigDeal, env)
   if (! bigDeal) {
-    env = API.remove('/detail/bonus', API.validate, env)
-    detail = API.lookup('/detail', env)  // we modified `/detail' so load again.
+    env = API.remove('/detail/bonus', env)
+    detail = API.extract('/detail', env)  // we modified `/detail' so load again.
   }
   if (detail.bonus) {
     const bonus = findByProp('name', detail.bonus, master.bonus)
     env = addLine('ボーナス', bonus, env)
     subtotal += bonus.price
   }
-  env = API.add('/quotation/subtotal', subtotal, API.validate, env)
-  env = API.add('/quotation/tax', subtotal / 10, API.validate, env)
-  env = API.add('/quotation/total', subtotal + subtotal / 10, API.validate, env)
+  env = API.add('/quotation/subtotal', subtotal, env)
+  env = API.add('/quotation/tax', subtotal / 10, env)
+  env = API.add('/quotation/total', subtotal + subtotal / 10, env)
   return env
 }
 
-const prepare = (env, _path, API) => {
-  return API.touchAll('/detail', env)
-}
-
-const submit = (env, _path, API) => {
-  const numErrors = API.countValidationErrors('/detail', env)
-  console.log('submit/1', numErrors)
-  if (numErrors) {
-    window.setTimeout(() => {
-      const targetEl = container.querySelector('.mg-invalid')
-      targetEl.scrollIntoView()
-    }, 100)
-  } else {
-    window.setTimeout(() => {window.alert('サブミットしました。')}, 100)
+const updates = {
+  submit: (_context, callEvolve, env) => {
+    env = API.touchAll('/detail', env)
+  
+    env = callEvolve("", env)
+  
+    const numErrors = API.countValidationErrors('/detail', env)
+    console.log('submit/1', numErrors)
+    if (numErrors) {
+      window.setTimeout(() => {
+        const targetEl = containerEl.querySelector('.mg-invalid')
+        targetEl.scrollIntoView()
+      }, 100)
+    } else {
+      window.setTimeout(() => {window.alert('サブミットしました。')}, 100)
+    }
   }
-  return env
 }
 
-const container = document.getElementById('app')
+const containerEl = document.getElementById('app')
 
-start(data, schema, {evolve, submit, prepare}, view, container)
+start({data, schema, view, updates, containerEl, evolve})
