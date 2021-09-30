@@ -1,5 +1,6 @@
 
 import {start, h, API} from '../../src/framework'
+import {Radio as CRadio, Checkbox as CCheckbox, Button} from '../../src/components'
 
 const Field = ({path, label, env}, children) => {
   if (! API.test(path, env)) return null
@@ -33,7 +34,7 @@ const InputGroup = ({class:clazz, ...props}, children) => {
 const Radio = ({path, name, value, label, disabled = false}) => {
   return (
     <label>
-      <input type="radio" mg-role="radio" mg-path={path} name={name} value={value} disabled={disabled} />
+      <CRadio type="radio" mg-path={path} name={name} value={value} disabled={disabled} />
       <span>{label}</span>
     </label>
   )
@@ -42,7 +43,7 @@ const Radio = ({path, name, value, label, disabled = false}) => {
 const Checkbox = ({path, label, disabled = false}) => {
   return (
     <label>
-      <input type="checkbox" mg-role="checkbox" mg-path={path} disabled={disabled} />
+      <CCheckbox type="checkbox" mg-role="checkbox" mg-path={path} disabled={disabled} />
       <span>{label}</span>
     </label>
   )
@@ -220,7 +221,7 @@ const view = (state, actions) => {
         </tr>
       </table>
       <hr />
-      <button type="button" mg-role="button" mg-update="submit">確定</button>
+      <Button type="button" mg-role="button" mg-update="submit">確定</Button>
     </div>
   )
 }

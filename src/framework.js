@@ -2,7 +2,7 @@
 import { normalizePath } from './utils'
 import * as E from './env'
 import * as S from './schema'
-import { app } from 'hyperapp'
+import { app, h as h0 } from 'hyperapp'
 
 /**
  * 
@@ -69,6 +69,36 @@ export const API = {
       return null
     }, null, path, env)
     return errors
+  }, 
+
+  /**
+   * @param {Object} context
+   * @param {string} context.touchAllPath
+   * @param {string} context.errorSelector
+   * @param {string} context.url
+   * @param {string} context.update
+   * @param {string} context.context
+   */
+  submit: (context, callEvolve, env) => {
+    env = API.touchAll(context.touchAllPath, env)
+    env = callEvolve(context.touchAllPath, env)
+
+    const numErrors = API.countValidationErrors(context.touchAllPath, env)
+    if (numErrors) {
+      window.setTimeout(() => {
+        const targetEl = containerEl.querySelector(context.errorSelector)
+        if (targetEl) targetEl.scrollIntoView()
+      }, 100)
+    } else if (context.url) {
+      const req = new XMLHttpRequest()
+      req.open("POST", context.url)
+      req.addEventListener('loadend', (res) => {
+        // TODO: call update with context, or call transit with context
+      })
+      req.setRequestHeader("Content-Type", "application/json")
+      req.send(JSON.stringify(API.extract("", env)))
+      window.setTimeout(() => {window.alert('サブミットしました。')}, 100)
+    }
   }
 }
 
@@ -82,7 +112,6 @@ export const API = {
  * @param {{[name:string]:(any)}} params.updates
  * @param {((value:any, schema:Schema) => Slot) | null} params.validate
  * @param {((slot:Slot, schema:Schema) => Slot) | null} params.coerce
- * @param {Object} params.bindingMap
  */
 export const start = (
     {
@@ -93,14 +122,12 @@ export const start = (
       evolve = null, 
       updates = {}, 
       validate = null, 
-      coerce = null, 
-      bindingMap = null 
+      coerce = null
     }) => {
   // complements reasonable defaults
   if (! evolve) evolve = (_path, env) => env
   if (! validate) validate = S.validate(S.defaultRules, S.defaultMessages)
   if (! coerce) coerce = S.coerce(S.defaultRules, S.defaultMessages)
-  if (! bindingMap) bindingMap = defaultBindingMap
 
   const schemaDb = S.buildDb(schema)
 
@@ -167,161 +194,12 @@ export const start = (
   let env = evolve("", baseEnv)
   const state = {
     baseEnv, 
-    env, 
-    bindingMap
+    env
   }
   const actions = app(state, actions0, view, containerEl)
-}
-
-const extractPath = (attributes) => {
-  if ('mg-path' in attributes) {
-    const path = attributes['mg-path']
-    delete attributes['mg-path']
-    attributes['data-mg-path'] = path
-    return path
-  } else {
-    return null
+  return {
+    onUpdate: actions.onUpdate, 
   }
 }
 
-const modifyNode = (attributes, children, state, actions) => {
-  const map = state.bindingMap
-  const role = attributes['mg-role']
-  delete attributes['mg-role']
-  const path = extractPath(attributes)
-  const slot = (path !== null) ? E.getSlot(path, state.env) : null
-  switch (role) {
-    case 'textbox': 
-      attributes[map.textbox.oninput] = actions.onTextInput
-      attributes[map.textbox.onblur] = actions.onTextBlur
-      attributes[map.textbox.value] = slot.input
-      if ((slot.touched || false) && (slot.invalid || false)) {
-        attributes[map.textbox.class] += ' ' + map.textbox.invalidClass
-        attributes[map.textbox.invalid] = true
-      }
-      break
-    case 'listbox': 
-      attributes[map.listbox.onchange] = actions.onSelectChange
-      if ((slot.touched || false) && (slot.invalid || false)) {
-        attributes[map.listbox.class] += ' ' + map.listbox.invalidClass
-        attributes[map.listbox.invalid] = true
-      }
-      children.forEach((o) => {
-        o.attributes[map.option.selected] = o.attributes[map.option.value] == slot['@value']
-      })
-      break
-    case 'radio': 
-      attributes[map.radio.onchange] = actions.onSelectChange
-      attributes[map.radio.checked] = attributes[map.radio.value] == slot['@value']
-      if ((slot.touched || false) && (slot.invalid || false)) {
-        attributes[map.radio.class] += ' ' + map.radio.invalidClass
-        attributes[map.radio.invalid] = true
-      }
-      break
-    case 'checkbox': 
-      attributes[map.checkbox.onchange] = actions.onToggleChange
-      attributes[map.checkbox.checked] = slot['@value']
-      if ((slot.touched || false) && (slot.invalid || false)) {
-        attributes[map.checkbox.class] += ' ' + map.checkbox.invalidClass
-        attributes[map.checkbox.invalid] = true
-      }
-      break
-    // TODO: file, number, date, color, ...
-    case 'button': 
-      attributes[map.button.update] = attributes['mg-update']
-      if ('mg-context' in attributes) {
-        attributes[map.button.context] = JSON.stringify(attributes['mg-context'])
-      }
-      attributes[map.button.onclick] = actions.onUpdate
-      break
-    default: 
-      break
-  }
-}
-
-export function h(name, attributes) {
-  var rest = []
-  var children = []
-  var length = arguments.length
-
-  while (length-- > 2) rest.push(arguments[length])
-
-  while (rest.length) {
-    var node = rest.pop()
-    if (node && node.pop) {
-      for (length = node.length; length--; ) {
-        rest.push(node[length])
-      }
-    } else if (node != null && node !== true && node !== false) {
-      children.push(node)
-    }
-  }
-  
-  if (typeof name == 'function') {
-    const rv = name(attributes || {}, children)
-    return rv
-  } else {
-    if (attributes && attributes['mg-role']) {
-      const rv = (state, actions) => {
-        modifyNode(attributes, children, state, actions)
-        const rv = {
-          nodeName: name,
-          attributes: attributes || {},
-          children: children,
-          key: attributes && attributes.key
-        }
-        return rv
-      }
-      return rv
-    } else {
-      const rv = {
-        nodeName: name,
-        attributes: attributes || {},
-        children: children,
-        key: attributes && attributes.key
-      }
-      return rv
-    }
-  }
-}
-
-export const defaultBindingMap = {
-  textbox: {
-    oninput: 'oninput', 
-    onblur: 'onblur', 
-    value: 'value', 
-    class: 'class', 
-    invalidClass: 'mg-invalid', 
-    invalid: 'data-mg-invalid'
-  }, 
-  listbox: {
-    onchange: 'onchange', 
-    class: 'class', 
-    invalidClass: 'mg-invalid', 
-    invalid: 'data-mg-invalid'
-  }, 
-  option: {
-    selected: 'selected', 
-    value: 'value'
-  }, 
-  radio: {
-    onchange: 'onchange', 
-    checked: 'checked', 
-    value: 'value', 
-    class: 'class', 
-    invalidClass: 'mg-invalid', 
-    invalid: 'data-mg-invalid'
-  }, 
-  checkbox: {
-    onchange: 'onchange', 
-    checked: 'checked', 
-    class: 'class', 
-    invalidClass: 'mg-invalid', 
-    invalid: 'data-mg-invalid'
-  }, 
-  button: {
-    onclick: 'onclick', 
-    update: 'data-mg-update', 
-    context: 'data-mg-context'
-  }
-}
+export const h = h0
