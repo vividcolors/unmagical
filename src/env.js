@@ -13,6 +13,8 @@ import {hasPath as rhasPath, init, path as rpath, assocPath, insert, last, disso
  *   tree: Json, 
  *   schemaDb: SchemaDb, 
  *   validate: (value:any, schema:Schema) => Slot
+ *   extra: {[name:string]:any}
+ *   ret?: (env:Env) => void
  * }} Env
  */
 
@@ -108,8 +110,19 @@ export const makeEnv = (data, schemaDb, validate) => {
   return {
     tree, 
     schemaDb, 
-    validate
+    validate, 
+    extra: {}
   }
+}
+
+/**
+ * 
+ * @param {Env} env0 
+ * @param {Env} env1 
+ * @returns {boolean}
+ */
+export const isSame = (env0, env1) => {
+  return (env0.tree === env1.tree && env0.extra === env1.extra)
 }
 
 /**
@@ -402,4 +415,60 @@ export const reduceDeep = (f, cur, path, env) => {
     throw new Error('reduceDeep/1: not found: ' + path)
   }
   return inner(cur, slot, path)
+}
+
+/**
+ * 
+ * @param {string} name 
+ * @param {Object|null} info 
+ * @param {Env} env
+ * @returns {Env} 
+ */
+export const setExtra = (name, info, env) => {
+  if (info === null) {
+    const {[name]:_unused, ...extra} = env.extra
+    return {...env, extra}
+  } else {
+    const extra = {...env.extra, [name]:info}
+    return {...env, extra}
+  }
+}
+
+/**
+ * 
+ * @param {string} name 
+ * @param {Env} env
+ * @returns {Object|null} 
+ */
+export const getExtra = (name, env) => {
+  return env.extra[name] || null
+}
+
+/**
+ * 
+ * @param {(env:Env) => void} ret 
+ * @param {Env} env 
+ * @returns {Env}
+ */
+export const setRet = (ret, env) => {
+  return {...env, ret}
+}
+
+/**
+ * 
+ * @param {Env} env
+ * @returns {void} 
+ */
+export const doReturn = (env) => {
+  if (env.ret) {
+    env.ret(env)
+  } else {
+    throw new Error('doReturn/0: no ret')
+  }
+}
+
+export const isEnv = (x) => {
+  return (x != null 
+    && typeof x == "object" 
+    && "tree" in x)
 }

@@ -38,7 +38,19 @@ export const defaultBindingMap = {
   button: {
     onclick: 'onclick', 
     update: 'data-mg-update', 
-    context: 'data-mg-context'
+    context: 'data-mg-context', 
+    name: 'data-mg-name', 
+    result: 'data-mg-result'
+  }, 
+  dialog: {
+    message: 'message', 
+    fulfill: 'fulfill', 
+    reject: 'reject'
+  }, 
+  feedback: {
+    message: 'message', 
+    fulfill: 'fulfill', 
+    reject: 'reject'
   }
 }
 
@@ -126,26 +138,42 @@ export const Checkbox = playCheckbox("input")
 export const playButton = (C, map = null) => {
   map = resolveBindingMap(map)
   return (props, children) => (state, actions) => {
-    const attributes = props
-    attributes[map.button.update] = attributes['mg-update']
-    if ('mg-context' in attributes) {
-      attributes[map.button.context] = JSON.stringify(attributes['mg-context'])
+    if ('mg-update' in props) {
+      const {'mg-update':update, 'mg-context':context, ...attributes} = props
+      attributes[map.button.update] = update
+      attributes[map.button.context] = JSON.stringify(typeof context == "undefined" ? null : context)
+      attributes[map.button.onclick] = actions.onUpdate
+      return h(C, attributes, ...children)
+    } else {
+      const {'mg-name':name, 'mg-result':result, ...attributes} = props
+      attributes[map.button.name] = name
+      attributes[map.button.result] = JSON.stringify(typeof result == "undefined" ? null : result)
+      attributes[map.button.onclick] = actions.onFulfill
+      return h(C, attributes, ...children)
     }
-    attributes[map.button.onclick] = actions.onUpdate
-    return h(C, attributes, ...children)
   }
 }
 
 export const Button = playButton("button")
 
+export const playFulfillButton = (C, map = null) => {
+  map = resolveBindingMap(map)
+  return (props, children) => (state, actions) => {
+    const {'mg-name':name, 'mg-result':result, ...attributes} = props
+    attributes[map.fulfill]
+  }
+}
+
 export const playFeedback = (C, map = null) => {
   map = resolveBindingMap(map)
   return (props, children) => (state, actions) => {
-    const {'mg-name':name, ...attributes} = props
-    const data = state.ui[name]
+    const {...attributes} = props
+    const name = attributes['mg-name']
+    const data = API.getExtra(name, state.env)
     if (! data) return null
     attributes[map.feedback.message] = data.message
-    attributes[map.feedback.context] = data.context
+    attributes[map.feedback.fulfill] = data.fulfill
+    attributes[map.feedback.reject] = data.reject
     return h(C, attributes, ...children)
   }
 }
@@ -153,11 +181,13 @@ export const playFeedback = (C, map = null) => {
 export const playDialog = (C, map = null) => {
   map = resolveBindingMap(map)
   return (props, children) => (state, actions) => {
-    const {'mg-name':name, ...attributes} = props
-    const data = state.ui[name]
+    const {...attributes} = props
+    const name = attributes['mg-name']
+    const data = API.getExtra(name, state.env)
     if (! data) return null
     attributes[map.dialog.message] = data.message
-    attributes[map.dialog.context] = data.context
+    attributes[map.dialog.fulfill] = data.fulfill
+    attributes[map.dialog.reject] = data.reject
     return h(C, attributes, ...children)
   }
 }
@@ -165,8 +195,9 @@ export const playDialog = (C, map = null) => {
 export const playLoader = (C, map = null) => {
   map = resolveBindingMap(map)
   return (props, children) => (state, actions) => {
-    const {'mg-name':name, ...attributes} = props
-    const data = state.ui[name]
+    const {...attributes} = props
+    const name = attributes['mg-name']
+    const data = API.getExtra(name, state.env)
     if (! data) return null
     return h(C, attributes, ...children)
   }

@@ -30,6 +30,7 @@ export const API = {
   copy: E.copy, 
   mapDeep: E.mapDeep, 
   reduceDeep: E.reduceDeep, 
+  getExtra: E.getExtra, 
 
   /**
    * 
@@ -72,35 +73,115 @@ export const API = {
   }, 
 
   /**
+   * @param {string} name
+   * @param {string} message
+   * @param {Env} env
+   * @returns {Promise}
+   */
+  openDialog: (name, message, env) => {
+    const p = new Promise((fulfill, reject) => {
+      env = E.setExtra(name, {message, fulfill, reject}, env)
+    })
+    E.doReturn(env)
+    return p
+  }, 
+
+  closeDialog: (name, env) => {
+    return E.setExtra(name, null, env)
+  }, 
+
+  openFeedback: (name, message, env) => {
+    const p = new Promise((fulfill, reject) => {
+      env = E.setExtra(name, {message, fulfill, reject}, env)
+    })
+    E.doReturn(env)
+    return p
+  }, 
+
+  closeFeedback: (name, env) => {
+    return E.setExtra(name, null, env)
+  }, 
+
+  openLoader: (name, env) => {
+    return E.setExtra(name, {}, env)
+  }, 
+
+  closeLoader: (name, env) => {
+    return E.setExtra(name, null, env)
+  }, 
+
+  withEnv: (env, p) => {
+    E.doReturn(env)
+    return p
+  }, 
+
+  wrap: (handler) => {
+    return (result) => {
+      let result1 = null
+      const ret = (res1) => {result1 = res1}
+      actions.onThen({result, handler, ret})
+      return result1
+    }
+  }, 
+
+  /**
+   * 
    * @param {Object} context
-   * @param {string} context.touchAllPath
+   * @param {string} context.path
    * @param {string} context.errorSelector
    * @param {string} context.url
-   * @param {string} context.update
-   * @param {string} context.context
+   * @param {string} context.method
+   * @param {string} context.successMessage
+   * @param {string} context.failureMessage
    */
-  submit: (context, callEvolve, env) => {
-    env = API.touchAll(context.touchAllPath, env)
-    env = callEvolve(context.touchAllPath, env)
-
-    const numErrors = API.countValidationErrors(context.touchAllPath, env)
+  submit: (context, env) => {
+    env = API.touchAll(context.path, env)
+    const numErrors = API.countValidationErrors(context.path, env)
     if (numErrors) {
       window.setTimeout(() => {
-        const targetEl = containerEl.querySelector(context.errorSelector)
+        const targetEl = document.querySelector(context.errorSelector)
         if (targetEl) targetEl.scrollIntoView()
       }, 100)
-    } else if (context.url) {
-      const req = new XMLHttpRequest()
-      req.open("POST", context.url)
-      req.addEventListener('loadend', (res) => {
-        // TODO: call update with context, or call transit with context
-      })
-      req.setRequestHeader("Content-Type", "application/json")
-      req.send(JSON.stringify(API.extract("", env)))
-      window.setTimeout(() => {window.alert('サブミットしました。')}, 100)
+      return env
+    } else {
+      const options = {
+        method: context.method, 
+        mode: 'cors', 
+        body: JSON.stringify(E.extract(context.path, env)), 
+        header: {
+          'Content-Type': 'application/json'
+        }
+      }
+      env = API.openLoader('loader', env)
+      return API.withEnv(env, 
+        fetch(context.url, options)
+        .catch(API.wrap(([response, env]) => {
+          console.error('form submission failed', response)
+          return {ok:false}
+        }))
+        .then(API.wrap(([response, env]) => {
+          env = API.closeLoader('loader', env)
+          if (response.ok) {
+            return API.openFeedback('feedback', context.successMessage, env)
+            .then(API.wrap(([result, env]) => {
+              return API.closeFeedback('feedback', env)
+            }))
+          } else {
+            return API.openDialog('alert', context.failureMessage, env)
+            .then(API.wrap(([result, env]) => {
+              return API.closeDialog('alert', env)
+            }))
+          }
+        }))
+      )
     }
   }
 }
+
+/**
+ * @type {Object|null}
+ */
+let actions = null
 
 /**
  * @param {Object} params
@@ -171,21 +252,51 @@ export const start = (
     }, 
     onUpdate: (ev) => (state, actions) => {
       const update = (ev instanceof Event) ? ev.currentTarget.dataset.mgUpdate : ev.update
-      const context = (ev instanceof Event) ? JSON.parse(ev.currentTarget.dataset.mgContext || "null") :  ev.context
+      const context = (ev instanceof Event) ? JSON.parse(ev.currentTarget.dataset.mgContext || "null") : ev.context
       let baseEnv = state.baseEnv
-      let env = state.env
+      const ret = (env0) => {baseEnv = env0}
+      baseEnv = {...baseEnv, ret}
       if (! update || ! updates[update]) throw new Error('onUpdate/0: no update or unknown update')
-      const callEvolve = (path, baseEnv0) => {
-        if (baseEnv0 && baseEnv0 !== baseEnv) {
-          baseEnv = baseEnv0
-          env = evolve(path, baseEnv)
-        } else {
-          // do nothing because `env' will not change.
-        }
-        return env
+      const res = updates[update](context, baseEnv)
+      let _unused = null
+      baseEnv = E.isEnv(res) ? {...res, ret:_unused} : {...baseEnv, ret:_unused}
+      let env = state.env
+      if (! E.isSame(state.baseEnv, baseEnv)) {
+        env = evolve("", baseEnv)
       }
-      let env0 = updates[update](context, callEvolve, baseEnv)
-      if (env0 && env0 !== env) env = env0
+      return {...state, baseEnv, env}
+    }, 
+    onFulfill: (ev) => (state, actions) => {
+      const name = (ev instanceof Event) ? ev.currentTarget.dataset.mgName : ev.name
+      const result = (ev instanceof Event) ? JSON.parse(ev.currentTarget.dataset.mgResult || "null") : ev.result
+      let baseEnv = state.baseEnv
+      const extra = E.getExtra(name, baseEnv)
+      const ret = (env0) => {baseEnv = env0}
+      baseEnv = {...baseEnv, ret}
+      if (! extra || ! extra.fulfill) throw new Error('onFulfill/0: no callback or unknown callback')
+      const res = extra.fulfill([result, baseEnv])
+      let _unused = null
+      baseEnv = E.isEnv(res) ? {...res, ret:_unused} : {...baseEnv, ret:_unused}
+      let env = state.env
+      if (! E.isSame(state.baseEnv, baseEnv)) {
+        env = evolve("", baseEnv)
+      }
+      return {...state, baseEnv, env}
+    }, 
+    onThen: (context) => (state, actions) => {
+      let baseEnv = state.baseEnv
+      const ret = (env0) => {baseEnv = env0}
+      baseEnv = {...baseEnv, ret}
+      const res = context.handler([context.result, baseEnv])
+      let _unused = null
+      baseEnv = E.isEnv(res) ? {...res, ret:_unused} : {...baseEnv, ret:_unused}
+      let env = state.env
+      if (! E.isSame(state.baseEnv, baseEnv)) {
+        env = evolve("", baseEnv)
+      }
+      if (! res.hasOwnProperty('tree')) {
+        context.ret(res)
+      }
       return {...state, baseEnv, env}
     }
   }
@@ -196,10 +307,12 @@ export const start = (
     baseEnv, 
     env
   }
-  const actions = app(state, actions0, view, containerEl)
+  actions = app(state, actions0, view, containerEl)
   return {
     onUpdate: actions.onUpdate, 
   }
 }
+
+
 
 export const h = h0

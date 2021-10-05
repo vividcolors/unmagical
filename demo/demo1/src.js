@@ -1,6 +1,6 @@
 
 import {start, h, API} from '../../src/framework'
-import {Radio as CRadio, Checkbox as CCheckbox, Button} from '../../src/components'
+import {Radio as CRadio, Checkbox as CCheckbox, Button, playLoader, playDialog, playFeedback} from '../../src/components'
 
 const Field = ({path, label, env}, children) => {
   if (! API.test(path, env)) return null
@@ -48,6 +48,33 @@ const Checkbox = ({path, label, disabled = false}) => {
     </label>
   )
 }
+
+const Loader = playLoader((props) => {
+  return (
+    <div class="loader">
+      Loading...
+    </div>
+  )
+})
+
+const Dialog = playDialog((props) => {
+  return (
+    <div class="dialog">
+      <p>{props.message}</p>
+      <Button mg-name={props['mg-name']} mg-result={false}>キャンセル</Button>
+      <Button mg-name={props['mg-name']} mg-result={true}>OK</Button>
+    </div>
+  )
+})
+
+const Feedback = playFeedback((props) => {
+  return (
+    <div class="feedback">
+      <p>{props.message}</p>
+      <Button mg-name={props['mg-name']} mg-result={true}>閉じる</Button>
+    </div>
+  )
+})
 
 // Homeだと32Gはダメ
 // 6万円を越えたらオマケが選べる
@@ -221,7 +248,10 @@ const view = (state, actions) => {
         </tr>
       </table>
       <hr />
-      <Button type="button" mg-role="button" mg-update="submit">確定</Button>
+      <Button type="button" mg-role="button" mg-update="submit" mg-context={{path:"/detail", errorSelector:".mg-invalid", url:"https://www.vividcolors.co.jp/", method:"POST", successMessage:"SUCCESS!!", failureMessage:"FAILURE!"}}>確定</Button>
+      <Loader mg-name="loader" />
+      <Dialog mg-name="alert" />
+      <Feedback mg-name="feedback" />
     </div>
   )
 }
@@ -290,24 +320,10 @@ const evolve = (path, env) => {
 }
 
 const updates = {
-  submit: (_context, callEvolve, env) => {
-    env = API.touchAll('/detail', env)
-  
-    env = callEvolve("", env)
-  
-    const numErrors = API.countValidationErrors('/detail', env)
-    console.log('submit/1', numErrors)
-    if (numErrors) {
-      window.setTimeout(() => {
-        const targetEl = containerEl.querySelector('.mg-invalid')
-        targetEl.scrollIntoView()
-      }, 100)
-    } else {
-      window.setTimeout(() => {window.alert('サブミットしました。')}, 100)
-    }
-  }
+  submit: API.submit
 }
 
 const containerEl = document.getElementById('app')
 
 start({data, schema, view, updates, containerEl, evolve})
+
