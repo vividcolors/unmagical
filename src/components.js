@@ -156,14 +156,6 @@ export const playButton = (C, map = null) => {
 
 export const Button = playButton("button")
 
-export const playFulfillButton = (C, map = null) => {
-  map = resolveBindingMap(map)
-  return (props, children) => (state, actions) => {
-    const {'mg-name':name, 'mg-result':result, ...attributes} = props
-    attributes[map.fulfill]
-  }
-}
-
 export const playFeedback = (C, map = null) => {
   map = resolveBindingMap(map)
   return (props, children) => (state, actions) => {
