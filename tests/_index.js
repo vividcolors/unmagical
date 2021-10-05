@@ -1,12 +1,13 @@
 
 import * as E from './env'
+import * as S from './schema'
 
 const assert = (ident, thunk, rv) => {
   const lv = thunk()
   if (lv == rv) {
-    console.log('- ASSERT', ident, 'OK')
+    console.log('- ASSERTION', ident, 'OK')
   } else {
-    console.log('! ASSERT', ident, 'NG', lv, rv)
+    console.log('! ASSERTION', ident, 'NG', lv, rv)
   }
 }
 
@@ -17,13 +18,13 @@ const assertError = (ident, thunk, match) => {
     status = "no error"
   } catch (e) {
     if (e instanceof Error && e.message.startsWith(match)) {
-      console.log('- ASSERT', ident, 'OK')
+      console.log('- ASSERTION', ident, 'OK')
       return
     } else {
       status = "matching failure: " + e.message
     }
   }
-  console.log('! ASSERT', ident, 'NG', status)
+  console.log('! ASSERTION', ident, 'NG', status)
 }
 
 const callRun = (m, name) => {
@@ -34,3 +35,4 @@ const callRun = (m, name) => {
 }
 
 callRun(E, 'env')
+callRun(S, 'schema')

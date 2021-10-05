@@ -1,216 +1,318 @@
 
+import { normalizePath } from './utils'
 import * as E from './env'
 import * as S from './schema'
-import {evalXpath} from './filters'
-import {app, h} from 'hyperapp'
+import { app, h as h0 } from 'hyperapp'
 
-const buildSchemaDb = (schema) => {
-  const db = {}
-  const inner = (schema, path) => {
-    db[path] = schema
-    switch (schema.type) {
-      case 'record': 
-      case 'record?': 
-        for (let p in schema.fields) {
-          inner(schema.fields[p], path + '/' + p)
-        }
-        break
-      case 'list': 
-      case 'list?': 
-        inner(schema.items, path + '/*')
-        break
-      default: 
-        break
-    }
-  }
-  inner(schema, "")
-  return db
-}
+/**
+ * 
+ * @typedef {import("./schema").Json} Json
+ * @typedef {import("./schema").Schema} Schema
+ * @typedef {import("./schema").Slot} Slot
+ * @typedef {import("./schema").SchemaDb} SchemaDb
+ * @typedef {import("./env").Env} Env
+ */
 
-const normPath = (path) => {
-  let frag = path.split('/')
-  for (let i = 0; i < frag.length; i++) {
-    const n = +frag[i]
-    if ("" + n === frag[i]) {
-      frag[i] = '*'
-    }
-  }
-  return frag.join('/')
-}
 
-const renderTable = {}
+ /**
+  * @namespace
+  */
+export const API = {
+  // re-export from env
+  test: E.test, 
+  extract: E.extract, 
+  getSlot: E.getSlot, 
+  setSlot: E.setSlot, 
+  add: E.add, 
+  remove: E.remove, 
+  replace: E.replace, 
+  move: E.move, 
+  copy: E.copy, 
+  mapDeep: E.mapDeep, 
+  reduceDeep: E.reduceDeep, 
+  getExtra: E.getExtra, 
 
-export const addComponent = (name, f) => {
-  renderTable[name] = f
-}
+  /**
+   * 
+   * @param {string} path 
+   * @param {Env} env
+   * @returns {Env} 
+   */
+  touchAll: (path, env) => {
+    return E.mapDeep((slot, _path) => ({...slot, touched:true}), path, env)
+  }, 
 
-const isComponent = (tag) => {
-  const code = tag.charCodeAt(0)
-  const a = 'A'.charCodeAt(0)
-  const z = 'Z'.charCodeAt(0)
-  return (a <= code && code <= z)
-}
+  /**
+   * 
+   * @param {string} path 
+   * @param {Env} env
+   * @returns {Env} 
+   */
+  countValidationErrors: (path, env) => {
+    return E.reduceDeep((cur, slot, _path) => {
+      const d = slot.touched && slot.invalid ? 1 : 0
+      return cur + d
+    }, 0, path, env)
+  }, 
 
-export const render = (view, env, actions, state) => {
-  console.log('render', view)
-  if (Array.isArray(view)) {
-    if (isComponent(view[0])) {
-      return renderTable[view[0]](view, env, actions, state)
-    } else {
-      let props = view[1]
-      if (view[1].hasOwnProperty('showIf')) {
-        const shown = evalXpath(view[1].showIf, env)
-        console.log('showIf', view[1].showIf, shown)
-        if (! shown) return null
-        props = {...view[1]}
-        delete props.showIf
+  /**
+   * 
+   * @param {string} path 
+   * @param {Env} env
+   * @returns {string[]} 
+   */
+  validationErrors: (path, env) => {
+    const errors = []
+    E.reduceDeep((_cur, slot, path) => {
+      if (slot.touched && slot.invalid) {
+        errors.push(path)
       }
-      return (
-        h(
-          view[0], 
-          props, 
-          view.slice(2).map(v => render(v, env, actions, state))
-        )
+      return null
+    }, null, path, env)
+    return errors
+  }, 
+
+  /**
+   * @param {string} name
+   * @param {string} message
+   * @param {Env} env
+   * @returns {Promise}
+   */
+  openDialog: (name, message, env) => {
+    const p = new Promise((fulfill, reject) => {
+      env = E.setExtra(name, {message, fulfill, reject}, env)
+    })
+    E.doReturn(env)
+    return p
+  }, 
+
+  closeDialog: (name, env) => {
+    return E.setExtra(name, null, env)
+  }, 
+
+  openFeedback: (name, message, env) => {
+    const p = new Promise((fulfill, reject) => {
+      env = E.setExtra(name, {message, fulfill, reject}, env)
+    })
+    E.doReturn(env)
+    return p
+  }, 
+
+  closeFeedback: (name, env) => {
+    return E.setExtra(name, null, env)
+  }, 
+
+  openLoader: (name, env) => {
+    return E.setExtra(name, {}, env)
+  }, 
+
+  closeLoader: (name, env) => {
+    return E.setExtra(name, null, env)
+  }, 
+
+  withEnv: (env, p) => {
+    E.doReturn(env)
+    return p
+  }, 
+
+  wrap: (handler) => {
+    return (result) => {
+      let result1 = null
+      const ret = (res1) => {result1 = res1}
+      actions.onThen({result, handler, ret})
+      return result1
+    }
+  }, 
+
+  /**
+   * 
+   * @param {Object} context
+   * @param {string} context.path
+   * @param {string} context.errorSelector
+   * @param {string} context.url
+   * @param {string} context.method
+   * @param {string} context.successMessage
+   * @param {string} context.failureMessage
+   */
+  submit: (context, env) => {
+    env = API.touchAll(context.path, env)
+    const numErrors = API.countValidationErrors(context.path, env)
+    if (numErrors) {
+      window.setTimeout(() => {
+        const targetEl = document.querySelector(context.errorSelector)
+        if (targetEl) targetEl.scrollIntoView()
+      }, 100)
+      return env
+    } else {
+      const options = {
+        method: context.method, 
+        mode: 'cors', 
+        body: JSON.stringify(E.extract(context.path, env)), 
+        header: {
+          'Content-Type': 'application/json'
+        }
+      }
+      env = API.openLoader('loader', env)
+      return API.withEnv(env, 
+        fetch(context.url, options)
+        .catch(API.wrap(([response, env]) => {
+          console.error('form submission failed', response)
+          return {ok:false}
+        }))
+        .then(API.wrap(([response, env]) => {
+          env = API.closeLoader('loader', env)
+          if (response.ok) {
+            return API.openFeedback('feedback', context.successMessage, env)
+            .then(API.wrap(([result, env]) => {
+              return API.closeFeedback('feedback', env)
+            }))
+          } else {
+            return API.openDialog('alert', context.failureMessage, env)
+            .then(API.wrap(([result, env]) => {
+              return API.closeDialog('alert', env)
+            }))
+          }
+        }))
       )
     }
-  } else {
-    return view
   }
 }
 
-export const start = (data, schema, hooks, view, el) => {
-  //console.log('start/0', data, schema, view)
-  console.log('start', E)
-  const API = {
-    ...E, 
-    validate: (value, path) => {
-      return S.validate(value, schemaDb[path])
-    }, 
-    touchAll: (path, env) => {
-      return E.mapMeta((slot, _path) => ({...slot, touched:true}), path, env)
-    }, 
-    countValidationErrors: (path, env) => {
-      return E.reduce((cur, slot, _path) => {
-        return (!slot.disabled && slot.touched && slot.invalid) ? (cur + 1) : cur
-      }, 0, path, env)
-    }, 
-    validationErrors: (path, env) => {
-      let errors = []
-      E.reduce((cur, slot, path) => {
-        if (!slot.disabled && slot.touched && slot.invalid) {
-          errors.push(path)
-        }
-        return null
-      }, null, path, env)
-      return errors
-    }
-  }
+/**
+ * @type {Object|null}
+ */
+let actions = null
+
+/**
+ * @param {Object} params
+ * @param {Json} params.data
+ * @param {Schema} params.schema
+ * @param {(any, any) => any} params.view
+ * @param {Element} params.containerEl
+ * @param {((string, Env) => Env) | null} params.evolve
+ * @param {{[name:string]:(any)}} params.updates
+ * @param {((value:any, schema:Schema) => Slot) | null} params.validate
+ * @param {((slot:Slot, schema:Schema) => Slot) | null} params.coerce
+ */
+export const start = (
+    {
+      data, 
+      schema, 
+      view, 
+      containerEl, 
+      evolve = null, 
+      updates = {}, 
+      validate = null, 
+      coerce = null
+    }) => {
+  // complements reasonable defaults
+  if (! evolve) evolve = (_path, env) => env
+  if (! validate) validate = S.validate(S.defaultRules, S.defaultMessages)
+  if (! coerce) coerce = S.coerce(S.defaultRules, S.defaultMessages)
+
+  const schemaDb = S.buildDb(schema)
+
   const actions0 = {
     onTextInput: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.path
-      let baseEnv = E.setm(path, 'input', ev.currentTarget.value, state.baseEnv)
-      let env = E.setm(path, 'input', ev.currentTarget.value, state.env)
+      const path = ev.currentTarget.dataset.mgPath
+      const slot0 = E.getSlot(path, state.baseEnv)
+      const slot = {...slot0, input:ev.currentTarget.value}
+      const baseEnv = E.setSlot(path, slot, state.baseEnv)
+      const slotb0 = E.getSlot(path, state.env)
+      const slotb = {...slotb0, input:ev.currentTarget.value}
+      const env = E.setSlot(path, slotb, state.env)
       return {...state, baseEnv, env}
     }, 
     onTextBlur: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.path
-      const npath = normPath(path)
+      const path = ev.currentTarget.dataset.mgPath
+      const npath = normalizePath(path)
       const slot0 = {touched:true, input:ev.currentTarget.value}
-      const slot = S.coerce(slot0, schemaDb[npath])
-      let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = hooks.evolve(baseEnv, API)
-      env = E.goTo("", env)
-      return {...state, env, baseEnv}
+      const slot = coerce(slot0, schemaDb[npath])
+      let baseEnv = E.setSlot(path, slot, state.baseEnv)
+      let env = evolve(path, baseEnv)
+      return {...state, baseEnv, env}
     }, 
-    onSelectionChange: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.path
-      const npath = normPath(path)
+    onSelectChange: (ev) => (state, actions) => {
+      const path = ev.currentTarget.dataset.mgPath
+      const npath = normalizePath(path)
       const slot0 = {touched:true, input:ev.currentTarget.value}
-      const slot = S.coerce(slot0, schemaDb[npath])
-      let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = hooks.evolve(baseEnv, API)
-      env = E.goTo("", env)
-      return {...state, env, baseEnv}
+      const slot = coerce(slot0, schemaDb[npath])
+      let baseEnv = E.setSlot(path, slot, state.baseEnv)
+      let env = evolve(path, baseEnv)
+      return {...state, baseEnv, env}
     }, 
     onToggleChange: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.path
-      const npath = normPath(path)
+      const path = ev.currentTarget.dataset.mgPath
+      const npath = normalizePath(path)
       const slot0 = {touched:true, input:ev.currentTarget.checked ? "true" : "false"}
-      const slot = S.coerce(slot0, schemaDb[npath])
-      let baseEnv = E.sets(path, slot, state.baseEnv)
-      let env = hooks.evolve(baseEnv, API)
-      env = E.goTo("", env)
-      return {...state, env, baseEnv}
+      const slot = coerce(slot0, schemaDb[npath])
+      let baseEnv = E.setSlot(path, slot, state.baseEnv)
+      let env = evolve(path, baseEnv)
+      return {...state, baseEnv, env}
     }, 
-    onButtonClick: (ev) => (state, actions) => {
-      const hook = ev.currentTarget.dataset.hook
-      const effect = ev.currentTarget.dataset.effect
-      const path = ev.currentTarget.dataset.path
+    onUpdate: (ev) => (state, actions) => {
+      const update = (ev instanceof Event) ? ev.currentTarget.dataset.mgUpdate : ev.update
+      const context = (ev instanceof Event) ? JSON.parse(ev.currentTarget.dataset.mgContext || "null") : ev.context
       let baseEnv = state.baseEnv
-      if (hook) baseEnv = hooks[hook](baseEnv, path, API)
-      let env = hooks.evolve(baseEnv, API)
-      env = E.goTo("", env)
-      if (effect) env = hooks[effect](env, path, API)
-      env = E.goTo("", env)
-      return {...state, env, baseEnv}
+      const ret = (env0) => {baseEnv = env0}
+      baseEnv = {...baseEnv, ret}
+      if (! update || ! updates[update]) throw new Error('onUpdate/0: no update or unknown update')
+      const res = updates[update](context, baseEnv)
+      let _unused = null
+      baseEnv = E.isEnv(res) ? {...res, ret:_unused} : {...baseEnv, ret:_unused}
+      let env = state.env
+      if (! E.isSame(state.baseEnv, baseEnv)) {
+        env = evolve("", baseEnv)
+      }
+      return {...state, baseEnv, env}
     }, 
-    onCall: ({hook, effect, data}) => (state, actions) => {
+    onFulfill: (ev) => (state, actions) => {
+      const name = (ev instanceof Event) ? ev.currentTarget.dataset.mgName : ev.name
+      const result = (ev instanceof Event) ? JSON.parse(ev.currentTarget.dataset.mgResult || "null") : ev.result
       let baseEnv = state.baseEnv
-      if (hook) baseEnv = hooks[hook](baseEnv, data, API)
-      let env = hooks.evolve(baseEnv, API)
-      env = E.goTo("", env)
-      if (effect) env = hooks[effect](env, data, API)
-      env = E.goTo("", env)
-      return {...state, env, baseEnv}
+      const extra = E.getExtra(name, baseEnv)
+      const ret = (env0) => {baseEnv = env0}
+      baseEnv = {...baseEnv, ret}
+      if (! extra || ! extra.fulfill) throw new Error('onFulfill/0: no callback or unknown callback')
+      const res = extra.fulfill([result, baseEnv])
+      let _unused = null
+      baseEnv = E.isEnv(res) ? {...res, ret:_unused} : {...baseEnv, ret:_unused}
+      let env = state.env
+      if (! E.isSame(state.baseEnv, baseEnv)) {
+        env = evolve("", baseEnv)
+      }
+      return {...state, baseEnv, env}
+    }, 
+    onThen: (context) => (state, actions) => {
+      let baseEnv = state.baseEnv
+      const ret = (env0) => {baseEnv = env0}
+      baseEnv = {...baseEnv, ret}
+      const res = context.handler([context.result, baseEnv])
+      let _unused = null
+      baseEnv = E.isEnv(res) ? {...res, ret:_unused} : {...baseEnv, ret:_unused}
+      let env = state.env
+      if (! E.isSame(state.baseEnv, baseEnv)) {
+        env = evolve("", baseEnv)
+      }
+      if (! res.hasOwnProperty('tree')) {
+        context.ret(res)
+      }
+      return {...state, baseEnv, env}
     }
-    // TODO implement
   }
 
-  const schemaDb = buildSchemaDb(schema)
-
-  let baseEnv = E.fromJson(data, API.validate)
-  console.log('start/2', baseEnv)
-  let env = hooks.evolve(baseEnv, API)
-  env = E.goTo("", env)
-  
-  const render0 = (state, actions) => {
-    console.log('render0', state.env)
-    const vdom = render(view, state.env, actions, state)
-    console.log('render0/1', vdom)
-    return vdom
-  }
+  let baseEnv = E.makeEnv(data, schemaDb, validate)
+  let env = evolve("", baseEnv)
   const state = {
     baseEnv, 
     env
-    // TODO internal state
   }
-  const actions = app(state, actions0, render0, el)
-  return actions.onCall
+  actions = app(state, actions0, view, containerEl)
+  return {
+    onUpdate: actions.onUpdate, 
+  }
 }
 
-const defaultDict = {
-  'schema.ruleError.enum': 'Invalid input',   // 不正な入力です
-  'schema.ruleError.const': 'Invalid input',   // 不正な入力です
-  'schema.ruleError.required': 'Missing fields',  // フィールドが不足しています
-  'schema.ruleError.requiredAnyOf': 'Unknown instance',  // 未知のインスタンスです
-  'schema.ruleError.maximum': 'Please enter {{0}} or less',  // %s以下を入力してください
-  'schema.ruleError.exclusiveMaximum': 'Please enter a number less than {{0}}',  // %sより小さい数を入力してください
-  'schema.ruleError.minimum': 'Please enter {{0}} or more',  // %s以上を入力してください
-  'schema.ruleError.exclusiveMinimum': 'Please enter a number more than {{0}}',  // %sより大きい数を入力してください
-  'schema.ruleError.maxLength': 'Please enter no more than {{0}} characters',  // %s文字以下で入力してください
-  'schema.ruleError.minLength0': 'Please enter',  // 入力してください
-  'schema.ruleError.minLength': 'Please enter at least {{0}} characters',  // %s文字以上で入力してください
-  'schema.ruleError.pattern': 'Invalid format',  // 形式が不正です
-  'schema.typeError': 'Invalid type',  // 不正な型です
-  'schema.scanError.empty': 'Please select',  // 選択してください
-  'schema.scanError.number': "Please enter a number",  // 数値を入力してください
-  'schema.scanError.integer': "Please enter an integer",  // 整数を入力してください
-  'schema.scanError.boolean': "Please enter a boolean value"  // 真偽値を入力してください
-}
 
-export const applyDict = (dict, code, arg = null) => {
-  const format = dict[code] || defaultDict[code] || code
-  return format.replace('{{0}}', '' + arg)
-}
 
-export {evalXpath}
+export const h = h0

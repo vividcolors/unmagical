@@ -1,90 +1,85 @@
+//@ts-check
 
-import * as R from 'ramda'
+import {normalizePath, typeOf, isIntStr, normalizePathArray} from './utils'
+import {hasPath as rhasPath, init, path as rpath, assocPath, insert, last, dissoc, remove as rremove, update } from 'ramda'
 
-const typeOf = (x) => x === null ? 'null' : Array.isArray(x) ? 'array' : typeof x
+/**
+ * 
+ * @typedef {import("./schema").Json} Json
+ * @typedef {import("./schema").Schema} Schema
+ * @typedef {import("./schema").Slot} Slot
+ * @typedef {import("./schema").SchemaDb} SchemaDb
+ * @typedef {{
+ *   tree: Json, 
+ *   schemaDb: SchemaDb, 
+ *   validate: (value:any, schema:Schema) => Slot
+ *   extra: {[name:string]:any}
+ *   ret?: (env:Env) => void
+ * }} Env
+ */
 
-const append2 = (name1, name2, list) => {
-  return R.append(name2, R.append(name1, list))
+
+/**
+ * see: https://github.com/ramda/ramda/pull/2841
+ * Anyway, here we fix the original behavior.
+ * @param {string[]} path 
+ * @param {any} x 
+ * @return {boolean}
+ */
+const hasPath = (path, x) => {
+  if (! path.length) return true
+  return rhasPath(path, x)
 }
 
 const init2 = (list) => {
-  return R.init(R.init(list))
+  return init(init(list))
 }
 
-// see: https://github.com/ramda/ramda/pull/2841
-// Anyway, here we fix the original behavior.
-const hasPath = (path, x) => {
-  if (! path.length) return true
-  return R.hasPath(path, x)
-}
 
-const last2 = (list) => {
-  return list[list.length - 2]
-}
 
-const typeFrag = (str) => {
-  if (typeof str == 'number') return str
-  const n = +str
-  return (n + "" === str) ? n : str
-}
 
-const normPath = (frags) => {
-  let rv = ""
-  for (let i = 0; i < frags.length; i++) {
-    if (frags[i] == '@value') {
-      rv += '/'
-    } else if (typeof frags[i] == 'number' || frags[i] == '-') {
-      rv += '*'
-    } else {
-      rv += frags[i]
-    }
-  }
-  return rv
-}
-
-const showPath = (frags) => {
-  let rv = ""
-  for (let i = 0; i < frags.length; i++) {
-    if (frags[i] == '@value') {
-      rv += "/"
-    } else {
-      rv += frags[i]
-    }
-  }
-  return rv
-}
-
-const wrap = (json, serial, path, validate) => {
-  const inner = (json, path) => {
-    switch (typeOf(json)) {
+/**
+ * 
+ * @param {Json} data 
+ * @param {string} path 
+ * @param {SchemaDb} schemaDb 
+ * @param {(value:any, schema:Schema) => Slot} validate 
+ * @returns {Slot}
+ */
+const wrap = (data, path, schemaDb, validate) => {
+  /** @type {(data:Json, path:string) => Slot} */
+  const inner = (data, path) => {
+    switch (typeOf(data)) {
       case 'array': 
         const es = []
         const path2 = path + '/*'
-        for (let i = 0; i < json.length; i++) {
-          es[i] = inner(json[i], path2)
+        for (let i = 0; i < /** @type {Json[]} */ (data).length; i++) {
+          es[i] = inner(data[i], path2)
         }
-        const xa = validate(es, path)
-        xa.key = serial++
+        const xa = validate(es, schemaDb[path])
         return xa
       case 'object': 
         const rec = {}
-        for (let p in json) {
-          rec[p] = inner(json[p], path + '/' + p)
+        for (let p in /** @type {{[name:string]:Json}} */ (data)) {
+          rec[p] = inner(data[p], path + '/' + p)
         }
-        const xo = validate(rec, path)
-        xo.key = serial++
+        const xo = validate(rec, schemaDb[path])
         return xo
       default: 
-        const xs = validate(json, path)
-        xs.key = serial++
+        const xs = validate(data, schemaDb[path])
         return xs
     }
   }
-  return [inner(json, path), serial]
+  return inner(data, path)
 }
 
-const strip = (data) => {
-  const root = data['@value']
+/**
+ * 
+ * @param {Json} tree 
+ * @returns {Json}
+ */
+const strip = (tree) => {
+  const root = tree['@value']
   switch (typeOf(root)) {
     case 'array': 
       const es = []
@@ -103,256 +98,300 @@ const strip = (data) => {
   }
 }
 
-export const fromJson = (json, validate) => {
-  const [data, serial] = wrap(json, 1, "", validate)
+/**
+ * Makes env.
+ * @param {Json} data 
+ * @param {SchemaDb} schemaDb 
+ * @param {(value:any, schema:Schema) => Slot} validate
+ * @returns {Env}
+ */
+export const makeEnv = (data, schemaDb, validate) => {
+  const tree = wrap(data, "", schemaDb, validate)
   return {
-    data, 
-    path: [], 
-    serial
+    tree, 
+    schemaDb, 
+    validate, 
+    extra: {}
   }
-}
-
-export const toJson = (env) => {
-  return strip(env.data)
-}
-
-export const path = (env) => {
-  return showPath(env.path)
-}
-
-export const basename = (env) => {
-  if (! R.length(env.path)) {
-    throw new Error('basename/1: on root location')
-  }
-  return R.last(env.path)
 }
 
 /**
  * 
- * @param {index[]} base internal representation of path
- * @param {string} path absolute or relative JSON pointer
+ * @param {Env} env0 
+ * @param {Env} env1 
+ * @returns {boolean}
  */
-const compose = (base, path) => {
-  if (path === '0') {
-    // common easy case first
-    return base
-  }
-  let frag0 = R.split('/', path)
-  let frag = []
-  if (path.length > 0 && path[0] != '/') {
-    // relative
-    const upcount = +frag0[0]
-    frag = base
-    for (let i = 0; i < upcount; i++) {
-      if (! R.length(frag)) {
-        throw new Error('compose/1: no parent location')
-      }
-      frag = init2(frag)
-    }
-  }
-
-  frag0 = R.tail(frag0)
-  for (let i = 0; i < frag0.length; i++) {
-    frag = append2('@value', typeFrag(frag0[i]), frag)
-  }
-  return frag
+export const isSame = (env0, env1) => {
+  return (env0.tree === env1.tree && env0.extra === env1.extra)
 }
 
-export const makePath = (path, env) => {
-  const epath = compose(env.path, path)
-  // We don't care about the existence of the epath location.
-  return showPath(epath)
-}
-
-export const goTo = (path, env) => {
-  const epath = compose(env.path, path)
-  if (! hasPath(epath, env.data)) {
-    throw new Error('goTo/1: not found: ' + path)
+/**
+ * Internalizes a path
+ * @param {string} path 
+ */
+const internPath = (path) => {
+  const frags = path.split('/')
+  const rv = []
+  for (let i = 1; i < frags.length; i++) {
+    rv.push('@value')
+    rv.push(isIntStr(frags[i]) ? +frags[i] : frags[i])
   }
-  return {...env, path:epath}
+  return rv
 }
 
-export const getm = (path, meta, value, env) => {
-  const epath = compose(env.path, path)
-  const slot = R.path(epath, env.data)
+/**
+ * 
+ * @param {string} path 
+ * @param {Env} env 
+ */
+export const test = (path, env) => {
+  return hasPath(/** @type {string[]} */ (internPath(path)), env.tree)
+}
+
+/**
+ * Extracts a subtree of Env.
+ * @param {string} path
+ * @param {Env} env
+ * @returns {Json}
+ */
+export const extract = (path, env) => {
+  const epath = /** @type {string[]} */ (internPath(path))
+  const slot = rpath(epath, env.tree)
   if (! slot) {
-    throw new Error('getm/1: not found: ' + path)
-  }
-  return slot.hasOwnProperty(meta) ? slot[meta] : value
-}
-
-export const gets = (path, env) => {
-  const epath = compose(env.path, path)
-  const slot = R.path(epath, env.data)
-  if (! slot) {
-    throw new Error('gets/1: not found: ' + path)
-  }
-  return slot
-}
-
-export const setm = (path, meta, value, env) => {
-  const epath = compose(env.path, path)
-  const slot0 = R.path(epath, env.data)
-  if (! slot0) {
-    throw new Error('setm/1: not found: ' + path)
-  }
-  const slot = {...slot0, [meta]:value}
-  const data = R.assocPath(epath, slot, env.data)
-  return {...env, data}
-}
-
-export const sets = (path, slot, env) => {
-  const epath = compose(env.path, path)
-  const slot0 = R.path(epath, env.data)
-  if (! slot0) {
-    throw new Error('sets/1: not found: ' + path)
-  }
-  slot.key = slot0.key
-  const data = R.assocPath(epath, slot, env.data)
-  return {...env, data}
-}
-
-export const lookup = (path, env) => {
-  const epath = compose(env.path, path)
-  const slot = R.path(epath, env.data)
-  if (! slot) {
-    throw new Error('lookup/1: not found: ' + path)
+    throw new Error('extract/1: not found: ' + path)
   }
   return strip(slot)
 }
 
-export const length = (path, env) => {
-  const epath = compose(env.path, path)
-  const slot = R.path(epath, env.data)
+/**
+ * Low-level api.
+ * @param {string} path 
+ * @param {Env} env
+ * @returns {Slot} 
+ */
+export const getSlot = (path, env) => {
+  const epath = /** @type {string[]} */ (internPath(path))
+  const slot = rpath(epath, env.tree)
   if (! slot) {
-    throw new Error('length/1: not found: ' + path)
+    throw new Error('getSlot/1: not found: ' + path)
   }
-  if (! Array.isArray(slot['@value'])) {
-    throw new Error('length/2: not a list: ' + path)
-  }
-  return slot['@value'].length
+  return slot
 }
 
-// totally replace the value of the path.
-// metas are generated by validation
-export const replace = (path, value, env) => {
-  // TODO implement
-  throw new Error('implement!')
+/**
+ * Low-level api. This function executes neither validation nor coercion.
+ * @param {string} path 
+ * @param {Slot} slot 
+ * @param {Env} env
+ * @returns {Env} 
+ */
+export const setSlot = (path, slot, env) => {
+  const epath = /** @type {string[]} */ (internPath(path))
+  const slot0 = rpath(epath, env.tree)
+  if (! slot) {
+    throw new Error('setSlot/1: not found: ' + path)
+  }
+  const tree = assocPath(epath, slot, env.tree)
+  return {...env, tree}
 }
 
-// generates new metas
-export const add = (path, value, validate, env) => {
-  const epath = compose(env.path, path)
+/**
+ * Adds value to env. `add' function of JSON patch.
+ * @param {string} path 
+ * @param {Json} value 
+ * @param {Env} env 
+ * @returns {Env}
+ */
+export const add = (path, value, env) => {
+  const epath = /** @type {string[]} */ (internPath(path))
   const location = init2(epath)
-  const name = R.last(epath)
-  const slot0 = R.path(location, env.data)
-  if (typeof slot0['@value'] != 'object') {
-    throw new Error('add/1 neither a record nor a list: ' + path)
+  const name = last(epath)
+  const slot0 = rpath(location, env.tree)
+  const type0 = typeOf(slot0['@value'])
+  if (type0 != 'object' && type0 != 'array') {
+    throw new Error('add/1 neither an object nor an array: ' + path)
   }
-  if (Array.isArray(slot0['@value'])) {
-    // insert into list
+  if (type0 == 'array') {
+    // insert into array
     const index = (name === '-') ? slot0['@value'].length : name
     if (typeof index != 'number' || index % 1 !== 0) {
       throw new Error('add/2 invalid index: ' + path)
     }
     if (index < 0 || index > slot0['@value'].length) {
-      throw new Error('add/3 out of range: ' + path)
+      throw new Error('add/3 index out of range: ' + path)
     }
-    const [value1, serial] = wrap(value, env.serial, normPath(epath), validate)
-    const lis = R.insert(index, value1, slot0['@value'])
-    const slot = validate(lis, normPath(location))
-    slot.key = slot0.key
-    const data = R.assocPath(location, slot, env.data)
-    return {...env, data, serial}
+    const value1 = wrap(value, normalizePath(path), env.schemaDb, env.validate)
+    const lis = insert(index, value1, slot0['@value'])
+    const slot = env.validate(lis, env.schemaDb[normalizePathArray(location)])
+    const tree = assocPath(location, slot, env.tree)
+    return {...env, tree}
   } else {
-    // define or set into record
+    // define or replace into object
     if (typeof name != 'string') {
       throw new Error('add/4 invalid name: ' + path)
     }
-    const [value1, serial] = wrap(value, env.serial, normPath(epath), validate)
+    const value1 = wrap(value, normalizePath(path), env.schemaDb, env.validate)
     const rec = {...slot0['@value'], [name]:value1}
-    const slot = validate(rec, normPath(location))
-    slot.key = slot0.key
-    const data = R.assocPath(location, slot, env.data)
-    return {...env, data}
+    const slot = env.validate(rec, env.schemaDb[normalizePathArray(location)])
+    const tree = assocPath(location, slot, env.tree)
+    return {...env, tree}
   }
 }
 
-export const remove = (path, validate, env) => {
-  const epath = compose(env.path, path)
+/**
+ * Removes a value specified by path from env. `remove' function of JSON patch.
+ * @param {string} path 
+ * @param {Env} env 
+ * @returns {Env}
+ */
+export const remove = (path, env) => {
+  const epath = /** @type {string[]} */ (internPath(path))
   const location = init2(epath)
-  const name = R.last(epath)
-  const slot0 = R.path(location, env.data)
-  if (typeof slot0['@value'] != 'object' || slot0['@value'] === null) {
-    throw new Error('remove/1 neither a record nor a list: ' + path)
+  const name = last(epath)
+  const slot0 = rpath(location, env.tree)
+  const type0 = typeOf(slot0['@value'])
+  if (type0 != 'object' && type0 != 'array') {
+    throw new Error('remove/1 neither an object nor an array: ' + path)
   }
-  if (Array.isArray(slot0['@value'])) {
-    // remove from list
+  if (type0 == 'array') {
+    // removes from array
     if (typeof name != 'number' || name % 1 !== 0) {
       throw new Error('remove/2 invalid index: ' + path)
     }
     if (name < 0 || name >= slot0['@value'].length) {
       throw new Error('remove/3 out of range: ' + path)
     }
-    const lis = R.remove(name, 1, slot0['@value'])
-    const slot = validate(lis, normPath(location))
-    slot.key = slot0.key
-    const data = R.assocPath(location, slot, env.data)
-    return {...env, data}
+    const lis = rremove(name, 1, slot0['@value'])
+    const slot = env.validate(lis, env.schemaDb[normalizePathArray(location)])
+    const tree = assocPath(location, slot, env.tree)
+    return {...env, tree}
   } else {
-    // undefine from record
+    // delete property from object
     if (! slot0['@value'].hasOwnProperty(name)) {
       throw new Error('remove/4: property not found: ' + path)
     }
-    const rec = R.dissoc(name, slot0['@value'])
-    const slot = validate(rec, normPath(location))
-    slot.key = slot0.key
-    const data = R.assocPath(location, slot, env.data)
-    return {...env, data}
+    const rec = dissoc(name, slot0['@value'])
+    const slot = env.validate(rec, env.schemaDb[normalizePathArray(location)])
+    const tree = assocPath(location, slot, env.tree)
+    return {...env, tree}
   }
 }
 
+/**
+ * Replaces a value specified by path into value.  Implements replace function of JSON patch.
+ * @param {string} path 
+ * @param {Json} value 
+ * @param {Env} env 
+ * @returns {Env}
+ */
+export const replace = (path, value, env) => {
+  const epath = /** @type {string[]} */ (internPath(path))
+  const location = init2(epath)
+  const name = last(epath)
+  const slot0 = rpath(location, env.tree)
+  const type0 = typeOf(slot0['@value'])
+  if (type0 != 'object' && type0 != 'array') {
+    throw new Error('replace/1 neither an object nor an array: ' + path)
+  }
+  if (type0 == 'array') {
+    // replace an element in array
+    if (typeof name != 'number' || name % 1 !== 0) {
+      throw new Error('replace/2 invalid index: ' + path)
+    }
+    if (name < 0 || name >= slot0['@value'].length) {
+      throw new Error('replace/3 out of range: ' + path)
+    }
+    const value1 = wrap(value, normalizePath(path), env.schemaDb, env.validate)
+    const lis = update(name, value1, slot0['@value'])
+    const slot = env.validate(lis, env.schemaDb[normalizePathArray(location)])
+    const tree = assocPath(location, slot, env.tree)
+    return {...env, tree}
+  } else {
+    // replace a property of object
+    if (typeof name != 'string') {
+      throw new Error('replace/4 invalid name: ' + path)
+    }
+    const value1 = wrap(value, normalizePath(path), env.schemaDb, env.validate)
+    const rec = {...slot0['@value'], [name]:value1}
+    const slot = env.validate(rec, env.schemaDb[normalizePathArray(location)])
+    const tree = assocPath(location, slot, env.tree)
+    return {...env, tree}
+  }
+}
+
+/**
+ * Moves a value located in from, to a location specified by path.  Implements move function of JSON patch.
+ * @param {string} from 
+ * @param {string} path 
+ * @param {Env} env
+ * @returns {Env} 
+ */
 export const move = (from, path, env) => {
-  // TODO implement
-  throw new Error('impelement!')
+  const value = extract(from, env)
+  env = remove(from, env)
+  env = add(path, value, env)
+  return env
 }
 
+/**
+ * Copies a value located in from, to a location specified by path.  Impelementing copy function of JSON patch.
+ * @param {string} from 
+ * @param {string} path 
+ * @param {Env} env
+ * @returns {Env} 
+ */
 export const copy = (from, path, env) => {
-  // TODO implement
-  throw new Error('impelement!')
+  const value = extract(from, env)
+  env = add(path, value, env)
+  return env
 }
 
-export const mapMeta = (f, path, env) => {
+/**
+ * By f, maps every slot descending to a location specified by path.
+ * @param {(slot:Slot, path:string) => Slot} f 
+ * @param {string} path 
+ * @param {Env} env 
+ * @returns {Env}
+ */
+export const mapDeep = (f, path, env) => {
   const inner = (slot0, path) => {
     const value0 = slot0['@value']
     switch (typeOf(value0)) {
       case 'array': 
         const lis = []
         for (let i = 0; i < value0.length; i++) {
-          lis[0] = inner(value0[i], path + '/' + i)
+          lis[i] = inner(value0[i], path + '/' + i)
         }
-        return {...f(slot0, path), '@value':lis, key:slot0.key}
+        return {...f(slot0, path), '@value':lis}
       case 'object': 
         const rec = {}
         for (let p in value0) {
           rec[p] = inner(value0[p], path + '/' + p)
         }
-        return {...f(slot0, path), '@value':rec, key:slot0.key}
+        return {...f(slot0, path), '@value':rec}
       default: 
-        return {...f(slot0, path), '@value':value0, key:slot0.key}
+        return {...f(slot0, path), '@value':value0}
     }
   }
-  const epath = compose(env.path, path)
-  const slot0 = R.path(epath, env.data)
+  const epath = internPath(path)
+  const slot0 = rpath(epath, env.tree)
   if (! slot0) {
-    throw new Error('mapMeta/1: not found: ' + path)
+    throw new Error('mapDeep/1: not found: ' + path)
   }
-  const slot = inner(slot0, showPath(epath))
-  const data = R.assocPath(epath, slot, env.data)
-  return {...env, data}
+  const slot = inner(slot0, path)
+  const tree = assocPath(epath, slot, env.tree)
+  return {...env, tree}
 }
 
-export const reduce = (f, cur, path, env) => {
+/**
+ * By f, deeply reduces a subtree of path.
+ * @template T
+ * @param {(cur:T, slot:Slot, path:String) => T} f 
+ * @param {T} cur 
+ * @param {string} path 
+ * @param {Env} env 
+ */
+export const reduceDeep = (f, cur, path, env) => {
   const inner = (cur, slot, path) => {
     const value0 = slot['@value']
     switch (typeOf(value0)) {
@@ -370,10 +409,66 @@ export const reduce = (f, cur, path, env) => {
         return f(cur, slot, path)
     }
   }
-  const epath = compose(env.path, path)
-  const slot = R.path(epath, env.data)
+  const epath = internPath(path)
+  const slot = rpath(epath, env.tree)
   if (! slot) {
-    throw new Error('mapMeta/1: not found: ' + path)
+    throw new Error('reduceDeep/1: not found: ' + path)
   }
-  return inner(cur, slot, showPath(epath))
+  return inner(cur, slot, path)
+}
+
+/**
+ * 
+ * @param {string} name 
+ * @param {Object|null} info 
+ * @param {Env} env
+ * @returns {Env} 
+ */
+export const setExtra = (name, info, env) => {
+  if (info === null) {
+    const {[name]:_unused, ...extra} = env.extra
+    return {...env, extra}
+  } else {
+    const extra = {...env.extra, [name]:info}
+    return {...env, extra}
+  }
+}
+
+/**
+ * 
+ * @param {string} name 
+ * @param {Env} env
+ * @returns {Object|null} 
+ */
+export const getExtra = (name, env) => {
+  return env.extra[name] || null
+}
+
+/**
+ * 
+ * @param {(env:Env) => void} ret 
+ * @param {Env} env 
+ * @returns {Env}
+ */
+export const setRet = (ret, env) => {
+  return {...env, ret}
+}
+
+/**
+ * 
+ * @param {Env} env
+ * @returns {void} 
+ */
+export const doReturn = (env) => {
+  if (env.ret) {
+    env.ret(env)
+  } else {
+    throw new Error('doReturn/0: no ret')
+  }
+}
+
+export const isEnv = (x) => {
+  return (x != null 
+    && typeof x == "object" 
+    && "tree" in x)
 }
