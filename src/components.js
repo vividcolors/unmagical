@@ -43,14 +43,10 @@ export const defaultBindingMap = {
     result: 'data-mg-result'
   }, 
   dialog: {
-    message: 'message', 
-    fulfill: 'fulfill', 
-    reject: 'reject'
+    message: 'message'
   }, 
   feedback: {
-    message: 'message', 
-    fulfill: 'fulfill', 
-    reject: 'reject'
+    message: 'message'
   }
 }
 
@@ -101,6 +97,7 @@ export const playRadio = (C, map = null) => {
   map = resolveBindingMap(map)
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
+    console.log('playRadio', path)
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
     attributes[map.radio.onchange] = actions.onSelectChange
@@ -178,8 +175,6 @@ export const playDialog = (C, map = null) => {
     const data = API.getExtra(name, state.env)
     if (! data) return null
     attributes[map.dialog.message] = data.message
-    attributes[map.dialog.fulfill] = data.fulfill
-    attributes[map.dialog.reject] = data.reject
     return h(C, attributes, ...children)
   }
 }

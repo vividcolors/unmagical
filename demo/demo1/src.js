@@ -1,83 +1,6 @@
 
-import {start, h, API} from '../../src/framework'
-import {Radio as CRadio, Checkbox as CCheckbox, Button, playLoader, playDialog, playFeedback} from '../../src/components'
+import {h, API, start, Textbox, Listbox, Radio, Checkbox, Button, Dialog, Feedback, Loader, Field} from '../../bindings/bulma'
 
-const Field = ({path, label, env}, children) => {
-  if (! API.test(path, env)) return null
-  const slot = API.getSlot(path, env)
-  const invalid = slot.touched && slot.invalid
-  return (
-    <div class={`mg-Field ${invalid ? 'mg-invalid' : ''}`} key={path}>
-      {label ? (
-        <div class="mg--header"><span class="mg--label">{label}</span></div>
-      ) : null}
-      <div class="mg--body">
-        {children}
-      </div>
-      {invalid ? (
-        <span class="mg--message">{slot.message}</span>
-      ) : null}
-    </div>
-  )
-}
-
-const InputGroup = ({class:clazz, ...props}, children) => {
-  return (
-    <div class={`mg-InputGroup ${clazz || ''}`}>
-      <div class="mg--inner">
-        {children}
-      </div>
-    </div>
-  )
-}
-
-const Radio = ({path, name, value, label, disabled = false}) => {
-  return (
-    <label>
-      <CRadio type="radio" mg-path={path} name={name} value={value} disabled={disabled} />
-      <span>{label}</span>
-    </label>
-  )
-}
-
-const Checkbox = ({path, label, disabled = false}) => {
-  return (
-    <label>
-      <CCheckbox type="checkbox" mg-role="checkbox" mg-path={path} disabled={disabled} />
-      <span>{label}</span>
-    </label>
-  )
-}
-
-const Loader = playLoader((props) => {
-  return (
-    <div class="loader">
-      Loading...
-    </div>
-  )
-})
-
-const Dialog = playDialog((props) => {
-  return (
-    <div class="dialog">
-      <p>{props.message}</p>
-      <Button mg-name={props['mg-name']} mg-result={false}>キャンセル</Button>
-      <Button mg-name={props['mg-name']} mg-result={true}>OK</Button>
-    </div>
-  )
-})
-
-const Feedback = playFeedback((props) => {
-  return (
-    <div class="feedback">
-      <p>{props.message}</p>
-      <Button mg-name={props['mg-name']} mg-result={true}>閉じる</Button>
-    </div>
-  )
-})
-
-// Homeだと32Gはダメ
-// 6万円を越えたらオマケが選べる
 const master = {
   frame: [
     {name:'SC130-T', price:32000}
@@ -187,33 +110,38 @@ const view = (state, actions) => {
   const quotation = API.extract('/quotation', state.env)
   return (
     <div id="rootMarker">
-      <Field path="/detail/os" label="OS" env={state.env}>
-        <InputGroup>
-          {master.os.map(x => <Radio path="/detail/os" name="os" value={x.name} label={`${x.name} ${x.price}円`} />)}
-        </InputGroup>
+      <Field path="/detail/os" env={state.env} class="field">
+        <label class="label">OS</label>
+        <div class="control">
+          {master.os.map(x => <label class="radio"><Radio type="radio" mg-path="/detail/os" name="os" value={x.name} />{`${x.name} ${x.price}円`}</label>)}
+        </div>
       </Field>
-      <Field path="/detail/cpu" label="CPU" env={state.env}>
-        <InputGroup>
-          {master.cpu.map(x => <Radio path="/detail/cpu" name="cpu" value={x.name} label={`${x.name} ${x.price}円`} />)}
-        </InputGroup>
+      <Field path="/detail/cpu" env={state.env} class="field">
+        <label class="label">CPU</label>
+        <div class="control">
+          {master.cpu.map(x => <label class="radio"><Radio type="radio" mg-path="/detail/cpu" name="cpu" value={x.name} />{`${x.name} ${x.price}円`}</label>)}
+        </div>
       </Field>
-      <Field path="/detail/memory" label="メモリ" env={state.env}>
-        <InputGroup>
-          {master.memory.map(x => <Radio path="/detail/memory" name="memory" value={x.name} label={`${x.name} ${x.price}円`} disabled={x.name == '32G' && !flags.isPro} />)}
-        </InputGroup>
+      <Field path="/detail/memory" env={state.env} class="field">
+        <label class="label">メモリ</label>
+        <div class="control">
+          {master.memory.map(x => <label class="radio"><Radio type="radio" mg-path="/detail/memory" name="memory" value={x.name} disabled={x.name == '32G' && !flags.isPro} />{`${x.name} ${x.price}円`}</label>)}
+        </div>
       </Field>
-      <Field path="/detail/accessories" label="アクセサリー" env={state.env}>
-        <InputGroup>
-          {master.accessory.map((x,i) => <Checkbox path={`/detail/accessories/a${i}`} label={`${x.name} ${x.price}円`} />)}
-        </InputGroup>
+      <Field path="/detail/accessories" env={state.env} class="field">
+        <label class="label">アクセサリー</label>
+        <div class="control">
+          {master.accessory.map((x,i) => <label class="checkbox"><Checkbox type="checkbox" mg-path={`/detail/accessories/a${i}`} />{`${x.name} ${x.price}円`}</label>)}
+        </div>
       </Field>
-      <Field path="/detail/bonus" label="ボーナス" env={state.env}>
-        <InputGroup>
-          {master.bonus.map(x => <Radio path="/detail/bonus" name="bonus" value={x.name} label={x.name} />)}
-        </InputGroup>
+      <Field path="/detail/bonus" env={state.env} class="field">
+        <label class="label">ボーナス</label>
+        <div class="control">
+          {master.bonus.map(x => <label class="radio"><Radio type="radio" mg-path="/detail/bonus" name="bonus" value={x.name} />{x.name}</label>)}
+        </div>
       </Field>
       <hr />
-      <table>
+      <table class="table is-striped">
         <thead>
           <th>カテゴリー</th>
           <th>名前</th>
@@ -233,7 +161,7 @@ const view = (state, actions) => {
           ))}
         </tbody>
       </table>
-      <table>
+      <table class="table">
         <tr>
           <th>小計</th>
           <td>{quotation.subtotal}</td>
@@ -248,9 +176,9 @@ const view = (state, actions) => {
         </tr>
       </table>
       <hr />
-      <Button type="button" mg-role="button" mg-update="submit" mg-context={{path:"/detail", errorSelector:".mg-invalid", url:"https://www.vividcolors.co.jp/", method:"POST", successMessage:"SUCCESS!!", failureMessage:"FAILURE!"}}>確定</Button>
+      <Button type="button" class="button is-primary" mg-role="button" mg-update="submit" mg-context={{path:"/detail", errorSelector:".mg-invalid", url:"https://www.vividcolors.co.jp/", method:"POST", successMessage:"SUCCESS!!", failureMessage:"FAILURE!"}}>確定</Button>
       <Loader mg-name="loader" />
-      <Dialog mg-name="alert" />
+      <Dialog mg-name="alert" class="modal is-active" />
       <Feedback mg-name="feedback" />
     </div>
   )
