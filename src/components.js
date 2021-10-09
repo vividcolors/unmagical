@@ -50,6 +50,45 @@ export const defaultBindingMap = {
   }
 }
 
+export const suspendRoot = () => {
+  const rootEl = document.documentElement
+  const c = rootEl.dataset.mgSuspendCount
+  if (!c || c < 1) {
+    rootEl.dataset.mgSuspendCount = 1
+    rootEl.style.overflow = "hidden"
+  } else {
+    rootEl.dataset.mgSuspendCount = c - 1
+  }
+}
+
+export const resumeRoot = () => {
+  const rootEl = document.documentElement
+  const c = rootEl.dataset.mgSuspendCount
+  if (c <= 1) {
+    delete rootEl.dataset.mgSuspendCount
+    rootEl.style.overflow = null
+  } else {
+    rootEl.dataset.mgSuspendCount = c + 1
+  }
+}
+
+export const prepareToDestroy = (el, anim, done) => {
+  const tid = setTimeout(() => {
+    done()
+    anim.onfinish = null
+  }, 800)
+  anim.onfinish = () => {
+    done()
+    clearTimeout(tid)
+  }
+}
+
+const addClass = (attributes, attr, clazz) => {
+  console.log('addClass', attributes, attr, clazz)
+  if (! attributes.hasOwnProperty(attr)) attributes[attr] = ''
+  attributes[attr] += ' ' + clazz
+}
+
 const resolveBindingMap = (map) => {
   return map || defaultBindingMap
 }
@@ -64,7 +103,7 @@ export const playTextbox = (C, map = null) => {
     attributes[map.textbox.onblur] = actions.onTextBlur
     attributes[map.textbox.value] = slot.input
     if ((slot.touched || false) && (slot.invalid || false)) {
-      attributes[map.textbox.class] += ' ' + map.textbox.invalidClass
+      addClass(attributes, map.textbox.class, map.textbox.invalidClass)
       attributes[map.textbox.invalid] = true
     }
     return h(C, attributes, ...children)
@@ -81,7 +120,7 @@ export const playListbox = (C, map = null) => {
     attributes['data-mg-path'] = path
     attributes[map.listbox.onchange] = actions.onSelectChange
     if ((slot.touched || false) && (slot.invalid || false)) {
-      attributes[map.listbox.class] += ' ' + map.listbox.invalidClass
+      addClass(attributes, map.listbox.class, map.listbox.invalidClass)
       attributes[map.listbox.invalid] = true
     }
     children.forEach((o) => {
@@ -103,7 +142,7 @@ export const playRadio = (C, map = null) => {
     attributes[map.radio.onchange] = actions.onSelectChange
     attributes[map.radio.checked] = attributes[map.radio.value] == slot['@value']
     if ((slot.touched || false) && (slot.invalid || false)) {
-      attributes[map.radio.class] += ' ' + map.radio.invalidClass
+      addClass(attributes, map.radio.class, map.radio.invalidClass)
       attributes[map.radio.invalid] = true
     }
     return h(C, attributes, ...children)
@@ -121,7 +160,7 @@ export const playCheckbox = (C, map = null) => {
     attributes[map.checkbox.onchange] = actions.onToggleChange
     attributes[map.checkbox.checked] = slot['@value']
     if ((slot.touched || false) && (slot.invalid || false)) {
-      attributes[map.checkbox.class] += ' ' + map.checkbox.invalidClass
+      addClass(attributes, map.checkbox.class, map.checkbox.invalidClass)
       attributes[map.checkbox.invalid] = true
     }
     return h(C, attributes, ...children)
@@ -161,8 +200,6 @@ export const playFeedback = (C, map = null) => {
     const data = API.getExtra(name, state.env)
     if (! data) return null
     attributes[map.feedback.message] = data.message
-    attributes[map.feedback.fulfill] = data.fulfill
-    attributes[map.feedback.reject] = data.reject
     return h(C, attributes, ...children)
   }
 }

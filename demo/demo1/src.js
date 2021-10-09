@@ -176,9 +176,9 @@ const view = (state, actions) => {
         </tr>
       </table>
       <hr />
-      <Button type="button" class="button is-primary" mg-role="button" mg-update="submit" mg-context={{path:"/detail", errorSelector:".mg-invalid", url:"https://www.vividcolors.co.jp/", method:"POST", successMessage:"SUCCESS!!", failureMessage:"FAILURE!"}}>確定</Button>
+      <Button type="button" class="button is-primary" mg-role="button" mg-update="submit" mg-context={{path:"/detail", errorSelector:".mg-invalid", url:"http://localhost/", method:"POST", successMessage:"SUCCESS!!", failureMessage:"FAILURE!"}}>確定</Button>
       <Loader mg-name="loader" />
-      <Dialog mg-name="alert" class="modal is-active" />
+      <Dialog mg-name="alert" />
       <Feedback mg-name="feedback" />
     </div>
   )

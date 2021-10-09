@@ -15,7 +15,7 @@ const bindingMap = {
   listbox: {
     onchange: 'onchange', 
     class: 'class', 
-    invalidClass: 'mg-invalid', 
+    invalidClass: 'is-danger', 
     invalid: 'data-mg-invalid'
   }, 
   option: {
@@ -45,25 +45,20 @@ const bindingMap = {
     result: 'data-mg-result'
   }, 
   dialog: {
-    message: 'message', 
-    fulfill: 'fulfill', 
-    reject: 'reject'
+    message: 'message'
   }, 
   feedback: {
-    message: 'message', 
-    fulfill: 'fulfill', 
-    reject: 'reject'
+    message: 'message'
   }
 }
 
-export const Textbox = C.Textbox
-export const Listbox = C.Listbox
-export const Radio = C.Radio
-export const Checkbox = C.Checkbox
-export const Button = C.Button
+export const Textbox = C.playTextbox('input', bindingMap)
+export const Listbox = C.playListbox('select', bindingMap)
+export const Radio = C.playRadio('input', bindingMap)
+export const Checkbox = C.playCheckbox('input', bindingMap)
+export const Button = C.playButton('button', bindingMap)
 
 export const Field = ({path, env, ...props}, children) => {
-  console.log('Field', path, env)
   if (! API.test(path, env)) return null
   const slot = API.getSlot(path, env)
   const invalid = slot.touched && slot.invalid
@@ -77,20 +72,47 @@ export const Field = ({path, env, ...props}, children) => {
   )
 }
 
+const fadeIn = (el) => {
+  C.suspendRoot()
+  el.animate([
+    {opacity: 0}, 
+    {opacity: 1}
+  ], 200)
+}
+
+const fadeOut = (el, done) => {
+  C.resumeRoot()
+  const anim = el.animate([
+    {opacity: 1}, 
+    {opacity: 0}
+  ], 200)
+  C.prepareToDestroy(el, anim, done)
+}
+
 /**
  * Bulma doesn't have Loader/Spinner, then we define simple one.
  */
-export const Loader = C.playLoader((props) => {
+export const Loader = C.playLoader(({'mg-name':name, ...props}) => {
+  const style = {
+    position:"fixed",
+    boxSizing: 'border-box', 
+    top:0,
+    right: 0, 
+    bottom:0,
+    left:0,
+    backgroundColor:'rgba(0,0,0,0.5)'
+  }
   return (
-    <div style={{position:"fixed",top:0,right:0,bottom:0,left:0,backgroundColor:'#000000',opacity:0.5}}>
+    <div key={name} style={style} {...props} oncreate={fadeIn} onremove={fadeOut}>
       <div style={{color:"#FFFFFF"}}>Loading...</div>
     </div>
   )
-})
+}, bindingMap)
 
-export const Dialog = C.playDialog(({'mg-name':name, message, ...props}) => {
+export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', message, ...props}) => {
+  clazz += ' modal is-active'
   return (
-    <div {...props}>
+    <div class={clazz} key={name} {...props} oncreate={fadeIn} onremove={fadeOut}>
       <div class="modal-background"></div>
       <div class="modal-card">
         <section class="modal-card-body">
@@ -103,92 +125,22 @@ export const Dialog = C.playDialog(({'mg-name':name, message, ...props}) => {
       </div>
     </div>
   )
-})
+}, bindingMap)
 
-export const Feedback = C.playFeedback(({'mg-name':name, message, ...props}) => {
+export const Feedback = C.playFeedback(({'mg-name':name, message, class:clazz = '', ...props}) => {
+  // add simple layout
+  const style = {
+    boxSizing: 'border-box', 
+    opacity: 1, 
+    position: 'fixed', 
+    right: '10px', 
+    bottom: '10px'
+  }
+  clazz += ' notification is-primary'
   return (
-    <div {...props}>
+    <div class={clazz} key={name} style={style} {...props} oncreate={fadeIn} onremove={fadeOut}>
       <Button class="delete" mg-name={name} mg-result={true}></Button>
       <p>{message}</p>
     </div>
   )
-})
-
-/*
-export const Field = ({path, label, env}, children) => {
-  if (! API.test(path, env)) return null
-  const slot = API.getSlot(path, env)
-  const invalid = slot.touched && slot.invalid
-  return (
-    <div class={`mg-Field ${invalid ? 'mg-invalid' : ''}`} key={path}>
-      {label ? (
-        <div class="mg--header"><span class="mg--label">{label}</span></div>
-      ) : null}
-      <div class="mg--body">
-        {children}
-      </div>
-      {invalid ? (
-        <span class="mg--message">{slot.message}</span>
-      ) : null}
-    </div>
-  )
-}
-
-export const InputGroup = ({class:clazz, ...props}, children) => {
-  return (
-    <div class={`mg-InputGroup ${clazz || ''}`}>
-      <div class="mg--inner">
-        {children}
-      </div>
-    </div>
-  )
-}
-
-export const InputRadio = C.playRadio
-
-export const Radio = ({path, name, value, label, disabled = false}) => {
-  return (
-    <label>
-      {C.playRadio()}
-      <CRadio type="radio" mg-path={path} name={name} value={value} disabled={disabled} />
-      <span>{label}</span>
-    </label>
-  )
-}
-
-export const Checkbox = C.playCheckbox(({path, label, disabled = false}) => {
-  return (
-    <label>
-      <CCheckbox type="checkbox" mg-role="checkbox" mg-path={path} disabled={disabled} />
-      <span>{label}</span>
-    </label>
-  )
-})
-
-export const Loader = C.playLoader((props) => {
-  return (
-    <div class="loader">
-      Loading...
-    </div>
-  )
-})
-
-export const Dialog = C.playDialog((props) => {
-  return (
-    <div class="dialog">
-      <p>{props.message}</p>
-      <C.Button mg-name={props['mg-name']} mg-result={false}>キャンセル</C.Button>
-      <Button mg-name={props['mg-name']} mg-result={true}>OK</Button>
-    </div>
-  )
-})
-
-export const Feedback = C.playFeedback((props) => {
-  return (
-    <div class="feedback">
-      <p>{props.message}</p>
-      <Button mg-name={props['mg-name']} mg-result={true}>閉じる</Button>
-    </div>
-  )
-})
-*/
+}, bindingMap)
