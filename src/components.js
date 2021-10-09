@@ -1,7 +1,7 @@
 
 import { API, h } from './framework'
 
-export const defaultBindingMap = {
+export const defaultAttributeMap = {
   textbox: {
     oninput: 'oninput', 
     onblur: 'onblur', 
@@ -89,12 +89,12 @@ const addClass = (attributes, attr, clazz) => {
   attributes[attr] += ' ' + clazz
 }
 
-const resolveBindingMap = (map) => {
-  return map || defaultBindingMap
+const resolveAttributeMap = (map) => {
+  return map || defaultAttributeMap
 }
 
 export const playTextbox = (C, map = null) => {
-  map = resolveBindingMap(map)
+  map = resolveAttributeMap(map)
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
@@ -113,7 +113,7 @@ export const playTextbox = (C, map = null) => {
 export const Textbox = playTextbox("input")
 
 export const playListbox = (C, map = null) => {
-  map = resolveBindingMap(map)
+  map = resolveAttributeMap(map)
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
@@ -133,7 +133,7 @@ export const playListbox = (C, map = null) => {
 export const Listbox = playListbox("select")
 
 export const playRadio = (C, map = null) => {
-  map = resolveBindingMap(map)
+  map = resolveAttributeMap(map)
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     console.log('playRadio', path)
@@ -152,7 +152,7 @@ export const playRadio = (C, map = null) => {
 export const Radio = playRadio("input")
 
 export const playCheckbox = (C, map = null) => {
-  map = resolveBindingMap(map)
+  map = resolveAttributeMap(map)
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
@@ -172,7 +172,7 @@ export const Checkbox = playCheckbox("input")
 // TODO: file, number, date, color, range, ...
 
 export const playButton = (C, map = null) => {
-  map = resolveBindingMap(map)
+  map = resolveAttributeMap(map)
   return (props, children) => (state, actions) => {
     if ('mg-update' in props) {
       const {'mg-update':update, 'mg-context':context, ...attributes} = props
@@ -193,7 +193,7 @@ export const playButton = (C, map = null) => {
 export const Button = playButton("button")
 
 export const playFeedback = (C, map = null) => {
-  map = resolveBindingMap(map)
+  map = resolveAttributeMap(map)
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const name = attributes['mg-name']
@@ -205,7 +205,7 @@ export const playFeedback = (C, map = null) => {
 }
 
 export const playDialog = (C, map = null) => {
-  map = resolveBindingMap(map)
+  map = resolveAttributeMap(map)
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const name = attributes['mg-name']
@@ -217,7 +217,7 @@ export const playDialog = (C, map = null) => {
 }
 
 export const playLoader = (C, map = null) => {
-  map = resolveBindingMap(map)
+  map = resolveAttributeMap(map)
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const name = attributes['mg-name']

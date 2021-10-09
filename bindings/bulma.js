@@ -3,7 +3,7 @@ import * as C from '../src/components'
 import {API, start, h} from '../src/framework'
 export {API, start, h} from '../src/framework'
 
-const bindingMap = {
+const attributeMap = {
   textbox: {
     oninput: 'oninput', 
     onblur: 'onblur', 
@@ -52,11 +52,11 @@ const bindingMap = {
   }
 }
 
-export const Textbox = C.playTextbox('input', bindingMap)
-export const Listbox = C.playListbox('select', bindingMap)
-export const Radio = C.playRadio('input', bindingMap)
-export const Checkbox = C.playCheckbox('input', bindingMap)
-export const Button = C.playButton('button', bindingMap)
+export const Textbox = C.playTextbox('input', attributeMap)
+export const Listbox = C.playListbox('select', attributeMap)
+export const Radio = C.playRadio('input', attributeMap)
+export const Checkbox = C.playCheckbox('input', attributeMap)
+export const Button = C.playButton('button', attributeMap)
 
 export const Field = ({path, env, ...props}, children) => {
   if (! API.test(path, env)) return null
@@ -107,7 +107,7 @@ export const Loader = C.playLoader(({'mg-name':name, ...props}) => {
       <div style={{color:"#FFFFFF"}}>Loading...</div>
     </div>
   )
-}, bindingMap)
+}, attributeMap)
 
 export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', message, ...props}) => {
   clazz += ' modal is-active'
@@ -125,7 +125,7 @@ export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', message, 
       </div>
     </div>
   )
-}, bindingMap)
+}, attributeMap)
 
 export const Feedback = C.playFeedback(({'mg-name':name, message, class:clazz = '', ...props}) => {
   // add simple layout
@@ -143,4 +143,4 @@ export const Feedback = C.playFeedback(({'mg-name':name, message, class:clazz = 
       <p>{message}</p>
     </div>
   )
-}, bindingMap)
+}, attributeMap)
