@@ -1,5 +1,5 @@
 
-import {h, API, start, Textbox, Listbox, Radio, Checkbox, Button, Dialog, Feedback, Loader, Field} from '../../bindings/bulma'
+import {h, API, start, Textbox, Listbox, Radio, Checkbox, Button, Field, Dialog, Notification, Progress} from '../../bindings/bulma'
 
 const master = {
   frame: [
@@ -108,6 +108,7 @@ const data = {
 const view = (state, actions) => {
   const flags = API.extract('/flags', state.env)
   const quotation = API.extract('/quotation', state.env)
+  const loading = API.getProgress('loading', state.env)
   return (
     <div id="rootMarker">
       <Field path="/detail/os" env={state.env} class="field">
@@ -176,10 +177,10 @@ const view = (state, actions) => {
         </tr>
       </table>
       <hr />
-      <Button type="button" class="button is-primary" mg-role="button" mg-update="submit" mg-context={{path:"/detail", errorSelector:".mg-invalid", url:"http://localhost/", method:"POST", successMessage:"SUCCESS!!", failureMessage:"FAILURE!"}}>確定</Button>
-      <Loader mg-name="loader" />
+      <Button type="button" class="button is-primary" disabled={loading} mg-role="button" mg-update="submit" mg-context={{path:"/detail", errorSelector:".mg-invalid", url:"http://localhost/", method:"POST", successMessage:"SUCCESS!!", failureMessage:"FAILURE!"}}>確定</Button>
+      <Progress mg-name="loading" />
       <Dialog mg-name="alert" />
-      <Feedback mg-name="feedback" />
+      <Notification mg-name="feedback" />
     </div>
   )
 }

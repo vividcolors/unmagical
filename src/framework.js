@@ -90,24 +90,63 @@ export const API = {
     return E.setExtra(name, null, env)
   }, 
 
-  openFeedback: (name, message, env) => {
-    const p = new Promise((fulfill, reject) => {
-      env = E.setExtra(name, {message, fulfill, reject}, env)
-    })
-    E.doReturn(env)
-    return p
+  getDialog: (name, env) => {
+    const extra = E.getExtra(name, env)
+    if (! extra) return null
+    return extra.message
   }, 
 
-  closeFeedback: (name, env) => {
+  setPage: (name, current, env) => {
+    return E.setExtra(name, current, env)
+  }, 
+
+  getPage: (name, env) => {
+    const extra = E.getExtra(name, env)
+    return (extra !== null) ? extra : 0
+  }, 
+
+  nextPage: (name, env) => {
+    const extra = E.getExtra(name, env)
+    const current = (extra !== null) ? extra : 0
+    return E.setExtra(name, current + 1, env)
+  }, 
+
+  prevPage: (name, env) => {
+    const extra = E.getExtra(name, env)
+    const current = (extra !== null) ? extra : 0
+    return E.setExtra(name, current - 1, env)
+  }, 
+
+  setSwitch: (name, shown, env) => {
+    return E.setExtra(name, shown, env)
+  }, 
+
+  getSwitch: (name, env) => {
+    const extra = E.getExtra(name, env)
+    return (extra !== null) ? extra : false
+  }, 
+
+  toggleSwitch: (name, env) => {
+    const extra = E.getExtra(name, env)
+    const current = (extra !== null) ? extra : false
+    return E.setExtra(name, !current, env)
+  }, 
+
+  /**
+   * TODO: progress bar, ReadStream, ...
+   */
+  openProgress: (name, unknown, env) => {
+    return E.setExtra(name, {current:-1}, env)
+  }, 
+
+  closeProgress: (name, env) => {
     return E.setExtra(name, null, env)
   }, 
 
-  openLoader: (name, env) => {
-    return E.setExtra(name, {}, env)
-  }, 
-
-  closeLoader: (name, env) => {
-    return E.setExtra(name, null, env)
+  getProgress: (name, env) => {
+    const extra = E.getExtra(name, env)
+    if (! extra) return null
+    return extra.current
   }, 
 
   withEnv: (env, p) => {
@@ -152,19 +191,19 @@ export const API = {
           'Content-Type': 'application/json'
         }
       }
-      env = API.openLoader('loader', env)
+      env = API.openProgress('loading', null, env)
       return API.withEnv(env, 
         fetch(context.url, options)
         .catch(API.wrap(([response, env]) => {
           console.error('form submission failed', response)
-          return {ok:false}
+          return {ok:true}
         }))
         .then(API.wrap(([response, env]) => {
-          env = API.closeLoader('loader', env)
+          env = API.closeProgress('loading', env)
           if (response.ok) {
-            return API.openFeedback('feedback', context.successMessage, env)
+            return API.openDialog('feedback', context.successMessage, env)
             .then(API.wrap(([result, env]) => {
-              return API.closeFeedback('feedback', env)
+              return API.closeDialog('feedback', env)
             }))
           } else {
             return API.openDialog('alert', context.failureMessage, env)

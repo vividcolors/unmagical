@@ -47,16 +47,19 @@ const attributeMap = {
   dialog: {
     message: 'message'
   }, 
-  feedback: {
+  notification: {
     message: 'message'
+  }, 
+  progress: {
+    current: 'value'
   }
 }
 
-export const Textbox = C.playTextbox('input', attributeMap)
-export const Listbox = C.playListbox('select', attributeMap)
-export const Radio = C.playRadio('input', attributeMap)
-export const Checkbox = C.playCheckbox('input', attributeMap)
-export const Button = C.playButton('button', attributeMap)
+export const Textbox = C.playTextbox('input', attributeMap.textbox)
+export const Listbox = C.playListbox('select', attributeMap.listbox)
+export const Radio = C.playRadio('input', attributeMap.radio)
+export const Checkbox = C.playCheckbox('input', attributeMap.checkbox)
+export const Button = C.playButton('button', attributeMap.button)
 
 export const Field = ({path, env, ...props}, children) => {
   if (! API.test(path, env)) return null
@@ -89,26 +92,6 @@ const fadeOut = (el, done) => {
   C.prepareToDestroy(el, anim, done)
 }
 
-/**
- * Bulma doesn't have Loader/Spinner, then we define simple one.
- */
-export const Loader = C.playLoader(({'mg-name':name, ...props}) => {
-  const style = {
-    position:"fixed",
-    boxSizing: 'border-box', 
-    top:0,
-    right: 0, 
-    bottom:0,
-    left:0,
-    backgroundColor:'rgba(0,0,0,0.5)'
-  }
-  return (
-    <div key={name} style={style} {...props} oncreate={fadeIn} onremove={fadeOut}>
-      <div style={{color:"#FFFFFF"}}>Loading...</div>
-    </div>
-  )
-}, attributeMap)
-
 export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', message, ...props}) => {
   clazz += ' modal is-active'
   return (
@@ -125,9 +108,9 @@ export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', message, 
       </div>
     </div>
   )
-}, attributeMap)
+}, attributeMap.dialog)
 
-export const Feedback = C.playFeedback(({'mg-name':name, message, class:clazz = '', ...props}) => {
+export const Notification = C.playDialog(({'mg-name':name, message, class:clazz = '', ...props}) => {
   // add simple layout
   const style = {
     boxSizing: 'border-box', 
@@ -143,4 +126,28 @@ export const Feedback = C.playFeedback(({'mg-name':name, message, class:clazz = 
       <p>{message}</p>
     </div>
   )
-}, attributeMap)
+}, attributeMap.notification)
+
+export const Progress = C.playProgress("progress", attributeMap.progress)
+
+
+
+/**
+ * Bulma doesn't have Spinner, then we define simple one.
+ */
+/*export const Spinner = C.playSpinner(({'mg-name':name, ...props}) => {
+  const style = {
+    position:"fixed",
+    boxSizing: 'border-box', 
+    top:0,
+    right: 0, 
+    bottom:0,
+    left:0,
+    backgroundColor:'rgba(0,0,0,0.5)'
+  }
+  return (
+    <div key={name} style={style} {...props} oncreate={fadeIn} onremove={fadeOut}>
+      <div style={{color:"#FFFFFF"}}>Loading...</div>
+    </div>
+  )
+}, attributeMap)*/

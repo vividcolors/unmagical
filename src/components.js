@@ -14,11 +14,11 @@ export const defaultAttributeMap = {
     onchange: 'onchange', 
     class: 'class', 
     invalidClass: 'mg-invalid', 
-    invalid: 'data-mg-invalid'
-  }, 
-  option: {
-    selected: 'selected', 
-    value: 'value'
+    invalid: 'data-mg-invalid', 
+    option: {
+      selected: 'selected', 
+      value: 'value'
+    }
   }, 
   radio: {
     onchange: 'onchange', 
@@ -45,8 +45,16 @@ export const defaultAttributeMap = {
   dialog: {
     message: 'message'
   }, 
-  feedback: {
-    message: 'message'
+  progress: {
+    current: 'current'
+  }, 
+  page: {
+    current: 'data-mg-current', 
+    currentClass: 'mg-current'
+  }, 
+  'switch': {
+    shown: 'data-mg-shown', 
+    shownClass: 'mg-shown'
   }
 }
 
@@ -84,27 +92,22 @@ export const prepareToDestroy = (el, anim, done) => {
 }
 
 const addClass = (attributes, attr, clazz) => {
-  console.log('addClass', attributes, attr, clazz)
   if (! attributes.hasOwnProperty(attr)) attributes[attr] = ''
   attributes[attr] += ' ' + clazz
 }
 
-const resolveAttributeMap = (map) => {
-  return map || defaultAttributeMap
-}
-
 export const playTextbox = (C, map = null) => {
-  map = resolveAttributeMap(map)
+  map = map || defaultAttributeMap.textbox
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
-    attributes[map.textbox.oninput] = actions.onTextInput
-    attributes[map.textbox.onblur] = actions.onTextBlur
-    attributes[map.textbox.value] = slot.input
+    attributes[map.oninput] = actions.onTextInput
+    attributes[map.onblur] = actions.onTextBlur
+    attributes[map.value] = slot.input
     if ((slot.touched || false) && (slot.invalid || false)) {
-      addClass(attributes, map.textbox.class, map.textbox.invalidClass)
-      attributes[map.textbox.invalid] = true
+      addClass(attributes, map.class, map.invalidClass)
+      attributes[map.invalid] = true
     }
     return h(C, attributes, ...children)
   }
@@ -113,15 +116,15 @@ export const playTextbox = (C, map = null) => {
 export const Textbox = playTextbox("input")
 
 export const playListbox = (C, map = null) => {
-  map = resolveAttributeMap(map)
+  map = map || defaultAttributeMap.listbox
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
-    attributes[map.listbox.onchange] = actions.onSelectChange
+    attributes[map.onchange] = actions.onSelectChange
     if ((slot.touched || false) && (slot.invalid || false)) {
-      addClass(attributes, map.listbox.class, map.listbox.invalidClass)
-      attributes[map.listbox.invalid] = true
+      addClass(attributes, map.class, map.invalidClass)
+      attributes[map.invalid] = true
     }
     children.forEach((o) => {
       o.attributes[map.option.selected] = o.attributes[map.option.value] == slot['@value']
@@ -133,17 +136,16 @@ export const playListbox = (C, map = null) => {
 export const Listbox = playListbox("select")
 
 export const playRadio = (C, map = null) => {
-  map = resolveAttributeMap(map)
+  map = map || defaultAttributeMap.radio
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
-    console.log('playRadio', path)
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
-    attributes[map.radio.onchange] = actions.onSelectChange
-    attributes[map.radio.checked] = attributes[map.radio.value] == slot['@value']
+    attributes[map.onchange] = actions.onSelectChange
+    attributes[map.checked] = attributes[map.value] == slot['@value']
     if ((slot.touched || false) && (slot.invalid || false)) {
-      addClass(attributes, map.radio.class, map.radio.invalidClass)
-      attributes[map.radio.invalid] = true
+      addClass(attributes, map.class, map.invalidClass)
+      attributes[map.invalid] = true
     }
     return h(C, attributes, ...children)
   }
@@ -152,16 +154,16 @@ export const playRadio = (C, map = null) => {
 export const Radio = playRadio("input")
 
 export const playCheckbox = (C, map = null) => {
-  map = resolveAttributeMap(map)
+  map = map || defaultAttributeMap.checkbox
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
-    attributes[map.checkbox.onchange] = actions.onToggleChange
-    attributes[map.checkbox.checked] = slot['@value']
+    attributes[map.onchange] = actions.onToggleChange
+    attributes[map.checked] = slot['@value']
     if ((slot.touched || false) && (slot.invalid || false)) {
-      addClass(attributes, map.checkbox.class, map.checkbox.invalidClass)
-      attributes[map.checkbox.invalid] = true
+      addClass(attributes, map.class, map.invalidClass)
+      attributes[map.invalid] = true
     }
     return h(C, attributes, ...children)
   }
@@ -172,19 +174,19 @@ export const Checkbox = playCheckbox("input")
 // TODO: file, number, date, color, range, ...
 
 export const playButton = (C, map = null) => {
-  map = resolveAttributeMap(map)
+  map = map || defaultAttributeMap.button
   return (props, children) => (state, actions) => {
     if ('mg-update' in props) {
       const {'mg-update':update, 'mg-context':context, ...attributes} = props
-      attributes[map.button.update] = update
-      attributes[map.button.context] = JSON.stringify(typeof context == "undefined" ? null : context)
-      attributes[map.button.onclick] = actions.onUpdate
+      attributes[map.update] = update
+      attributes[map.context] = JSON.stringify(typeof context == "undefined" ? null : context)
+      attributes[map.onclick] = actions.onUpdate
       return h(C, attributes, ...children)
     } else {
       const {'mg-name':name, 'mg-result':result, ...attributes} = props
-      attributes[map.button.name] = name
-      attributes[map.button.result] = JSON.stringify(typeof result == "undefined" ? null : result)
-      attributes[map.button.onclick] = actions.onFulfill
+      attributes[map.name] = name
+      attributes[map.result] = JSON.stringify(typeof result == "undefined" ? null : result)
+      attributes[map.onclick] = actions.onFulfill
       return h(C, attributes, ...children)
     }
   }
@@ -192,39 +194,52 @@ export const playButton = (C, map = null) => {
 
 export const Button = playButton("button")
 
-export const playFeedback = (C, map = null) => {
-  map = resolveAttributeMap(map)
-  return (props, children) => (state, actions) => {
-    const {...attributes} = props
-    const name = attributes['mg-name']
-    const data = API.getExtra(name, state.env)
-    if (! data) return null
-    attributes[map.feedback.message] = data.message
-    return h(C, attributes, ...children)
-  }
-}
-
 export const playDialog = (C, map = null) => {
-  map = resolveAttributeMap(map)
+  map = map || defaultAttributeMap.dialog
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const name = attributes['mg-name']
-    const data = API.getExtra(name, state.env)
-    if (! data) return null
-    attributes[map.dialog.message] = data.message
+    const message = API.getDialog(name, state.env)
+    if (message === null) return null
+    attributes[map.message] = message
     return h(C, attributes, ...children)
   }
 }
 
-export const playLoader = (C, map = null) => {
-  map = resolveAttributeMap(map)
+export const playProgress = (C, map = null) => {
+  map = map || defaultAttributeMap.progress
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const name = attributes['mg-name']
-    const data = API.getExtra(name, state.env)
-    if (! data) return null
+    const current = API.getProgress(name, state.env)
+    if (current === null) return null
+    if (current != -1) attributes[map.current] = current
     return h(C, attributes, ...children)
   }
 }
 
-// TODO: tab, tabpanel
+export const playPage = (C, map = null) => {
+  map = map || defaultAttributeMap.page
+  return (props, children) => (state, actions) => {
+    const {'mg-index':index, ...attributes} = props
+    const name = attributes['mg-name']
+    let current = API.getPage(name, state.env)
+    if (index != current) return null
+    addClass(attributes, map.class, map.currentClass)
+    attributes[map.current] = true
+    return h(C, attributes, ...children)
+  }
+}
+
+export const playSwitch = (C, map = null) => {
+  map = map || defaultAttributeMap.switch
+  return (props, children) => (state, actions) => {
+    const {...attributes} = props
+    const name = attributes['mg-name']
+    let current = API.getSwitch(name, state.env)
+    if (! current) return null
+    addClass(attributes, map.class, map.shownClass)
+    attributes[map.shown] = true
+    return h(C, attributes, ...children)
+  }
+}
