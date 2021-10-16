@@ -197,7 +197,6 @@ export const defaultRules = {
     if (value % param === 0) return true
     return 'schema.ruleError.multipleOf'
   }, 
-  // TODO multipleOf(number/integer)
   maximum: (param, value) => {
     if (typeof value != 'number') return true
     if (param >= value) return true
