@@ -92,7 +92,17 @@ export const prepareToDestroy = (el, anim, done) => {
   }
 }
 
-const addClass = (attributes, attr, clazz) => {
+export const compose = (p1, p2) => (C, map = null) => {
+  return (props, children) => (state, actions) => {
+    const more = (props, children) => {
+      return p1(C, map)(props, children)(state, actions)
+    }
+    const x = p2(more, map)(props, children)(state, actions)
+    return x || p1(C, map)(props, children)(state, actions)
+  }
+}
+
+export const addClass = (attributes, attr, clazz) => {
   if (! attributes.hasOwnProperty(attr)) attributes[attr] = ''
   attributes[attr] += ' ' + clazz
 }
@@ -104,6 +114,7 @@ export const playTextbox = (C, map = null) => {
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
     attributes['data-mg-value-attribute'] = map.value
+    attributes['data-mg-textbox'] = "1"
     attributes[map.oninput] = actions.onTextboxInput
     attributes[map.onblur] = actions.onTextboxBlur
     attributes[map.value] = slot.input
@@ -124,6 +135,7 @@ export const playListbox = (C, map = null) => {
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
     attributes['data-mg-value-attribute'] = map.value
+    attributes['data-mg-listbox'] = "1"
     attributes[map.onchange] = actions.onListboxChange
     if ((slot.touched || false) && (slot.invalid || false)) {
       addClass(attributes, map.class, map.invalidClass)
@@ -145,6 +157,7 @@ export const playRadio = (C, map = null) => {
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
     attributes['data-mg-value-attribute'] = map.value
+    attributes['data-mg-radio'] = "1"
     attributes[map.onchange] = actions.onRadioChange
     attributes[map.checked] = attributes[map.value] == slot['@value']
     if ((slot.touched || false) && (slot.invalid || false)) {
@@ -164,6 +177,7 @@ export const playCheckbox = (C, map = null) => {
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
     attributes['data-mg-checked-attribute'] = map.checked
+    attributes['data-mg-checkbox'] = "1"
     attributes[map.onchange] = actions.onCheckboxChange
     attributes[map.checked] = slot['@value']
     if ((slot.touched || false) && (slot.invalid || false)) {
@@ -183,12 +197,14 @@ export const playButton = (C, map = null) => {
   return (props, children) => (state, actions) => {
     if ('mg-update' in props) {
       const {'mg-update':update, 'mg-context':context, ...attributes} = props
+      attributes['data-mg-button'] = "1"
       attributes[map.update] = update
       attributes[map.context] = JSON.stringify(typeof context == "undefined" ? null : context)
       attributes[map.onclick] = actions.onUpdate
       return h(C, attributes, ...children)
     } else {
       const {'mg-name':name, 'mg-result':result, ...attributes} = props
+      attributes['data-mg-button'] = "1"
       attributes[map.name] = name
       attributes[map.result] = JSON.stringify(typeof result == "undefined" ? null : result)
       attributes[map.onclick] = actions.onFulfill
@@ -207,6 +223,7 @@ export const playDialog = (C, map = null) => {
     const message = API.getDialog(name, state.env)
     if (message === null) return null
     attributes[map.message] = message
+    attributes['data-mg-dialog'] = "1"
     return h(C, attributes, ...children)
   }
 }
@@ -219,6 +236,7 @@ export const playProgress = (C, map = null) => {
     const current = API.getProgress(name, state.env)
     if (current === null) return null
     if (current != -1) attributes[map.current] = current
+    attributes['data-mg-progress'] = "1"
     return h(C, attributes, ...children)
   }
 }
@@ -232,6 +250,7 @@ export const playPage = (C, map = null) => {
     if (index != current) return null
     addClass(attributes, map.class, map.currentClass)
     attributes[map.current] = true
+    attributes['data-mg-page'] = "1"
     return h(C, attributes, ...children)
   }
 }
@@ -245,6 +264,7 @@ export const playSwitch = (C, map = null) => {
     if (! current) return null
     addClass(attributes, map.class, map.shownClass)
     attributes[map.shown] = true
+    attributes['data-mg-switch'] = "1"
     return h(C, attributes, ...children)
   }
 }

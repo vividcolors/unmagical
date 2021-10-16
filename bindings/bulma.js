@@ -42,7 +42,8 @@ const attributeMap = {
     update: 'data-mg-update', 
     context: 'data-mg-context', 
     name: 'data-mg-name', 
-    result: 'data-mg-result'
+    result: 'data-mg-result', 
+    current: 'value'
   }, 
   dialog: {
     message: 'message'
@@ -59,7 +60,14 @@ export const Textbox = C.playTextbox('input', attributeMap.textbox)
 export const Listbox = C.playListbox('select', attributeMap.listbox)
 export const Radio = C.playRadio('input', attributeMap.radio)
 export const Checkbox = C.playCheckbox('input', attributeMap.checkbox)
-export const Button = C.playButton('button', attributeMap.button)
+export const Button = C.compose(C.playButton, C.playProgress)(({...props}, children) => {
+  if (props.hasOwnProperty('data-mg-progress')) {
+    C.addClass(props, 'class', 'is-loading')
+  }
+  return (
+    <button {...props}>{children}</button>
+  )
+}, attributeMap.button)
 
 export const Field = ({path, env, ...props}, children) => {
   if (! API.test(path, env)) return null
@@ -128,7 +136,12 @@ export const Notification = C.playDialog(({'mg-name':name, message, class:clazz 
   )
 }, attributeMap.notification)
 
-export const Progress = C.playProgress("progress", attributeMap.progress)
+export const Progress = C.playProgress(({...props}) => {
+  C.addClass(props, 'class', 'progress')
+  return (
+    <progress {...props}>indeterminated</progress>
+  )
+}, attributeMap.progress)
 
 
 
