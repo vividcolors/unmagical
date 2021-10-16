@@ -105,37 +105,37 @@ const data = {
   }
 }
 
-const view = (state, actions) => {
-  const flags = API.extract('/flags', state.env)
-  const quotation = API.extract('/quotation', state.env)
-  const loading = API.getProgress('loading', state.env)
+const view = (env) => {
+  const flags = API.extract('/flags', env)
+  const quotation = API.extract('/quotation', env)
+  const loading = API.getProgress('loading', env)
   return (
     <div id="rootMarker">
-      <Field path="/detail/os" env={state.env} class="field">
+      <Field path="/detail/os" env={env} class="field">
         <label class="label">OS</label>
         <div class="control">
           {master.os.map(x => <label class="radio"><Radio type="radio" mg-path="/detail/os" name="os" value={x.name} />{`${x.name} ${x.price}円`}</label>)}
         </div>
       </Field>
-      <Field path="/detail/cpu" env={state.env} class="field">
+      <Field path="/detail/cpu" env={env} class="field">
         <label class="label">CPU</label>
         <div class="control">
           {master.cpu.map(x => <label class="radio"><Radio type="radio" mg-path="/detail/cpu" name="cpu" value={x.name} />{`${x.name} ${x.price}円`}</label>)}
         </div>
       </Field>
-      <Field path="/detail/memory" env={state.env} class="field">
+      <Field path="/detail/memory" env={env} class="field">
         <label class="label">メモリ</label>
         <div class="control">
           {master.memory.map(x => <label class="radio"><Radio type="radio" mg-path="/detail/memory" name="memory" value={x.name} disabled={x.name == '32G' && !flags.isPro} />{`${x.name} ${x.price}円`}</label>)}
         </div>
       </Field>
-      <Field path="/detail/accessories" env={state.env} class="field">
+      <Field path="/detail/accessories" env={env} class="field">
         <label class="label">アクセサリー</label>
         <div class="control">
           {master.accessory.map((x,i) => <label class="checkbox"><Checkbox type="checkbox" mg-path={`/detail/accessories/a${i}`} />{`${x.name} ${x.price}円`}</label>)}
         </div>
       </Field>
-      <Field path="/detail/bonus" env={state.env} class="field">
+      <Field path="/detail/bonus" env={env} class="field">
         <label class="label">ボーナス</label>
         <div class="control">
           {master.bonus.map(x => <label class="radio"><Radio type="radio" mg-path="/detail/bonus" name="bonus" value={x.name} />{x.name}</label>)}

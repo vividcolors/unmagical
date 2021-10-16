@@ -226,7 +226,7 @@ let actions = null
  * @param {Object} params
  * @param {Json} params.data
  * @param {Schema} params.schema
- * @param {(any, any) => any} params.view
+ * @param {(Env) => VNode} params.view
  * @param {Element} params.containerEl
  * @param {((string, Env) => Env) | null} params.evolve
  * @param {{[name:string]:(any)}} params.updates
@@ -360,7 +360,8 @@ export const start = (
     baseEnv, 
     env
   }
-  actions = app(state, actions0, view, containerEl)
+  const view1 = (state, actions) => view(state.env)
+  actions = app(state, actions0, view1, containerEl)
   return {
     onUpdate: actions.onUpdate, 
   }
