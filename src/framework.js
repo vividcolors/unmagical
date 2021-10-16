@@ -252,38 +252,52 @@ export const start = (
   const schemaDb = S.buildDb(schema)
 
   const actions0 = {
-    onTextInput: (ev) => (state, actions) => {
+    onTextboxInput: (ev) => (state, actions) => {
       const path = ev.currentTarget.dataset.mgPath
+      const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
       const slot0 = E.getSlot(path, state.baseEnv)
-      const slot = {...slot0, input:ev.currentTarget.value}
+      const slot = {...slot0, input:value}
       const baseEnv = E.setSlot(path, slot, state.baseEnv)
       const slotb0 = E.getSlot(path, state.env)
-      const slotb = {...slotb0, input:ev.currentTarget.value}
+      const slotb = {...slotb0, input:value}
       const env = E.setSlot(path, slotb, state.env)
       return {...state, baseEnv, env}
     }, 
-    onTextBlur: (ev) => (state, actions) => {
+    onTextboxBlur: (ev) => (state, actions) => {
       const path = ev.currentTarget.dataset.mgPath
+      const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const slot0 = {touched:true, input:ev.currentTarget.value}
+      const slot0 = {touched:true, input:value}
       const slot = coerce(slot0, schemaDb[npath])
       let baseEnv = E.setSlot(path, slot, state.baseEnv)
       let env = evolve(path, baseEnv)
       return {...state, baseEnv, env}
     }, 
-    onSelectChange: (ev) => (state, actions) => {
+    onListboxChange: (ev) => (state, actions) => {
       const path = ev.currentTarget.dataset.mgPath
+      const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const slot0 = {touched:true, input:ev.currentTarget.value}
+      const slot0 = {touched:true, input:value}
       const slot = coerce(slot0, schemaDb[npath])
       let baseEnv = E.setSlot(path, slot, state.baseEnv)
       let env = evolve(path, baseEnv)
       return {...state, baseEnv, env}
     }, 
-    onToggleChange: (ev) => (state, actions) => {
+    onRadioChange: (ev) => (state, actions) => {
       const path = ev.currentTarget.dataset.mgPath
+      const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const slot0 = {touched:true, input:ev.currentTarget.checked ? "true" : "false"}
+      const slot0 = {touched:true, input:value}
+      const slot = coerce(slot0, schemaDb[npath])
+      let baseEnv = E.setSlot(path, slot, state.baseEnv)
+      let env = evolve(path, baseEnv)
+      return {...state, baseEnv, env}
+    }, 
+    onCheckboxChange: (ev) => (state, actions) => {
+      const path = ev.currentTarget.dataset.mgPath
+      const checked = ev.currentTarget[ev.currentTarget.dataset.mgCheckedAttribute]
+      const npath = normalizePath(path)
+      const slot0 = {touched:true, input:checked ? "true" : "false"}
       const slot = coerce(slot0, schemaDb[npath])
       let baseEnv = E.setSlot(path, slot, state.baseEnv)
       let env = evolve(path, baseEnv)

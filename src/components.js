@@ -15,6 +15,7 @@ export const defaultAttributeMap = {
     class: 'class', 
     invalidClass: 'mg-invalid', 
     invalid: 'data-mg-invalid', 
+    value: 'value', 
     option: {
       selected: 'selected', 
       value: 'value'
@@ -102,8 +103,9 @@ export const playTextbox = (C, map = null) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
-    attributes[map.oninput] = actions.onTextInput
-    attributes[map.onblur] = actions.onTextBlur
+    attributes['data-mg-value-attribute'] = map.value
+    attributes[map.oninput] = actions.onTextboxInput
+    attributes[map.onblur] = actions.onTextboxBlur
     attributes[map.value] = slot.input
     if ((slot.touched || false) && (slot.invalid || false)) {
       addClass(attributes, map.class, map.invalidClass)
@@ -121,7 +123,8 @@ export const playListbox = (C, map = null) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
-    attributes[map.onchange] = actions.onSelectChange
+    attributes['data-mg-value-attribute'] = map.value
+    attributes[map.onchange] = actions.onListboxChange
     if ((slot.touched || false) && (slot.invalid || false)) {
       addClass(attributes, map.class, map.invalidClass)
       attributes[map.invalid] = true
@@ -141,7 +144,8 @@ export const playRadio = (C, map = null) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
-    attributes[map.onchange] = actions.onSelectChange
+    attributes['data-mg-value-attribute'] = map.value
+    attributes[map.onchange] = actions.onRadioChange
     attributes[map.checked] = attributes[map.value] == slot['@value']
     if ((slot.touched || false) && (slot.invalid || false)) {
       addClass(attributes, map.class, map.invalidClass)
@@ -159,7 +163,8 @@ export const playCheckbox = (C, map = null) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
-    attributes[map.onchange] = actions.onToggleChange
+    attributes['data-mg-checked-attribute'] = map.checked
+    attributes[map.onchange] = actions.onCheckboxChange
     attributes[map.checked] = slot['@value']
     if ((slot.touched || false) && (slot.invalid || false)) {
       addClass(attributes, map.class, map.invalidClass)
