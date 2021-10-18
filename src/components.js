@@ -207,7 +207,7 @@ export const playButton = (C, map = null) => {
       attributes['data-mg-button'] = "1"
       attributes[map.name] = name
       attributes[map.result] = JSON.stringify(typeof result == "undefined" ? null : result)
-      attributes[map.onclick] = actions.onFulfill
+      attributes[map.onclick] = actions.onPromiseSettle
       return h(C, attributes, ...children)
     }
   }

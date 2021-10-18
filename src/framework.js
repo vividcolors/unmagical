@@ -158,7 +158,7 @@ export const API = {
     return (result) => {
       let result1 = null
       const ret = (res1) => {result1 = res1}
-      actions.onThen({result, handler, ret})
+      actions.onPromiseThen({result, handler, ret})
       return result1
     }
   }, 
@@ -319,14 +319,14 @@ export const start = (
       }
       return {...state, baseEnv, env}
     }, 
-    onFulfill: (ev) => (state, actions) => {
+    onPromiseSettle: (ev) => (state, actions) => {
       const name = (ev instanceof Event) ? ev.currentTarget.dataset.mgName : ev.name
       const result = (ev instanceof Event) ? JSON.parse(ev.currentTarget.dataset.mgResult || "null") : ev.result
       let baseEnv = state.baseEnv
       const extra = E.getExtra(name, baseEnv)
       const ret = (env0) => {baseEnv = env0}
       baseEnv = {...baseEnv, ret}
-      if (! extra || ! extra.fulfill) throw new Error('onFulfill/0: no callback or unknown callback')
+      if (! extra || ! extra.fulfill) throw new Error('onPromiseSettle/0: no callback or unknown callback')
       const res = extra.fulfill([result, baseEnv])
       let _unused = null
       baseEnv = E.isEnv(res) ? {...res, ret:_unused} : {...baseEnv, ret:_unused}
@@ -336,7 +336,7 @@ export const start = (
       }
       return {...state, baseEnv, env}
     }, 
-    onThen: (context) => (state, actions) => {
+    onPromiseThen: (context) => (state, actions) => {
       let baseEnv = state.baseEnv
       const ret = (env0) => {baseEnv = env0}
       baseEnv = {...baseEnv, ret}
