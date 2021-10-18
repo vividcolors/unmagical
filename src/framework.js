@@ -75,12 +75,17 @@ export const API = {
   /**
    * @param {string} name
    * @param {string} message
+   * @param {Object|null} options
+   * @param {number|null} params.timeout
    * @param {Env} env
    * @returns {Promise}
    */
-  openDialog: (name, message, env) => {
+  openDialog: (name, message, options, env) => {
+    const timeoutId = (options && options.timeout)
+      ? setTimeout(() => { actions.onPromiseSettle({name, result:true}) }, options.timeout)
+      : null
     const p = new Promise((fulfill, reject) => {
-      env = E.setExtra(name, {message, fulfill, reject}, env)
+      env = E.setExtra(name, {message, fulfill, reject, timeoutId}, env)
     })
     E.doReturn(env)
     return p
@@ -171,6 +176,7 @@ export const API = {
    * @param {string} context.url
    * @param {string} context.method
    * @param {string} context.successMessage
+   * @param {number|null} context.successMessageTimeout
    * @param {string} context.failureMessage
    */
   submit: (context, env) => {
@@ -196,17 +202,17 @@ export const API = {
         fetch(context.url, options)
         .catch(API.wrap(([response, env]) => {
           console.error('form submission failed', response)
-          return {ok:true}
+          return {ok:false}
         }))
         .then(API.wrap(([response, env]) => {
           env = API.closeProgress('loading', env)
           if (response.ok) {
-            return API.openDialog('feedback', context.successMessage, env)
+            return API.openDialog('feedback', context.successMessage, {timeout:context.successMessageTimeout}, env)
             .then(API.wrap(([result, env]) => {
               return API.closeDialog('feedback', env)
             }))
           } else {
-            return API.openDialog('alert', context.failureMessage, env)
+            return API.openDialog('alert', context.failureMessage, null, env)
             .then(API.wrap(([result, env]) => {
               return API.closeDialog('alert', env)
             }))
@@ -327,6 +333,9 @@ export const start = (
       const ret = (env0) => {baseEnv = env0}
       baseEnv = {...baseEnv, ret}
       if (! extra || ! extra.fulfill) throw new Error('onPromiseSettle/0: no callback or unknown callback')
+      if (extra.timeoutId) {
+        clearTimeout(extra.timeoutId)
+      }
       const res = extra.fulfill([result, baseEnv])
       let _unused = null
       baseEnv = E.isEnv(res) ? {...res, ret:_unused} : {...baseEnv, ret:_unused}
