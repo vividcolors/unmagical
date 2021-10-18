@@ -37,13 +37,16 @@ const attributeMap = {
     invalidClass: 'mg-invalid', 
     invalid: 'data-mg-invalid'
   }, 
-  button: {
+  updateButton: {
     onclick: 'onclick', 
     update: 'data-mg-update', 
     context: 'data-mg-context', 
-    name: 'data-mg-name', 
-    result: 'data-mg-result', 
     current: 'value'
+  }, 
+  settleButton: {
+    onclick: 'onclick', 
+    name: 'data-mg-name', 
+    result: 'data-mg-result'
   }, 
   dialog: {
     message: 'message'
@@ -60,14 +63,15 @@ export const Textbox = C.playTextbox('input', attributeMap.textbox)
 export const Listbox = C.playListbox('select', attributeMap.listbox)
 export const Radio = C.playRadio('input', attributeMap.radio)
 export const Checkbox = C.playCheckbox('input', attributeMap.checkbox)
-export const Button = C.compose(C.playButton, C.playProgress)(({...props}, children) => {
+export const UpdateButton = C.compose(C.playUpdateButton, C.playProgress)(({...props}, children) => {
   if (props.hasOwnProperty('data-mg-progress')) {
     C.addClass(props, 'class', 'is-loading')
   }
   return (
     <button {...props}>{children}</button>
   )
-}, attributeMap.button)
+}, attributeMap.updateButton)
+export const SettleButton = C.playSettleButton('button', attributeMap.settleButton)
 
 export const Field = ({path, env, ...props}, children) => {
   if (! API.test(path, env)) return null
@@ -110,8 +114,8 @@ export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', message, 
           <p>{message}</p>
         </section>
         <footer class="modal-card-foot">
-          <Button class="button is-success" mg-name={name} mg-result={true}>OK</Button>
-          <Button class="button" mg-name={name} mg-result={false}>キャンセル</Button>
+          <SettleButton class="button is-success" mg-name={name} mg-result={true}>OK</SettleButton>
+          <SettleButton class="button" mg-name={name} mg-result={false}>キャンセル</SettleButton>
         </footer>
       </div>
     </div>
@@ -130,7 +134,7 @@ export const Notification = C.playDialog(({'mg-name':name, message, class:clazz 
   clazz += ' notification is-primary'
   return (
     <div class={clazz} key={name} style={style} {...props} oncreate={fadeIn} onremove={fadeOut}>
-      <Button class="delete" mg-name={name} mg-result={true}></Button>
+      <SettleButton class="delete" mg-name={name} mg-result={true}></SettleButton>
       <p>{message}</p>
     </div>
   )

@@ -36,10 +36,13 @@ export const defaultAttributeMap = {
     invalidClass: 'mg-invalid', 
     invalid: 'data-mg-invalid'
   }, 
-  button: {
+  updateButton: {
     onclick: 'onclick', 
     update: 'data-mg-update', 
     context: 'data-mg-context', 
+  }, 
+  settleButton: {
+    onclick: 'onclick', 
     name: 'data-mg-name', 
     result: 'data-mg-result'
   }, 
@@ -192,28 +195,33 @@ export const Checkbox = playCheckbox("input")
 
 // TODO: file, number, date, color, range, ...
 
-export const playButton = (C, map = null) => {
+export const playUpdateButton = (C, map = null) => {
   map = map || defaultAttributeMap.button
   return (props, children) => (state, actions) => {
-    if ('mg-update' in props) {
-      const {'mg-update':update, 'mg-context':context, ...attributes} = props
-      attributes['data-mg-button'] = "1"
-      attributes[map.update] = update
-      attributes[map.context] = JSON.stringify(typeof context == "undefined" ? null : context)
-      attributes[map.onclick] = actions.onUpdate
-      return h(C, attributes, ...children)
-    } else {
-      const {'mg-name':name, 'mg-result':result, ...attributes} = props
-      attributes['data-mg-button'] = "1"
-      attributes[map.name] = name
-      attributes[map.result] = JSON.stringify(typeof result == "undefined" ? null : result)
-      attributes[map.onclick] = actions.onPromiseSettle
-      return h(C, attributes, ...children)
-    }
+    const {'mg-update':update, 'mg-context':context, ...attributes} = props
+    attributes['data-mg-updateButton'] = "1"
+    attributes[map.update] = update
+    attributes[map.context] = JSON.stringify(typeof context == "undefined" ? null : context)
+    attributes[map.onclick] = actions.onUpdate
+    return h(C, attributes, ...children)
   }
 }
 
-export const Button = playButton("button")
+export const UpdateButton = playUpdateButton("button")
+
+export const playSettleButton = (C, map = null) => {
+  map = map || defaultAttributeMap.button
+  return (props, children) => (state, actions) => {
+    const {'mg-name':name, 'mg-result':result, ...attributes} = props
+    attributes['data-mg-settleButton'] = "1"
+    attributes[map.name] = name
+    attributes[map.result] = JSON.stringify(typeof result == "undefined" ? null : result)
+    attributes[map.onclick] = actions.onPromiseSettle
+    return h(C, attributes, ...children)
+  }
+}
+
+export const SettleButton = playSettleButton("button")
 
 export const playDialog = (C, map = null) => {
   map = map || defaultAttributeMap.dialog

@@ -1,5 +1,5 @@
 
-import {h, API, start, Textbox, Listbox, Radio, Checkbox, Button, Field, Dialog, Notification, Progress} from '../../bindings/bulma'
+import {h, API, start, Textbox, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../bindings/bulma'
 
 const master = {
   frame: [
@@ -177,7 +177,7 @@ const view = (env) => {
         </tr>
       </table>
       <hr />
-      <Button type="button" class="button is-primary" disabled={loading} mg-role="button" mg-update="submit" mg-context={{path:"/detail", errorSelector:".mg-invalid", url:"http://localhost/", method:"POST", successMessage:"SUCCESS!!", failureMessage:"FAILURE!"}}>確定</Button>
+      <UpdateButton type="button" class="button is-primary" disabled={loading} mg-role="button" mg-update="submit" mg-context={{path:"/detail", errorSelector:".mg-invalid", url:"http://localhost/", method:"POST", successMessage:"SUCCESS!!", failureMessage:"FAILURE!"}}>確定</UpdateButton>
       <Progress mg-name="loading" />
       <Dialog mg-name="alert" />
       <Notification mg-name="feedback" />
