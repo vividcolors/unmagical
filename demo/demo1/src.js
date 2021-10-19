@@ -108,7 +108,6 @@ const data = {
 const view = (env) => {
   const flags = API.extract('/flags', env)
   const quotation = API.extract('/quotation', env)
-  const loading = API.getProgress('loading', env)
   return (
     <div id="rootMarker">
       <Notification mg-name="feedback" />
