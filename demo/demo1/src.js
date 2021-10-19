@@ -179,7 +179,7 @@ const view = (env) => {
       <hr />
       <UpdateButton type="button" class="button is-primary" mg-name="loading" mg-update="submit" mg-context={{path:"/detail", errorSelector:".is-danger", url:"http://localhost/", method:"POST", successMessage:"SUCCESS!!", successMessageTimeout:5000, failureMessage:"FAILURE!"}}>確定</UpdateButton>
       <Progress mg-name="loading" />
-      <Dialog mg-name="alert" />
+      <Dialog mg-name="alert" hideCancelButton={true} />
       <Notification mg-name="feedback" />
     </div>
   )

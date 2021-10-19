@@ -84,15 +84,20 @@ export const Field = ({path, env, ...props}, children) => {
   )
 }
 
-const fadeIn = (el) => {
+const onDialogCreated = (el) => {
   C.suspendRoot()
   el.animate([
     {opacity: 0}, 
     {opacity: 1}
   ], 200)
+  const el2 = el.querySelector('.modal-card')
+  el2.animate([
+    {transform: 'translateY(5vh)'}, 
+    {transform: 'translateY(0)'}
+  ], 200)
 }
 
-const fadeOut = (el, done) => {
+const onDialogRemoved = (el, done) => {
   C.resumeRoot()
   const anim = el.animate([
     {opacity: 1}, 
@@ -101,10 +106,10 @@ const fadeOut = (el, done) => {
   C.prepareToDestroy(el, anim, done)
 }
 
-export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', message, ...props}) => {
+export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', hideCancelButton = false, message, ...props}) => {
   clazz += ' modal is-active'
   return (
-    <div class={clazz} key={name} {...props} oncreate={fadeIn} onremove={fadeOut}>
+    <div class={clazz} key={name} {...props} oncreate={onDialogCreated} onremove={onDialogRemoved}>
       <div class="modal-background"></div>
       <div class="modal-card">
         <section class="modal-card-body">
@@ -112,12 +117,27 @@ export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', message, 
         </section>
         <footer class="modal-card-foot">
           <SettleButton class="button is-success" mg-name={name} mg-result={true}>OK</SettleButton>
-          <SettleButton class="button" mg-name={name} mg-result={false}>キャンセル</SettleButton>
+          {! hideCancelButton ? (<SettleButton class="button" mg-name={name} mg-result={false}>キャンセル</SettleButton>) : null}
         </footer>
       </div>
     </div>
   )
 }, attributeMap.dialog)
+
+const onNotificationCreated = (el) => {
+  el.animate([
+    {transform: 'translateX(100%)'}, 
+    {transform: 'translateY(0)'}
+  ], 200)
+}
+
+const onNotificationRemoved = (el, done) => {
+  const anim = el.animate([
+    {opacity: 1}, 
+    {opacity: 0}
+  ], 200)
+  C.prepareToDestroy(el, anim, done)
+}
 
 export const Notification = C.playDialog(({'mg-name':name, message, class:clazz = '', ...props}) => {
   // add simple layout
@@ -130,7 +150,7 @@ export const Notification = C.playDialog(({'mg-name':name, message, class:clazz 
   }
   clazz += ' notification is-primary'
   return (
-    <div class={clazz} key={name} style={style} {...props} oncreate={fadeIn} onremove={fadeOut}>
+    <div class={clazz} key={name} style={style} {...props} oncreate={onNotificationCreated} onremove={onNotificationRemoved}>
       <SettleButton class="delete" mg-name={name} mg-result={true}></SettleButton>
       <p>{message}</p>
     </div>
