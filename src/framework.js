@@ -92,6 +92,11 @@ export const API = {
   }, 
 
   closeDialog: (name, env) => {
+    const extra = E.getExtra(name, env)
+    if (! extra) return env
+    if (extra.timeoutId) {
+      clearTimeout(extra.timeoutId)
+    }
     return E.setExtra(name, null, env)
   }, 
 
