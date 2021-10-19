@@ -126,31 +126,23 @@ export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', hideCance
 
 const onNotificationCreated = (el) => {
   el.animate([
-    {transform: 'translateX(100%)'}, 
-    {transform: 'translateY(0)'}
+    {maxHeight: 0}, 
+    {maxHeight: '300px'}
   ], 200)
 }
 
 const onNotificationRemoved = (el, done) => {
   const anim = el.animate([
-    {opacity: 1}, 
-    {opacity: 0}
+    {maxHeight: '300px'}, 
+    {maxHeight: 0}
   ], 200)
   C.prepareToDestroy(el, anim, done)
 }
 
 export const Notification = C.playDialog(({'mg-name':name, message, class:clazz = '', ...props}) => {
-  // add simple layout
-  const style = {
-    boxSizing: 'border-box', 
-    opacity: 1, 
-    position: 'fixed', 
-    right: '10px', 
-    bottom: '10px'
-  }
-  clazz += ' notification is-primary'
+  clazz += ' notification'
   return (
-    <div class={clazz} key={name} style={style} {...props} oncreate={onNotificationCreated} onremove={onNotificationRemoved}>
+    <div class={clazz} key={name} {...props} oncreate={onNotificationCreated} onremove={onNotificationRemoved}>
       <SettleButton class="delete" mg-name={name} mg-result={true}></SettleButton>
       <p>{message}</p>
     </div>
@@ -164,24 +156,3 @@ export const Progress = C.playProgress(({class:clazz, ...props}) => {
   )
 }, attributeMap.progress)
 
-
-
-/**
- * Bulma doesn't have Spinner, then we define simple one.
- */
-/*export const Spinner = C.playSpinner(({'mg-name':name, ...props}) => {
-  const style = {
-    position:"fixed",
-    boxSizing: 'border-box', 
-    top:0,
-    right: 0, 
-    bottom:0,
-    left:0,
-    backgroundColor:'rgba(0,0,0,0.5)'
-  }
-  return (
-    <div key={name} style={style} {...props} oncreate={fadeIn} onremove={fadeOut}>
-      <div style={{color:"#FFFFFF"}}>Loading...</div>
-    </div>
-  )
-}, attributeMap)*/
