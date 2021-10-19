@@ -10,51 +10,55 @@ const attributeMap = {
     value: 'value', 
     class: 'class', 
     invalidClass: 'is-danger', 
-    invalid: 'data-mg-invalid'
+    invalid: ''
   }, 
   listbox: {
     onchange: 'onchange', 
     class: 'class', 
     invalidClass: 'is-danger', 
-    invalid: 'data-mg-invalid'
-  }, 
-  option: {
-    selected: 'selected', 
-    value: 'value'
+    invalid: '', 
+    value: 'value', 
+    option: {
+      selected: 'selected', 
+      value: 'value'
+    }
   }, 
   radio: {
     onchange: 'onchange', 
     checked: 'checked', 
     value: 'value', 
     class: 'class', 
-    invalidClass: 'mg-invalid', 
-    invalid: 'data-mg-invalid'
+    invalidClass: '', 
+    invalid: ''
   }, 
   checkbox: {
     onchange: 'onchange', 
     checked: 'checked', 
     class: 'class', 
-    invalidClass: 'mg-invalid', 
-    invalid: 'data-mg-invalid'
+    invalidClass: '', 
+    invalid: ''
   }, 
   updateButton: {
     onclick: 'onclick', 
-    update: 'data-mg-update', 
-    context: 'data-mg-context', 
-    current: 'value'
+    '@nullIfHidden': false, 
+    current: '', 
+    class: 'class', 
+    shown: '', 
+    shownClass: 'is-loading'
   }, 
   settleButton: {
-    onclick: 'onclick', 
-    name: 'data-mg-name', 
-    result: 'data-mg-result'
+    onclick: 'onclick'
   }, 
   dialog: {
+    '@nullIfHidden': true, 
     message: 'message'
   }, 
   notification: {
+    '@nullIfHidden': true, 
     message: 'message'
   }, 
   progress: {
+    '@nullIfHidden': true, 
     current: 'value'
   }
 }
@@ -63,14 +67,7 @@ export const Textbox = C.playTextbox('input', attributeMap.textbox)
 export const Listbox = C.playListbox('select', attributeMap.listbox)
 export const Radio = C.playRadio('input', attributeMap.radio)
 export const Checkbox = C.playCheckbox('input', attributeMap.checkbox)
-export const UpdateButton = C.compose(C.playUpdateButton, C.playProgress)(({...props}, children) => {
-  if (props.hasOwnProperty('data-mg-progress')) {
-    C.addClass(props, 'class', 'is-loading')
-  }
-  return (
-    <button {...props}>{children}</button>
-  )
-}, attributeMap.updateButton)
+export const UpdateButton = C.compose(C.playUpdateButton, C.playProgress)("button", attributeMap.updateButton)
 export const SettleButton = C.playSettleButton('button', attributeMap.settleButton)
 
 export const Field = ({path, env, ...props}, children) => {
@@ -140,10 +137,10 @@ export const Notification = C.playDialog(({'mg-name':name, message, class:clazz 
   )
 }, attributeMap.notification)
 
-export const Progress = C.playProgress(({...props}) => {
-  C.addClass(props, 'class', 'progress')
+export const Progress = C.playProgress(({class:clazz, ...props}) => {
+  clazz += ' progress'
   return (
-    <progress {...props}>indeterminated</progress>
+    <progress class={clazz} {...props}>indeterminated</progress>
   )
 }, attributeMap.progress)
 

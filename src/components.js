@@ -8,13 +8,13 @@ export const defaultAttributeMap = {
     value: 'value', 
     class: 'class', 
     invalidClass: 'mg-invalid', 
-    invalid: 'data-mg-invalid'
+    invalid: ''
   }, 
   listbox: {
     onchange: 'onchange', 
     class: 'class', 
     invalidClass: 'mg-invalid', 
-    invalid: 'data-mg-invalid', 
+    invalid: '', 
     value: 'value', 
     option: {
       selected: 'selected', 
@@ -27,37 +27,45 @@ export const defaultAttributeMap = {
     value: 'value', 
     class: 'class', 
     invalidClass: 'mg-invalid', 
-    invalid: 'data-mg-invalid'
+    invalid: ''
   }, 
   checkbox: {
     onchange: 'onchange', 
     checked: 'checked', 
     class: 'class', 
     invalidClass: 'mg-invalid', 
-    invalid: 'data-mg-invalid'
+    invalid: ''
   }, 
   updateButton: {
-    onclick: 'onclick', 
-    update: 'data-mg-update', 
-    context: 'data-mg-context', 
+    onclick: 'onclick'
   }, 
   settleButton: {
-    onclick: 'onclick', 
-    name: 'data-mg-name', 
-    result: 'data-mg-result'
+    onclick: 'onclick'
   }, 
   dialog: {
-    message: 'message'
+    '@nullIfHidden': true, 
+    message: 'message', 
+    class: 'class', 
+    shown: 'shown', 
+    shownClass: 'mg-shown'
   }, 
   progress: {
-    current: 'current'
+    '@nullIfHidden': true, 
+    current: 'current', 
+    class: 'class', 
+    shown: 'shown', 
+    shownClass: 'mg-shown'
   }, 
   page: {
-    current: 'data-mg-current', 
-    currentClass: 'mg-current'
+    '@nullIfHidden': true, 
+    class: 'class', 
+    shown: 'shown', 
+    shownClass: 'mg-shown'
   }, 
   'switch': {
-    shown: 'data-mg-shown', 
+    '@nullIfHidden': true, 
+    class: 'class', 
+    shown: 'shown', 
     shownClass: 'mg-shown'
   }
 }
@@ -105,9 +113,15 @@ export const compose = (p1, p2) => (C, map = null) => {
   }
 }
 
-export const addClass = (attributes, attr, clazz) => {
+const addClass = (attributes, attr, clazz) => {
+  if (! clazz) return
   if (! attributes.hasOwnProperty(attr)) attributes[attr] = ''
   attributes[attr] += ' ' + clazz
+}
+
+const addAttr = (attributes, attr, value) => {
+  if (! attr) return
+  attributes[attr] = value
 }
 
 export const playTextbox = (C, map = null) => {
@@ -117,14 +131,12 @@ export const playTextbox = (C, map = null) => {
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
     attributes['data-mg-value-attribute'] = map.value
-    attributes['data-mg-textbox'] = "1"
     attributes[map.oninput] = actions.onTextboxInput
     attributes[map.onblur] = actions.onTextboxBlur
     attributes[map.value] = slot.input
-    if ((slot.touched || false) && (slot.invalid || false)) {
-      addClass(attributes, map.class, map.invalidClass)
-      attributes[map.invalid] = true
-    }
+    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    addAttr(attributes, map.invalid, invalid)
+    addClass(attributes, map.class, invalid ? map.invalidClass : "")
     return h(C, attributes, ...children)
   }
 }
@@ -138,12 +150,10 @@ export const playListbox = (C, map = null) => {
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
     attributes['data-mg-value-attribute'] = map.value
-    attributes['data-mg-listbox'] = "1"
     attributes[map.onchange] = actions.onListboxChange
-    if ((slot.touched || false) && (slot.invalid || false)) {
-      addClass(attributes, map.class, map.invalidClass)
-      attributes[map.invalid] = true
-    }
+    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    addAttr(attributes, map.invalid, invalid)
+    addClass(attributes, map.class, invalid ? map.invalidClass : "")
     children.forEach((o) => {
       o.attributes[map.option.selected] = o.attributes[map.option.value] == slot['@value']
     })
@@ -160,13 +170,11 @@ export const playRadio = (C, map = null) => {
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
     attributes['data-mg-value-attribute'] = map.value
-    attributes['data-mg-radio'] = "1"
     attributes[map.onchange] = actions.onRadioChange
     attributes[map.checked] = attributes[map.value] == slot['@value']
-    if ((slot.touched || false) && (slot.invalid || false)) {
-      addClass(attributes, map.class, map.invalidClass)
-      attributes[map.invalid] = true
-    }
+    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    addAttr(attributes, map.invalid, invalid)
+    addClass(attributes, map.class, invalid ? map.invalidClass : "")
     return h(C, attributes, ...children)
   }
 }
@@ -183,10 +191,9 @@ export const playCheckbox = (C, map = null) => {
     attributes['data-mg-checkbox'] = "1"
     attributes[map.onchange] = actions.onCheckboxChange
     attributes[map.checked] = slot['@value']
-    if ((slot.touched || false) && (slot.invalid || false)) {
-      addClass(attributes, map.class, map.invalidClass)
-      attributes[map.invalid] = true
-    }
+    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    addAttr(attributes, map.invalid, invalid)
+    addClass(attributes, map.class, invalid ? map.invalidClass : "")
     return h(C, attributes, ...children)
   }
 }
@@ -199,9 +206,8 @@ export const playUpdateButton = (C, map = null) => {
   map = map || defaultAttributeMap.button
   return (props, children) => (state, actions) => {
     const {'mg-update':update, 'mg-context':context, ...attributes} = props
-    attributes['data-mg-updateButton'] = "1"
-    attributes[map.update] = update
-    attributes[map.context] = JSON.stringify(typeof context == "undefined" ? null : context)
+    attributes['data-mg-update'] = update
+    attributes['data-mg-context'] = JSON.stringify(typeof context == "undefined" ? null : context)
     attributes[map.onclick] = actions.onUpdate
     return h(C, attributes, ...children)
   }
@@ -213,9 +219,8 @@ export const playSettleButton = (C, map = null) => {
   map = map || defaultAttributeMap.button
   return (props, children) => (state, actions) => {
     const {'mg-name':name, 'mg-result':result, ...attributes} = props
-    attributes['data-mg-settleButton'] = "1"
-    attributes[map.name] = name
-    attributes[map.result] = JSON.stringify(typeof result == "undefined" ? null : result)
+    attributes['data-mg-name'] = name
+    attributes['data-mg-result'] = JSON.stringify(typeof result == "undefined" ? null : result)
     attributes[map.onclick] = actions.onPromiseSettle
     return h(C, attributes, ...children)
   }
@@ -229,9 +234,10 @@ export const playDialog = (C, map = null) => {
     const {...attributes} = props
     const name = attributes['mg-name']
     const message = API.getDialog(name, state.env)
-    if (message === null) return null
+    if (message === null && map['@nullIfHidden']) return null
     attributes[map.message] = message
-    attributes['data-mg-dialog'] = "1"
+    addAttr(attributes, map.shown, (message !== null))
+    addClass(attributes, map.class, message !== null ? map.shownClass : "")
     return h(C, attributes, ...children)
   }
 }
@@ -242,9 +248,10 @@ export const playProgress = (C, map = null) => {
     const {...attributes} = props
     const name = attributes['mg-name']
     const current = API.getProgress(name, state.env)
-    if (current === null) return null
-    if (current != -1) attributes[map.current] = current
-    attributes['data-mg-progress'] = "1"
+    if (current === null && map['@nullIfHidden']) return null
+    if (current !== null && current != -1) addAttr(attributes, map.current, current)
+    addAttr(attributes, map.shown, current !== null)
+    addClass(attributes, map.class, current !== null ? map.shownClass : "")
     return h(C, attributes, ...children)
   }
 }
@@ -252,13 +259,14 @@ export const playProgress = (C, map = null) => {
 export const playPage = (C, map = null) => {
   map = map || defaultAttributeMap.page
   return (props, children) => (state, actions) => {
-    const {'mg-index':index, ...attributes} = props
+    const {...attributes} = props
+    const index = attributes['mg-index']
     const name = attributes['mg-name']
-    let current = API.getPage(name, state.env)
-    if (index != current) return null
-    addClass(attributes, map.class, map.currentClass)
-    attributes[map.current] = true
-    attributes['data-mg-page'] = "1"
+    const current = API.getPage(name, state.env)
+    const shown = (index == current)
+    if (! shown && map['@nullIfHidden']) return null
+    addAttr(attributes, map.shown, shown)
+    addClass(attributes, map.class, shown ? map.shownClass : "")
     return h(C, attributes, ...children)
   }
 }
@@ -268,11 +276,10 @@ export const playSwitch = (C, map = null) => {
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const name = attributes['mg-name']
-    let current = API.getSwitch(name, state.env)
-    if (! current) return null
-    addClass(attributes, map.class, map.shownClass)
-    attributes[map.shown] = true
-    attributes['data-mg-switch'] = "1"
+    const shown = API.getSwitch(name, state.env)
+    if (! shown && map['@nullIfHidden']) return null
+    addAttr(attributes, map.shown, shown)
+    addClass(attributes, map.class, shown ? map.shownClass : "")
     return h(C, attributes, ...children)
   }
 }

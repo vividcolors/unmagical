@@ -177,7 +177,7 @@ const view = (env) => {
         </tr>
       </table>
       <hr />
-      <UpdateButton type="button" class="button is-primary" disabled={loading} mg-role="button" mg-update="submit" mg-context={{path:"/detail", errorSelector:".mg-invalid", url:"http://localhost/", method:"POST", successMessage:"SUCCESS!!", successMessageTimeout:5000, failureMessage:"FAILURE!"}}>確定</UpdateButton>
+      <UpdateButton type="button" class="button is-primary" mg-name="loading" mg-update="submit" mg-context={{path:"/detail", errorSelector:".is-danger", url:"http://localhost/", method:"POST", successMessage:"SUCCESS!!", successMessageTimeout:5000, failureMessage:"FAILURE!"}}>確定</UpdateButton>
       <Progress mg-name="loading" />
       <Dialog mg-name="alert" />
       <Notification mg-name="feedback" />
