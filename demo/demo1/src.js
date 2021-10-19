@@ -177,7 +177,7 @@ const view = (env) => {
         </tr>
       </table>
       <hr />
-      <UpdateButton type="button" class="button is-primary" mg-name="loading" mg-update="submit" mg-context={{path:"/detail", errorSelector:".is-danger", url:"http://localhost/", method:"POST", successMessage:"SUCCESS!!", successMessageTimeout:5000, failureMessage:"FAILURE!"}}>確定</UpdateButton>
+      <UpdateButton type="button" class="button is-primary" mg-name="loading" mg-update="submit" mg-context={{url:"http://localhost/", options:{path:"/detail", errorSelector:".is-danger", method:"POST", successMessage:"SUCCESS!!", successMessageTimeout:5000, failureMessage:"FAILURE!"}}}>確定</UpdateButton>
       <Dialog mg-name="alert" hideCancelButton={true} />
     </div>
   )
@@ -246,11 +246,7 @@ const evolve = (path, env) => {
   return env
 }
 
-const updates = {
-  submit: API.submit
-}
-
 const containerEl = document.getElementById('app')
 
-start({data, schema, view, updates, containerEl, evolve})
+start({data, schema, view, containerEl, evolve})
 

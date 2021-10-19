@@ -175,36 +175,47 @@ export const API = {
 
   /**
    * 
-   * @param {Object} context
-   * @param {string} context.path
-   * @param {string} context.errorSelector
-   * @param {string} context.url
-   * @param {string} context.method
-   * @param {string} context.successMessage
-   * @param {number|null} context.successMessageTimeout
-   * @param {string} context.failureMessage
+   * @param {string} url
+   * @param {Object} options
+   * @param {string} options.path
+   * @param {string} options.errorSelector
+   * @param {string} options.method
+   * @param {string} options.successMessage
+   * @param {number|null} options.successMessageTimeout
+   * @param {string} options.failureMessage
    */
-  submit: (context, env) => {
-    env = API.touchAll(context.path, env)
-    const numErrors = API.countValidationErrors(context.path, env)
+  submit: (url, options, env) => {
+    const opts = {
+      path: '', 
+      errorSelector: null, 
+      method: 'POST', 
+      successMessage: "Submission successful.", 
+      successMessageTimeout: 5000, 
+      failureMessage: "Submission failed.", 
+      ...options
+    }
+    env = API.touchAll(opts.path, env)
+    const numErrors = API.countValidationErrors(opts.path, env)
     if (numErrors) {
-      window.setTimeout(() => {
-        const targetEl = document.querySelector(context.errorSelector)
-        if (targetEl) targetEl.scrollIntoView()
-      }, 100)
+      if (opts.errorSelector) {
+        window.setTimeout(() => {
+          const targetEl = document.querySelector(opts.errorSelector)
+          if (targetEl) targetEl.scrollIntoView()
+        }, 100)
+      }
       return env
     } else {
-      const options = {
-        method: context.method, 
+      const fetchOptions = {
+        method: opts.method, 
         mode: 'cors', 
-        body: JSON.stringify(E.extract(context.path, env)), 
+        body: JSON.stringify(E.extract(opts.path, env)), 
         header: {
           'Content-Type': 'application/json'
         }
       }
       env = API.openProgress('loading', null, env)
       return API.withEnv(env, 
-        fetch(context.url, options)
+        fetch(url, fetchOptions)
         .catch(API.wrap(([response, env]) => {
           console.error('form submission failed', response)
           return {ok:false}
@@ -212,12 +223,12 @@ export const API = {
         .then(API.wrap(([response, env]) => {
           env = API.closeProgress('loading', env)
           if (response.ok) {
-            return API.openDialog('feedback', context.successMessage, {timeout:context.successMessageTimeout}, env)
+            return API.openDialog('feedback', opts.successMessage, {timeout:opts.successMessageTimeout}, env)
             .then(API.wrap(([result, env]) => {
               return API.closeDialog('feedback', env)
             }))
           } else {
-            return API.openDialog('alert', context.failureMessage, null, env)
+            return API.openDialog('alert', opts.failureMessage, null, env)
             .then(API.wrap(([result, env]) => {
               return API.closeDialog('alert', env)
             }))
@@ -225,6 +236,39 @@ export const API = {
         }))
       )
     }
+  }
+}
+
+const apiProxies = {
+  openDialog: (context, env) => {
+    return API.openDialog(context.name, context.message, context.options, env)
+  }, 
+  closeDialog: (context, env) => {
+    return API.closeDialog(context.name, env)
+  }, 
+  openProgress: (context, env) => {
+    return API.openProgress(context.name, null, env)
+  }, 
+  closeProgress: (context, env) => {
+    return API.closeProgress(context.name, env)
+  }, 
+  setPage: (context, env) => {
+    return API.setPage(context.name, context.current, env)
+  }, 
+  nextPage: (context, env) => {
+    return API.nextPage(context.name, env)
+  }, 
+  prevPage: (context, env) => {
+    return API.prevPage(context.name, env)
+  }, 
+  setSwitch: (context, env) => {
+    return API.setSwitch(context.name, context.shown, env)
+  }, 
+  toggleSwitch: (context, env) => {
+    return API.toggleSwitch(context.name, env)
+  }, 
+  submit: (context, env) => {
+    return API.submit(context.url, context.options, env)
   }
 }
 
@@ -269,6 +313,8 @@ export const start = (
       const slot0 = E.getSlot(path, state.baseEnv)
       const slot = {...slot0, input:value}
       const baseEnv = E.setSlot(path, slot, state.baseEnv)
+      // We don't call evolve() here, because oninput is not a check point of evolve().
+      // Thus we update not only baseEnv but also env.
       const slotb0 = E.getSlot(path, state.env)
       const slotb = {...slotb0, input:value}
       const env = E.setSlot(path, slotb, state.env)
@@ -320,8 +366,8 @@ export const start = (
       let baseEnv = state.baseEnv
       const ret = (env0) => {baseEnv = env0}
       baseEnv = {...baseEnv, ret}
-      if (! update || ! updates[update]) throw new Error('onUpdate/0: no update or unknown update')
-      const res = updates[update](context, baseEnv)
+      if (! update || !(updates[update] || apiProxies[update])) throw new Error('onUpdate/0: no update or unknown update')
+      const res = (updates[update] || apiProxies[update])(context, baseEnv)
       let _unused = null
       baseEnv = E.isEnv(res) ? {...res, ret:_unused} : {...baseEnv, ret:_unused}
       let env = state.env
