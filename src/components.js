@@ -188,7 +188,6 @@ export const playCheckbox = (C, map = null) => {
     const slot = API.getSlot(path, state.env)
     attributes['data-mg-path'] = path
     attributes['data-mg-checked-attribute'] = map.checked
-    attributes['data-mg-checkbox'] = "1"
     attributes[map.onchange] = actions.onCheckboxChange
     attributes[map.checked] = slot['@value']
     const invalid = ((slot.touched || false) && (slot.invalid || false))
