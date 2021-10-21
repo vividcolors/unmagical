@@ -8,7 +8,8 @@
   "scripts": {
     "build": "parcel build -d asset src/framework.js", 
     "test": "parcel build --target node -d asset/test tests/_index.js && node asset/test/_index", 
-    "demo1": "parcel build -d demo/demo1 --out-file index.js demo/demo1/src.js"
+    "demo1": "parcel build -d demo/demo1 --out-file index.js demo/demo1/src.js", 
+    "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.js"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
