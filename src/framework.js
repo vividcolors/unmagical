@@ -1,3 +1,4 @@
+//@ts-check
 
 import { normalizePath } from './utils'
 import * as E from './env'
@@ -28,6 +29,7 @@ export const API = {
   replace: E.replace, 
   move: E.move, 
   copy: E.copy, 
+  validate: E.validate, 
   mapDeep: E.mapDeep, 
   reduceDeep: E.reduceDeep, 
   getExtra: E.getExtra, 
@@ -46,7 +48,7 @@ export const API = {
    * 
    * @param {string} path 
    * @param {Env} env
-   * @returns {Env} 
+   * @returns {number} 
    */
   countValidationErrors: (path, env) => {
     return E.reduceDeep((cur, slot, _path) => {
@@ -164,11 +166,11 @@ export const API = {
     return p
   }, 
 
-  wrap: (handler) => {
-    return (result) => {
-      let result1 = null
+  wrap: (handler) => {  // Our customized handler :: (result, env) => ...
+    return (result) => {  // This is the actual promise handler
+      let result1 = null  // We will get the result in this variable.
       const ret = (res1) => {result1 = res1}
-      actions.onPromiseThen({result, handler, ret})
+      actions.onPromiseThen({result, handler, ret})  // enter into hyperapp. Its result is undefined.
       return result1
     }
   }, 
@@ -195,6 +197,7 @@ export const API = {
       ...options
     }
     env = API.touchAll(opts.path, env)
+    env = API.validate(opts.path, env)
     const numErrors = API.countValidationErrors(opts.path, env)
     if (numErrors) {
       if (opts.errorSelector) {
@@ -215,10 +218,12 @@ export const API = {
       }
       env = API.openProgress('loading', null, env)
       return API.withEnv(env, 
+        /** @ts-ignore */
         fetch(url, fetchOptions)
         .catch(API.wrap(([response, env]) => {
           console.error('form submission failed', response)
-          return {ok:false}
+          //return {ok:false}
+          return {ok:true}
         }))
         .then(API.wrap(([response, env]) => {
           env = API.closeProgress('loading', env)
@@ -281,12 +286,12 @@ let actions = null
  * @param {Object} params
  * @param {Json} params.data
  * @param {Schema} params.schema
- * @param {(Env) => VNode} params.view
+ * @param {(Env) => import('hyperapp').VNode} params.view
  * @param {Element} params.containerEl
  * @param {((string, Env) => Env) | null} params.evolve
  * @param {{[name:string]:(any)}} params.updates
- * @param {((value:any, schema:Schema) => Slot) | null} params.validate
- * @param {((slot:Slot, schema:Schema) => Slot) | null} params.coerce
+ * @param {((value:any, slot:Slot, schema:Schema) => Slot) | null} params.validate
+ * @param {((input:string, slot:Slot, schema:Schema) => Slot) | null} params.coerce
  */
 export const start = (
     {
@@ -311,12 +316,12 @@ export const start = (
       const path = ev.currentTarget.dataset.mgPath
       const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
       const slot0 = E.getSlot(path, state.baseEnv)
-      const slot = {...slot0, input:value}
+      const slot = {...slot0, input:value, touched:true}
       const baseEnv = E.setSlot(path, slot, state.baseEnv)
       // We don't call evolve() here, because oninput is not a check point of evolve().
       // Thus we update not only baseEnv but also env.
       const slotb0 = E.getSlot(path, state.env)
-      const slotb = {...slotb0, input:value}
+      const slotb = {...slotb0, input:value, touched:true}
       const env = E.setSlot(path, slotb, state.env)
       return {...state, baseEnv, env}
     }, 
@@ -324,90 +329,99 @@ export const start = (
       const path = ev.currentTarget.dataset.mgPath
       const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const slot0 = {touched:true, input:value}
-      const slot = coerce(slot0, schemaDb[npath])
+      const slot0 = E.getSlot(path, state.baseEnv)
+      const slot = coerce(value, slot0, schemaDb[npath])
       let baseEnv = E.setSlot(path, slot, state.baseEnv)
+      baseEnv = E.validate("", baseEnv)
       let env = evolve(path, baseEnv)
+      env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
     onListboxChange: (ev) => (state, actions) => {
       const path = ev.currentTarget.dataset.mgPath
       const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const slot0 = {touched:true, input:value}
-      const slot = coerce(slot0, schemaDb[npath])
+      const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
+      const slot = coerce(value, slot0, schemaDb[npath])
       let baseEnv = E.setSlot(path, slot, state.baseEnv)
+      baseEnv = E.validate("", baseEnv)
       let env = evolve(path, baseEnv)
+      env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
     onRadioChange: (ev) => (state, actions) => {
       const path = ev.currentTarget.dataset.mgPath
       const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const slot0 = {touched:true, input:value}
-      const slot = coerce(slot0, schemaDb[npath])
+      const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
+      const slot = coerce(value, slot0, schemaDb[npath])
       let baseEnv = E.setSlot(path, slot, state.baseEnv)
+      baseEnv = E.validate("", baseEnv)
       let env = evolve(path, baseEnv)
+      env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
     onCheckboxChange: (ev) => (state, actions) => {
       const path = ev.currentTarget.dataset.mgPath
       const checked = ev.currentTarget[ev.currentTarget.dataset.mgCheckedAttribute]
+      const value = checked ? "true" : "false"
       const npath = normalizePath(path)
-      const slot0 = {touched:true, input:checked ? "true" : "false"}
-      const slot = coerce(slot0, schemaDb[npath])
+      const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
+      const slot = coerce(value, slot0, schemaDb[npath])
       let baseEnv = E.setSlot(path, slot, state.baseEnv)
+      baseEnv = E.validate("", baseEnv)
       let env = evolve(path, baseEnv)
+      env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
     onUpdate: (ev) => (state, actions) => {
-      const update = (ev instanceof Event) ? ev.currentTarget.dataset.mgUpdate : ev.update
-      const context = (ev instanceof Event) ? JSON.parse(ev.currentTarget.dataset.mgContext || "null") : ev.context
+      const update = ('currentTarget' in ev) ? ev.currentTarget.dataset.mgUpdate : ev.update
+      const context = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgContext || "null") : ev.context
       let baseEnv = state.baseEnv
-      const ret = (env0) => {baseEnv = env0}
-      baseEnv = {...baseEnv, ret}
+      baseEnv = E.setRet((env0) => {baseEnv = env0}, baseEnv)
       if (! update || !(updates[update] || apiProxies[update])) throw new Error('onUpdate/0: no update or unknown update')
       const res = (updates[update] || apiProxies[update])(context, baseEnv)
-      let _unused = null
-      baseEnv = E.isEnv(res) ? {...res, ret:_unused} : {...baseEnv, ret:_unused}
+      baseEnv = E.setRet(null, E.isEnv(res) ? res : baseEnv)
+      baseEnv = E.validate("", baseEnv)
       let env = state.env
       if (! E.isSame(state.baseEnv, baseEnv)) {
         env = evolve("", baseEnv)
+        env = E.validate("", env)
       }
       return {...state, baseEnv, env}
     }, 
     onPromiseSettle: (ev) => (state, actions) => {
-      const name = (ev instanceof Event) ? ev.currentTarget.dataset.mgName : ev.name
-      const result = (ev instanceof Event) ? JSON.parse(ev.currentTarget.dataset.mgResult || "null") : ev.result
+      const name = ('currentTarget' in ev) ? ev.currentTarget.dataset.mgName : ev.name
+      const result = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgResult || "null") : ev.result
       let baseEnv = state.baseEnv
       const extra = E.getExtra(name, baseEnv)
-      const ret = (env0) => {baseEnv = env0}
-      baseEnv = {...baseEnv, ret}
+      baseEnv = E.setRet((env0) => {baseEnv = env0}, baseEnv)
       if (! extra || ! extra.fulfill) throw new Error('onPromiseSettle/0: no callback or unknown callback')
       if (extra.timeoutId) {
         clearTimeout(extra.timeoutId)
       }
       const res = extra.fulfill([result, baseEnv])
-      let _unused = null
-      baseEnv = E.isEnv(res) ? {...res, ret:_unused} : {...baseEnv, ret:_unused}
+      baseEnv = E.setRet(null, E.isEnv(res) ? res : baseEnv)
+      baseEnv = E.validate("", baseEnv)
       let env = state.env
       if (! E.isSame(state.baseEnv, baseEnv)) {
         env = evolve("", baseEnv)
+        env = E.validate("", env)
       }
       return {...state, baseEnv, env}
     }, 
     onPromiseThen: (context) => (state, actions) => {
       let baseEnv = state.baseEnv
-      const ret = (env0) => {baseEnv = env0}
-      baseEnv = {...baseEnv, ret}
+      baseEnv = E.setRet((env0) => {baseEnv = env0}, baseEnv)
       const res = context.handler([context.result, baseEnv])
-      let _unused = null
-      baseEnv = E.isEnv(res) ? {...res, ret:_unused} : {...baseEnv, ret:_unused}
+      baseEnv = E.setRet(null, E.isEnv(res) ? res : baseEnv)
+      baseEnv = E.validate("", baseEnv)
       let env = state.env
       if (! E.isSame(state.baseEnv, baseEnv)) {
         env = evolve("", baseEnv)
+        env = E.validate("", env)
       }
-      if (! res.hasOwnProperty('tree')) {
+      if (! E.isEnv(res)) {
         context.ret(res)
       }
       return {...state, baseEnv, env}

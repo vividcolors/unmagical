@@ -1,6 +1,6 @@
 //@ts-check
 
-import {emptyObject, typeOf} from './utils'
+import {emptyObject, typeOf, isJsonValue} from './utils'
 
 /**
  * @typedef {null|number|string|boolean|any[]|{[name:string]:any}} Json 
@@ -51,12 +51,19 @@ export const defaultMessages = {
   'schema.ruleError.pattern': 'Invalid format',  // 形式が不正です
   'schema.ruleError.maxItems': 'Please make it less than or equal to {{0}}',  // %s個以下にしてください
   'schema.ruleError.minItems': 'Please make it more than or equal to {{0}}',  // %s個以上にしてください
-  'schema.typeError': 'Invalid type',  // 不正な型です
-  'schema.scanError.null': 'Invalid input',  // 不正な入力です
-  'schema.scanError.empty': 'Please select',  // 選択してください
-  'schema.scanError.number': "Please enter a number",  // 数値を入力してください
-  'schema.scanError.integer': "Please enter an integer",  // 整数を入力してください
-  'schema.scanError.boolean': "Please enter a boolean value"  // 真偽値を入力してください
+  'schema.valueError.generic': 'Invalid value',  // 不正な値です
+  'schema.valueError.null': 'Invalid input', 
+  'schema.valueError.number': 'Please input a number', 
+  'schema.valueError.number?': 'Please input a number', 
+  'schema.valueError.integer': 'Please input an integer', 
+  'schema.valueError.integer?': 'Please input an integer', 
+  'schema.valueError.boolean': 'Please input true or false', 
+  'schema.valueError.boolean?': 'Please input true or false', 
+  'schema.valueError.string': 'Invalid input', 
+  'schema.valueError.array': 'Invalid input', 
+  'schema.valueError.array?': 'Invalid input', 
+  'schema.valueError.object': 'Invalid input', 
+  'schema.valueError.object?': 'Invalid input'
 }
 
 /**
@@ -100,28 +107,6 @@ const makeMessage = (dict, code, arg = null) => {
 }
 
 /**
- * Applies validation rules for a specified value.
- * @param {Json} value a value which validation rules are applied to
- * @param {Slot} slot a prototype of a slot to return
- * @param {Schema} schema 
- * @param {Rules} rules 
- * @param {Dictionary} dict
- * @return {Slot}
- */
-const cook = (value, slot, schema, rules, dict) => {
-  for (let p in schema) {
-    const f = rules[p]
-    if (! f) continue
-    const result = f(schema[p], value)
-    if (result !== true) {
-      const message = makeMessage(dict, result, schema[p])
-      return {...slot, '@value':value, invalid:true, message}
-    }
-  }
-  return {...slot, '@value':value, invalid:false, message:''}
-}
-
-/**
  * Returns true if the value is in an specified type
  * @param {Json} value
  * @param {string} type 
@@ -145,7 +130,7 @@ const testType = (value, type) => {
       case 'boolean?': 
         return typeof value == 'boolean'
       case 'string': 
-        return true
+        return typeof value == 'string'
       case 'object':  // FALLTHRU
       case 'object?': 
         return (typeof value == 'object' && value !== null)
@@ -252,43 +237,38 @@ export const defaultRules = {
  * @description shallow validation
  * @param {Rules} rules
  * @param {Dictionary} dict
- * @returns {(value:any, schema:Schema) => Slot} 
+ * @returns {(value:any, slot:Slot, schema:Schema) => Slot} 
  */
-export const validate = (rules, dict) => (value, schema) => {
-  /** @type {Slot} */
-  const slot = !schema ? {'@value':value, invalid:false, touched:value !== null && value !== "", message:''} 
-    : testType(value, schema.type) ? cook(value, emptyObject, schema, rules, dict)
-    : {'@value':value, invalid:true, touched:value !== null && value !== "", message:makeMessage(dict, 'schema.typeError', null)}
-
-  if (! slot.hasOwnProperty('input')) {
-    // add input meta if possible
-    switch (typeOf(value)) {
-      case 'null': 
-        slot.input = ""
-        break
-      case 'number': 
-        slot.input = "" + value
-        break
-      case 'string': 
-        slot.input = value
-        break
-      case 'boolean': 
-        slot.input = value ? 'true' : 'false'
-        break
-      default: 
-        slot.input = ""
+export const validate = (rules, dict) => (value, slot, schema) => {
+  if (! isJsonValue(value)) {
+    const code = (schema && schema.type) ? 'schema.valueError.' + schema.type : 'schema.valueError.generic'
+    return {...slot, '@value':value, invalid:true, message:makeMessage(dict, code, null)}
+  }
+  if (schema && schema.type) {
+    if (! testType(value, schema.type)) {
+      return {...slot, '@value':value, invalid:true, message:makeMessage(dict, 'schema.typeError.' + schema.type, null)}
     }
   }
-  return slot
+
+  for (let p in schema) {
+    const f = rules[p]
+    if (! f) continue
+    const result = f(schema[p], value)
+    if (result !== true) {
+      const message = makeMessage(dict, result, schema[p])
+      return {...slot, '@value':value, invalid:true, message}
+    }
+  }
+  return {...slot, '@value':value, invalid:false, message:''}
 }
 
 /**
- * Coerces a slot, to which a raw input belongs, with a schema
+ * 
  * @param {Rules} rules 
- * @param {Dictionary} dict
- * @returns {(slot:Slot, schema:Schema) => Slot}
+ * @param {Dictionary} dict 
+ * @returns {(input:string, slot:Slot, schema:Schema) => Slot}
  */
-export const coerce = (rules, dict) => (slot, schema) => {
+export const coerce = (rules, dict) => (input, slot, schema) => {
   if (! schema) {
     throw new Error('coerce/0: no schema')
   }
@@ -296,48 +276,37 @@ export const coerce = (rules, dict) => (slot, schema) => {
     throw new Error('coerce/1: type not specified')
   }
   if (['null', 'boolean', 'boolean?', 'integer', 'integer?', 'number', 'number?', 'string'].indexOf(schema.type) == -1) {
-    throw new Error('coerce/2: unknown type: ' + schema.type)
+    throw new Error('coerce/2: not a coercion enabled type: ' + schema.type)
   }
-  if (slot.input == "") {
-    if (nullable(schema.type)) {
-      return cook(null, slot, schema, rules, dict)
-    } else if (schema.type == "string") {
-      return cook("", slot, schema, rules, dict)
-    } else {
-      return {...slot, invalid:true, message:makeMessage(dict, 'schema.scanError.empty', null)}
-    }
-  }
+
   switch (schema.type) {
     case 'null': 
-      // succeed only if slot.input == ""
-      return {...slot, invalid:true, message:makeMessage(dict, 'schema.scanError.null', null)}
-    case 'number':  // FALLTHRU
+      break
+    case 'number': 
     case 'number?': 
-      const n = +slot.input
-      if ("" + n !== slot.input) {
-        return {...slot, invalid:true, message:makeMessage(dict, 'schema.scanError.number', null)}
+      const n = +input
+      if ("" + n === input) {
+        return {'@value':n, input, touched:slot.touched}
       }
-      return cook(n, slot, schema, rules, dict)
-    case 'integer':  // FALLTHRU
+      break
+    case 'integer': 
     case 'integer?': 
-      const i = +slot.input
-      if ("" + i !== slot.input || i % 1 !== 0) {
-        return {...slot, invalid:true, message:makeMessage(dict, 'schema.scanError.integer', null)}
+      const i = +input
+      if ("" + i === input && i % 1 === 0) {
+        return {'@value':i, input, touched:slot.touched}
       }
-      return cook(i, slot, schema, rules, dict)
-    case 'string': 
-      return cook(slot.input, slot, schema, rules, dict)
-    case 'boolean':  // FALLTHRU
+      break
+    case 'boolean': 
     case 'boolean?': 
-      const b = (slot.input === "true") ? true
-              : (slot.input === "false") ? false
-              : null
-      if (b === null) {
-        return {...slot, invalid:true, message:makeMessage(dict, 'schema.scanError.boolean', null)}
+      if (input === "true" || input === "false") {
+        return {'@value':input==="true", input, touched:slot.touched}
       }
-      return cook(b, slot, schema, rules, dict)
-    default: 
-      // never comes here
-      throw new Error('unknown type: ' + schema.type)
+      break
+    case 'string': 
+      return {'@value':input, input, touched:slot.touched}
   }
+  if (input == "" && nullable(schema.type)) {
+    return {'@value':null, input, touched:slot.touched}
+  }
+  return {input, touched:slot.touched}
 }

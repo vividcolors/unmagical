@@ -73,3 +73,22 @@ export const emptyObject = {}
  * @type {T[]}
  */
 export const emptyArray = []
+
+/**
+ * Returns true if `x' is json value.
+ * @param {any} x
+ * @returns {boolean} 
+ */
+export const isJsonValue = (x) => {
+  switch (typeOf(x)) {
+    case 'null': 
+    case 'number': 
+    case 'boolean': 
+    case 'string': 
+    case 'object': 
+    case 'array': 
+      return true
+    default: 
+      return false
+  }
+}

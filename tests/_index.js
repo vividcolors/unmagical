@@ -11,6 +11,15 @@ const assert = (ident, thunk, rv) => {
   }
 }
 
+const assertUndefined = (ident, thunk) => {
+  const lv = thunk()
+  if (typeof lv == "undefined") {
+    console.log('- ASSERTION', ident, 'OK')
+  } else {
+    console.log('! ASSERTION', ident, 'NG', lv, "undefined")
+  }
+}
+
 const assertError = (ident, thunk, match) => {
   let status = null
   try {
@@ -29,7 +38,7 @@ const assertError = (ident, thunk, match) => {
 
 const callRun = (m, name) => {
   console.log('TEST START: ' + name)
-  m.run(assert, assertError)
+  m.run(assert, assertError, assertUndefined)
   console.log('TEST DONE: ' + name)
   console.log('')
 }
