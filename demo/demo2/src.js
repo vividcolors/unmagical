@@ -19,7 +19,7 @@ const schema = {
       type: 'object', 
       properties: {
         firstTime: {type:'string', pattern:'^([a-zA-Z0-9])+([a-zA-Z0-9\._-])*@([a-zA-Z0-9_-])+([a-zA-Z0-9\._-]+)+$'}, 
-        secondTime: {type:'string', minLength:1}
+        secondTime: {type:'string', same:'/email/firstTime'}
       }
     }, 
     sex: {type:'string', enum:master.sex}, 

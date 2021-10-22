@@ -290,7 +290,7 @@ let actions = null
  * @param {Element} params.containerEl
  * @param {((string, Env) => Env) | null} params.evolve
  * @param {{[name:string]:(any)}} params.updates
- * @param {((value:any, slot:Slot, schema:Schema) => Slot) | null} params.validate
+ * @param {((value:any, slot:Slot, schema:Schema, path:string, env:Env) => Slot) | null} params.validate
  * @param {((input:string, slot:Slot, schema:Schema) => Slot) | null} params.coerce
  */
 export const start = (

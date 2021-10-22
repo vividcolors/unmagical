@@ -1,6 +1,7 @@
 //@ts-check
 
-import {emptyObject, typeOf, isJsonValue} from './utils'
+import {emptyObject, typeOf, isJsonValue, appendPath} from './utils'
+import * as E from './env'
 
 /**
  * @typedef {null|number|string|boolean|any[]|{[name:string]:any}} Json 
@@ -11,14 +12,16 @@ import {emptyObject, typeOf, isJsonValue} from './utils'
  *   input?:string, 
  *   ['@value']?:Json
  * }} Slot
+ * @typedef {import("./env").Env} Env
  * @typedef {{
  *   type:string, 
  *   [rule:string]:Json
  * }} Schema
- * @typedef {(param:Json, value:Json) => true|string} RuleFunc
+ * @typedef {(param:Json, value:Json, path:string, env:Env) => true|string} RuleFunc
  * @typedef {{[name:string]:RuleFunc}} Rules
  * @typedef {{[key:string]:string}} Dictionary
  * @typedef {{[path:string]:Schema}} SchemaDb
+ * 
  */
 
 /**
@@ -40,6 +43,7 @@ export const defaultMessages = {
   'schema.ruleError.const': 'Invalid input',   // 不正な入力です
   'schema.ruleError.required': 'Missing properties',  // フィールドが不足しています
   'schema.ruleError.requiredAnyOf': 'Unknown instance',  // 未知のインスタンスです
+  'schema.ruleError.same': 'Not a same value', 
   'schema.ruleError.multipleOf': 'Please enter a multiple of {{0}}',  // %Sの倍数を入力してください
   'schema.ruleError.maximum': 'Please enter {{0}} or less',  // %s以下を入力してください
   'schema.ruleError.exclusiveMaximum': 'Please enter a number less than {{0}}',  // %sより小さい数を入力してください
@@ -176,6 +180,13 @@ export const defaultRules = {
     }
     return 'schema.ruleError.requiredAnyOf'
   }, 
+  same: (param, value, path, env) => {
+    if (typeof param != 'string') throw new Error('invalid parameter')
+    const targetPath = appendPath(path, param)
+    const target = E.extract(targetPath, env)
+    if (target !== value) return 'schema.ruleError.same'
+    return true
+  }, 
   multipleOf: (param, value) => {
     if (typeof param != 'number') throw new Error('invalid parameter')
     if (typeof value != 'number') return true
@@ -237,9 +248,9 @@ export const defaultRules = {
  * @description shallow validation
  * @param {Rules} rules
  * @param {Dictionary} dict
- * @returns {(value:any, slot:Slot, schema:Schema) => Slot} 
+ * @returns {(value:any, slot:Slot, schema:Schema, path:string, env:Env) => Slot} 
  */
-export const validate = (rules, dict) => (value, slot, schema) => {
+export const validate = (rules, dict) => (value, slot, schema, path, env) => {
   if (! isJsonValue(value)) {
     const code = (schema && schema.type) ? 'schema.valueError.' + schema.type : 'schema.valueError.generic'
     return {...slot, '@value':value, invalid:true, message:makeMessage(dict, code, null)}
@@ -253,7 +264,7 @@ export const validate = (rules, dict) => (value, slot, schema) => {
   for (let p in schema) {
     const f = rules[p]
     if (! f) continue
-    const result = f(schema[p], value)
+    const result = f(schema[p], value, path, env)
     if (result !== true) {
       const message = makeMessage(dict, result, schema[p])
       return {...slot, '@value':value, invalid:true, message}

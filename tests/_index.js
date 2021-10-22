@@ -1,4 +1,5 @@
 
+import * as U from './utils'
 import * as E from './env'
 import * as S from './schema'
 
@@ -43,5 +44,6 @@ const callRun = (m, name) => {
   console.log('')
 }
 
+callRun(U, 'utils')
 callRun(E, 'env')
 callRun(S, 'schema')

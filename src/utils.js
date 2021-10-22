@@ -27,6 +27,34 @@ export const normalizePath = (path) => {
 
 /**
  * 
+ * @param {string} base 
+ * @param {string} path 
+ * @returns {string}
+ */
+export const appendPath = (base, path) => {
+  if (path.charAt(0) == '' || path.charAt(0) == '/') return path  // absolute path
+  if (path === '0') return base  // easy frequent case
+  
+  const base1 = pathToArray(base)
+  let frag0 = path.split('/')
+  let frag = []
+  let unused = null
+
+  let upcount = +frag0[0]
+  frag = base1
+  if (upcount > frag.length) {
+    upcount = frag.length
+  }
+  frag.splice(frag.length - upcount, upcount)
+
+  frag0.shift()
+
+  if (frag0.length == 0 && frag.length == 0) return ''
+  return '/' + frag.concat(frag0).join('/')
+}
+
+/**
+ * 
  * @param {(string | number)[]} path
  * @returns {string} 
  */

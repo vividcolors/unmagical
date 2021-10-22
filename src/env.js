@@ -13,7 +13,7 @@ import {hasPath as rhasPath, init, path as rpath, assocPath, insert, last, disso
  *   tree: Json, 
  *   validationNeeded: boolean, 
  *   schemaDb: SchemaDb, 
- *   validate: (value:any, slot:Slot, schema:Schema) => Slot
+ *   validate: (value:any, slot:Slot, schema:Schema, path:string, env:Env) => Slot
  *   extra: {[name:string]:any}
  *   ret?: (env:Env) => void
  * }} Env
@@ -125,7 +125,7 @@ const strip = (tree) => {
  * Makes env.
  * @param {Json} data 
  * @param {SchemaDb} schemaDb 
- * @param {(value:any, slot:Slot, schema:Schema) => Slot} validate
+ * @param {(value:any, slot:Slot, schema:Schema, path:string, env:Env) => Slot} validate
  * @returns {Env}
  */
 export const makeEnv = (data, schemaDb, validate) => {
@@ -381,25 +381,26 @@ export const validate = (path, env) => {
    * 
    * @param {Slot} slot0 
    * @param {string} npath
+   * @param {string} path
    * @returns {Slot} 
    */
-  const inner = (slot0, npath) => {
+  const inner = (slot0, npath, path) => {
     const value0 = slot0['@value']
     switch (typeOf(value0)) {
       case 'array': 
         const lis = []
         for (let i = 0; i < (/** @type {Json[]} */(value0)).length; i++) {
-          lis[i] = inner(value0[i], npath + '/*')
+          lis[i] = inner(value0[i], npath + '/*', path + '/' + i)
         }
-        return env.validate(lis, slot0, env.schemaDb[npath])
+        return env.validate(lis, slot0, env.schemaDb[npath], path, env)
       case 'object': 
         const rec = {}
         for (let p in  /** @type {{[name:string]:Json}} */(value0)) {
-          rec[p] = inner(value0[p], npath + '/' + p)
+          rec[p] = inner(value0[p], npath + '/' + p, path + '/' + p)
         }
-        return env.validate(rec, slot0, env.schemaDb[npath])
+        return env.validate(rec, slot0, env.schemaDb[npath], path, env)
       default: 
-        const slot = env.validate(value0, slot0, env.schemaDb[npath])
+        const slot = env.validate(value0, slot0, env.schemaDb[npath], path, env)
         return slot
     }
   }
@@ -409,7 +410,7 @@ export const validate = (path, env) => {
   if (! slot0) {
     throw new Error('validate/1: not found: ' + path)
   }
-  const slot = inner(slot0, normalizePath(path))
+  const slot = inner(slot0, normalizePath(path), path)
   const tree = assocPath(epath, slot, env.tree)
   return {...env, tree, validationNeeded:false}
 }
