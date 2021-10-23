@@ -75,6 +75,19 @@ export const API = {
   }, 
 
   /**
+   * @param {string} path
+   * @param {Env} env
+   * @returns {{invalid:boolean, message:string}}
+   */
+  foldValidity: (path, env) => {
+    return API.reduceDeep((cur, slot, _path) => {
+      if (cur.invalid) return cur
+      if (slot.touched && slot.invalid) return {invalid:true, message:slot.message}
+      return cur
+    }, /** @type {{invalid:boolean,message:string}} */({invalid:false, message:''}), path, env)
+  }, 
+
+  /**
    * @param {string} name
    * @param {string} message
    * @param {Object|null} options
@@ -316,12 +329,12 @@ export const start = (
       const path = ev.currentTarget.dataset.mgPath
       const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
       const slot0 = E.getSlot(path, state.baseEnv)
-      const slot = {...slot0, input:value, touched:true}
+      const slot = {...slot0, input:value}
       const baseEnv = E.setSlot(path, slot, state.baseEnv)
       // We don't call evolve() here, because oninput is not a check point of evolve().
       // Thus we update not only baseEnv but also env.
       const slotb0 = E.getSlot(path, state.env)
-      const slotb = {...slotb0, input:value, touched:true}
+      const slotb = {...slotb0, input:value}
       const env = E.setSlot(path, slotb, state.env)
       return {...state, baseEnv, env}
     }, 
@@ -329,7 +342,7 @@ export const start = (
       const path = ev.currentTarget.dataset.mgPath
       const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const slot0 = E.getSlot(path, state.baseEnv)
+      const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
       const slot = coerce(value, slot0, schemaDb[npath])
       let baseEnv = E.setSlot(path, slot, state.baseEnv)
       baseEnv = E.validate("", baseEnv)

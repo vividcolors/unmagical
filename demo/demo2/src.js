@@ -45,50 +45,14 @@ const data = {
   job:''
 }
 
-const foldValidity = (path, env) => {
-  const slot0 = API.getSlot(path, env)
-  const obj = slot0['@value']
-  const slot1 = Object.keys(obj).reduce((cur, p) => {
-    const cslot = obj[p]
-    if (cur.touched && cur.invalid) return cur
-    if (cur.touched != cslot.touched && cur.invalid != cslot.invalid) {
-      return {
-        ...cur, 
-        touched: cslot.touched, 
-        invalid: cslot.invalid, 
-        message: cslot.message
-      }
-    } else {
-      return cur
-    }
-  }, slot0)
-  return API.setSlot(path, slot1, env)
-}
-
-const evolve = (path, env) => {
-  env = foldValidity('/name', env)
-
-  const emails = API.extract('/email', env)
-  const eslot = API.getSlot('/email/secondTime', env)
-  if (eslot.touched && !eslot.invalid && emails.firstTime != emails.secondTime) {
-    env = API.setSlot('/email/secondTime', {...eslot, invalid:true, message:'二度入力してね'}, env)
-  }
-
-  env = foldValidity('/email', env)
-
-  env = foldValidity('/address', env)
-
-  return env
-}
-
 const view = (env) => {
   return (
     <div>
-      <Field title="名前" path="/name" env={env}>
+      <Field title="名前" path="/name" env={env} foldValidity>
         <Textbox mg-path="/name/firstName" />
         <Textbox mg-path="/name/lastName" />
       </Field>
-      <Field title="メールアドレス" path="/email" env={env}>
+      <Field title="メールアドレス" path="/email" env={env} foldValidity>
         <Textbox mg-path="/email/firstTime" />
         <Textbox mg-path="/email/secondTime" />
       </Field>
@@ -97,7 +61,7 @@ const view = (env) => {
           <Radio mg-path="/sex" name="sex" value={s} label={s} />
         ))}
       </Field>
-      <Field title="住所" path="/address" env={env}>
+      <Field title="住所" path="/address" env={env} foldValidity>
         <Textbox mg-path="/address/zip" />
         <Textbox mg-path="/address/pref" />
         <Textbox mg-path="/address/city" />
@@ -117,4 +81,4 @@ const view = (env) => {
 }
 
 const containerEl = document.getElementById('app')
-start({data, schema, view, containerEl, evolve})
+start({data, schema, view, containerEl})
