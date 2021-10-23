@@ -350,6 +350,31 @@ export const start = (
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
+    onSliderInput: (ev) => (state, actions) => {
+      const path = ev.currentTarget.dataset.mgPath
+      const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
+      const slot0 = E.getSlot(path, state.baseEnv)
+      const slot = {...slot0, input:value}
+      const baseEnv = E.setSlot(path, slot, state.baseEnv)
+      // We don't call evolve() here, because oninput is not a check point of evolve().
+      // Thus we update not only baseEnv but also env.
+      const slotb0 = E.getSlot(path, state.env)
+      const slotb = {...slotb0, input:value}
+      const env = E.setSlot(path, slotb, state.env)
+      return {...state, baseEnv, env}
+    }, 
+    onSliderChange: (ev) => (state, actions) => {
+      const path = ev.currentTarget.dataset.mgPath
+      const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
+      const npath = normalizePath(path)
+      const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
+      const slot = coerce(value, slot0, schemaDb[npath])
+      let baseEnv = E.setSlot(path, slot, state.baseEnv)
+      baseEnv = E.validate("", baseEnv)
+      let env = evolve(path, baseEnv)
+      env = E.validate("", env)
+      return {...state, baseEnv, env}
+    }, 
     onListboxChange: (ev) => (state, actions) => {
       const path = ev.currentTarget.dataset.mgPath
       const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]

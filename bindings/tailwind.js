@@ -71,6 +71,10 @@ export const Textbox = C.playTextbox(({invalid, class:clazz, ...props}, children
   )
 }, attributeMap.textbox)
 
+export const GenericTextbox = C.Textbox
+
+export const Slider = C.Slider
+
 export const Listbox = C.playListbox(({invalid, class:clazz, ...props}, children) => {
   clazz = "bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"  // initialize clazz
   if (invalid) clazz += " bg-red-500 bg-opacity-50"

@@ -1,4 +1,4 @@
-import {h, API, start, Textbox, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification} from '../../bindings/tailwind'
+import {h, API, start, Textbox, GenericTextbox, Slider, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification} from '../../bindings/tailwind'
 
 const master = {
   sex: ['男', '女'], 
@@ -33,7 +33,17 @@ const schema = {
         bld: {type:'string'}
       }
     }, 
-    job: {type:'string', enum:master.job}
+    job: {type:'string', enum:master.job}, 
+    password: {
+      type: 'object', 
+      properties: {
+        firstTime: {type:'string', minLength:1}, 
+        secondTime: {type:'string', same:'1/firstTime'}
+      }
+    }, 
+    color: {type:'string', pattern:'^#[0-9a-fA-F]{6}$'}, 
+    date: {type:'string', minLength:1}, 
+    age: {type:'integer', minimum:15, maximum:45}
   }
 }
 
@@ -42,10 +52,15 @@ const data = {
   email: {firstTime:'', secondTime:''}, 
   sex: '', 
   address: {zip:'', pref:'', city:'', street:'', bld:''}, 
-  job:''
+  job:'', 
+  password: {firstTime:'', secondTime:''}, 
+  color: '', 
+  date: '', 
+  age: 15
 }
 
 const view = (env) => {
+  console.log('view', env)
   return (
     <div>
       <Field title="名前" path="/name" env={env} foldValidity>
@@ -75,6 +90,19 @@ const view = (env) => {
             <option value={j}>{j}</option>
           ))}
         </Listbox>
+      </Field>
+      <Field title="パスワード" path="/password" env={env} foldValidity>
+        <Textbox type="password" mg-path="/password/firstTime" />
+        <Textbox type="password" mg-path="/password/secondTime" />
+      </Field>
+      <Field title="色" path="/color" env={env}>
+        <GenericTextbox type="color" mg-path="/color" />
+      </Field>
+      <Field title="日付" path="/date" env={env}>
+        <Textbox type="date" mg-path="/date" />
+      </Field>
+      <Field title="年齢" path="/age" env={env}>
+        <Slider type="range" mg-path="/age" min={15} max={45} />
       </Field>
     </div>
   )
