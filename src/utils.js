@@ -120,3 +120,21 @@ export const isJsonValue = (x) => {
       return false
   }
 }
+
+/**
+ * 
+ * @param {string} path1 
+ * @param {string} path2 
+ * @return {string}
+ */
+export const commonPath = (path1, path2) => {
+  const frags1 = path1.split('/')
+  const frags2 = path2.split('/')
+  const rv = []
+  for (let i = 0; i < frags1.length; i++) {
+    if (frags2.length <= i) break
+    if (frags1[i] != frags2[i]) break
+    rv.push(frags1[i])
+  }
+  return rv.join('/')
+}

@@ -1,6 +1,6 @@
 //@ts-check
 
-import { normalizePath } from './utils'
+import { normalizePath, commonPath } from './utils'
 import * as E from './env'
 import * as S from './schema'
 import { app, h as h0 } from 'hyperapp'
@@ -409,6 +409,22 @@ export const start = (
       let baseEnv = E.setSlot(path, slot, state.baseEnv)
       baseEnv = E.validate("", baseEnv)
       let env = evolve(path, baseEnv)
+      env = E.validate("", env)
+      return {...state, baseEnv, env}
+    }, 
+    onSmartControlChange: (pair) => (state, actions) => {
+      const pairs = Array.isArray(pair) ? pair : [pair]
+      let cpath = Array.isArray(pair) ? pair[0].path : pair.path
+      let baseEnv = state.baseEnv
+      for (let i = 0; i < pairs.length; i++) {
+        const {path, input} = pairs[i]
+        const slot0 = {...E.getSlot(path, baseEnv), touched:true}
+        const slot = coerce(input, slot0, schemaDb[normalizePath(path)])
+        baseEnv = E.setSlot(path, slot, baseEnv)
+        cpath = commonPath(cpath, path)
+      }
+      baseEnv = E.validate("", baseEnv)
+      let env = evolve(cpath, baseEnv)
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 

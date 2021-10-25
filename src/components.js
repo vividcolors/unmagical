@@ -75,6 +75,10 @@ export const defaultAttributeMap = {
     class: 'class', 
     shown: 'shown', 
     shownClass: 'mg-shown'
+  }, 
+  smartControl: {
+    onchange: 'onchange', 
+    value: ''
   }
 }
 
@@ -227,6 +231,18 @@ export const playCheckbox = (C, map = null) => {
 export const Checkbox = playCheckbox("input")
 
 // TODO: file, number, date, color, range, ...
+
+export const playSmartControl = (C, map = null) => {
+  map = map || defaultAttributeMap.smartControl
+  return (props, children) => (state, actions) => {
+    const {...attributes} = props
+    const path = props['mg-path']
+    const slot = API.getSlot(path, state.env)
+    attributes[map.onchange] = actions.onSmartControlChange
+    addAttr(attributes, map.value, slot.input)
+    return h(C, attributes, ...children)
+  }
+}
 
 export const playUpdateButton = (C, map = null) => {
   map = map || defaultAttributeMap.button
