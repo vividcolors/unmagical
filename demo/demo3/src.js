@@ -29,7 +29,7 @@ const createFlatpickr = (path, onchange, defaultValue, config0) => {
   }
 }
 const DatePicker = playSmartControl(({
-  path, 
+  'mg-path':path, 
   onchange, 
   value, 
   clearable = false, 
@@ -87,7 +87,7 @@ const createPickr = (path, onchange, defaultValue, options0) => {
   }
 }
 const ColorPicker = playSmartControl(({
-  path, 
+  'mg-path':path, 
   onchange, 
   value, 
   options = {
@@ -146,11 +146,11 @@ const view = (env) => {
     <div class="block">
       <Field path="/date" env={env} class="field">
         <label class="label">カレンダー</label>
-        <DatePicker path="/date" mg-path="/date" class="input" clearable />
+        <DatePicker mg-path="/date" class="input" clearable />
       </Field>
       <Field path="/color" env={env} class="field">
         <label class="label">カラー</label>
-        <ColorPicker path="/color" mg-path="/color" class="button" />
+        <ColorPicker mg-path="/color" class="button" />
       </Field>
       <dl>
         <dt>カレンダー</dt>
