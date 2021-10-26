@@ -5,6 +5,7 @@ const master = {
   job: ['給与所得者', '会社経営', '個人事業主', '主婦', '学生']
 }
 
+const zipPattern = '^[0-9]{3}-?[0-9]{4}$'
 const schema = {
   type: 'object', 
   properties: {
@@ -26,7 +27,7 @@ const schema = {
     address: {
       type: 'object', 
       properties: {
-        zip: {type:'string', pattern:'^[0-9]{3}-?[0-9]{4}$'}, 
+        zip: {type:'string', pattern:zipPattern}, 
         pref: {type:'string', minLength:1}, 
         city: {type:'string', minLength:1}, 
         street: {type:'string', minLength:1}, 
@@ -61,16 +62,29 @@ const data = {
 
 const updates = {
   complementAddress: (context, env) => {
-    const zip = API.extract('/address/zip', env)
+    const zipSlot = API.getSlot('/address/zip', env)
+    console.log('complementAddress', zipSlot)
     return API.withEnv(env, 
       new Promise((fulfill, reject) => {
-        new YubinBango.Core(zip.replace('-', ''), fulfill)
+        new YubinBango.Core(zipSlot.input.replace('-', ''), fulfill)
       }).then(API.wrap(([result, env]) => {
         const bld = API.extract('/address/bld', env)
-        const address = {zip, pref:result.region, city:result.locality, street:result.street, bld}
+        const address = {zip:zipSlot.input, pref:result.region, city:result.locality, street:result.street, bld}
         return API.add('/address', address, env)
       }))
     )
+  }
+}
+
+const keyupHandler = (ev) => {
+  const zip = ev.currentTarget.value
+  if (zip.match(new RegExp(zipPattern))) {
+    window.requestAnimationFrame(() => {
+      onUpdate({
+        update:'complementAddress', 
+        context: null
+      })
+    })
   }
 }
 
@@ -93,8 +107,7 @@ const view = (env) => {
         ))}
       </Field>
       <Field title="住所" path="/address" env={env} foldValidity>
-        <Textbox mg-path="/address/zip" />
-        <UpdateButton mg-update="complementAddress" mg-context={null} disabled={zipSlot.invalid}>住所補完</UpdateButton>
+        <Textbox mg-path="/address/zip" onkeyup={keyupHandler} />
         <Textbox mg-path="/address/pref" />
         <Textbox mg-path="/address/city" />
         <Textbox mg-path="/address/street" />
@@ -126,4 +139,4 @@ const view = (env) => {
 }
 
 const containerEl = document.getElementById('app')
-start({data, schema, view, updates, containerEl})
+const {onUpdate} = start({data, schema, view, updates, containerEl})
