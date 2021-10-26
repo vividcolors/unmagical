@@ -504,7 +504,9 @@ export const start = (
   }
 
   let baseEnv = E.makeEnv(data, schemaDb, validate)
+  baseEnv = E.validate("", baseEnv)
   let env = evolve("", baseEnv)
+  env = E.validate("", env)
   const state = {
     baseEnv, 
     env

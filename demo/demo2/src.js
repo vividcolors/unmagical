@@ -59,8 +59,24 @@ const data = {
   age: 15
 }
 
+const updates = {
+  complementAddress: (context, env) => {
+    const zip = API.extract('/address/zip', env)
+    return API.withEnv(env, 
+      new Promise((fulfill, reject) => {
+        new YubinBango.Core(zip.replace('-', ''), fulfill)
+      }).then(API.wrap(([result, env]) => {
+        const bld = API.extract('/address/bld', env)
+        const address = {zip, pref:result.region, city:result.locality, street:result.street, bld}
+        return API.add('/address', address, env)
+      }))
+    )
+  }
+}
+
 const view = (env) => {
   console.log('view', env)
+  const zipSlot = API.getSlot('/address/zip', env)
   return (
     <div>
       <Field title="名前" path="/name" env={env} foldValidity>
@@ -78,6 +94,7 @@ const view = (env) => {
       </Field>
       <Field title="住所" path="/address" env={env} foldValidity>
         <Textbox mg-path="/address/zip" />
+        <UpdateButton mg-update="complementAddress" mg-context={null} disabled={zipSlot.invalid}>住所補完</UpdateButton>
         <Textbox mg-path="/address/pref" />
         <Textbox mg-path="/address/city" />
         <Textbox mg-path="/address/street" />
@@ -109,4 +126,4 @@ const view = (env) => {
 }
 
 const containerEl = document.getElementById('app')
-start({data, schema, view, containerEl})
+start({data, schema, view, updates, containerEl})
