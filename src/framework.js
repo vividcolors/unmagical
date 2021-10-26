@@ -87,6 +87,26 @@ export const API = {
     }, /** @type {{invalid:boolean,message:string}} */({invalid:false, message:''}), path, env)
   }, 
 
+  startReordering: (name, env) => {
+    const p = new Promise((fulfill, reject) => {
+      env = E.setExtra(name, {fulfill, reject}, env)
+    })
+    E.doReturn(env)
+    return p
+  }, 
+
+  endReordering: (name, env) => {
+    const extra = E.getExtra(name, env)
+    if (! extra) return env
+    return E.setExtra(name, null, env)
+  }, 
+
+  getReordering: (name, env) => {
+    const extra = E.getExtra(name, env)
+    if (! extra) return null
+    return true
+  }, 
+
   /**
    * @param {string} name
    * @param {string} message
@@ -179,7 +199,7 @@ export const API = {
     return p
   }, 
 
-  wrap: (handler) => {  // Our customized handler :: (result, env) => ...
+  wrap: (handler) => {  // Our customized handler :: [result, env] => ...
     return (result) => {  // This is the actual promise handler
       let result1 = null  // We will get the result in this variable.
       const ret = (res1) => {result1 = res1}
@@ -235,8 +255,8 @@ export const API = {
         fetch(url, fetchOptions)
         .catch(API.wrap(([response, env]) => {
           console.error('form submission failed', response)
-          //return {ok:false}
-          return {ok:true}
+          return {ok:false}
+          //return {ok:true}
         }))
         .then(API.wrap(([response, env]) => {
           env = API.closeProgress('loading', env)
@@ -254,6 +274,14 @@ export const API = {
         }))
       )
     }
+  }, 
+
+  reorder: (name, fromPath, env) => {
+    return API.startReordering(name, env)
+      .then(API.wrap(([{path}, env]) => {
+        env = API.endReordering(name, env)
+        return API.move(fromPath, path, env)
+      }))
   }
 }
 
@@ -287,6 +315,9 @@ const apiProxies = {
   }, 
   submit: (context, env) => {
     return API.submit(context.url, context.options, env)
+  }, 
+  reorder: (context, env) => {
+    return API.reorder(context.name, context.fromPath, env)
   }
 }
 
@@ -447,22 +478,12 @@ export const start = (
     onPromiseSettle: (ev) => (state, actions) => {
       const name = ('currentTarget' in ev) ? ev.currentTarget.dataset.mgName : ev.name
       const result = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgResult || "null") : ev.result
-      let baseEnv = state.baseEnv
-      const extra = E.getExtra(name, baseEnv)
-      baseEnv = E.setRet((env0) => {baseEnv = env0}, baseEnv)
+      const extra = E.getExtra(name, state.baseEnv)
       if (! extra || ! extra.fulfill) throw new Error('onPromiseSettle/0: no callback or unknown callback')
       if (extra.timeoutId) {
         clearTimeout(extra.timeoutId)
       }
-      const res = extra.fulfill([result, baseEnv])
-      baseEnv = E.setRet(null, E.isEnv(res) ? res : baseEnv)
-      baseEnv = E.validate("", baseEnv)
-      let env = state.env
-      if (! E.isSame(state.baseEnv, baseEnv)) {
-        env = evolve("", baseEnv)
-        env = E.validate("", env)
-      }
-      return {...state, baseEnv, env}
+      extra.fulfill(result)
     }, 
     onPromiseThen: (context) => (state, actions) => {
       let baseEnv = state.baseEnv

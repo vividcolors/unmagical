@@ -1,6 +1,6 @@
 
 import {h, API, start, Textbox, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../bindings/bulma'
-import {playSmartControl} from '../../src/components'
+import {playSmartControl, playReorderable} from '../../src/components'
 
 const createFlatpickr = (path, onchange, defaultValue, config0) => {
   let instance = null
@@ -125,18 +125,89 @@ const ColorPicker = playSmartControl(({
   value: 'value'
 })
 
+const instantiateSortable = (name, path, onStart, onEnd, options) => {
+  var instance = null;
+  var marker = null;
+  const effectiveOptions = {
+    ...options, 
+    onStart: (ev) => {
+      marker = ev.item.nextElementSibling
+      onStart({
+        update: 'reorder', 
+        context: {
+          name, 
+          fromPath: path + '/' + ev.oldIndex
+        }
+      })
+    }, 
+    onEnd: (ev) => {
+      setTimeout(function() {
+        ev.from.insertBefore(ev.item, marker)
+        marker = null
+      }, 0)
+      const toPath = ev.to.dataset.mgPath
+      onEnd({
+        name, 
+        result: {
+          path: toPath + '/' + ev.newIndex
+        }
+      })
+    }
+  }
+  return {
+    oncreate: (el) => {
+      instance = Sortable.create(el.firstChild, effectiveOptions)
+    }, 
+    ondestroy: () => {
+      if (instance) {
+        instance.destroy()
+        instance = null
+      }
+    }
+  }
+}
+const ReorderableMenu = playReorderable((
+  {
+    'mg-name':name, 
+    path, 
+    active, 
+    onstart, 
+    onend, 
+    options = {}, 
+    ...props
+  }, children) => {
+  const {oncreate, ondestroy} = instantiateSortable(name, path, onstart, onend, options)
+  return (
+    <div class="menu" oncreate={oncreate} ondestroy={ondestroy} {...props}>
+      <ul class="menu-list" data-mg-path={path}>
+        {children}
+      </ul>
+    </div>
+  )
+}, {
+  active: "active", 
+  activeClass: "", 
+  onstart: "onstart", 
+  onend: "onend"
+})
+
 
 const schema = {
   type: 'object', 
   properties: {
     date: {type:'string', minLength:1}, 
-    color: {type:'string', minLength:1}
+    color: {type:'string', minLength:1}, 
+    persons: {
+      type: 'array', 
+      items: {type:'string'}
+    }
   }
 }
 
 const data = {
   date: '2021-11-03', 
-  color: ''
+  color: '', 
+  persons: ['Dad', 'Mam', 'Me', 'Doggy']
 }
 
 const view = (env) => {
@@ -158,6 +229,10 @@ const view = (env) => {
         <dt>カラー</dt>
         <dd>{data.color}</dd>
       </dl>
+      <hr />
+      <ReorderableMenu mg-name="persons" path="/persons">
+        {data.persons.map(p => (<li key={p}><a>{p}</a></li>))}
+      </ReorderableMenu>
     </div>
   )
 }

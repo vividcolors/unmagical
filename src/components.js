@@ -79,6 +79,12 @@ export const defaultAttributeMap = {
   smartControl: {
     onchange: 'onchange', 
     value: ''
+  }, 
+  reorderable: {
+    active: 'active', 
+    activeClass: 'mg-active', 
+    onstart: 'onstart', 
+    onend: 'onend'
   }
 }
 
@@ -322,6 +328,21 @@ export const playSwitch = (C, map = null) => {
     if (! shown && map['@nullIfHidden']) return null
     addAttr(attributes, map.shown, shown)
     addClass(attributes, map.class, shown ? map.shownClass : "")
+    return h(C, attributes, ...children)
+  }
+}
+
+export const playReorderable = (C, map = null) => {
+  map = map || defaultAttributeMap.switch
+  return (props, children) => (state, actions) => {
+    const {...attributes} = props
+    const name = attributes['mg-name']
+    const extra = API.getExtra(name, state.env)
+    const active = !!extra
+    attributes[map.onstart] = actions.onUpdate
+    attributes[map.onend] = actions.onPromiseSettle
+    addAttr(attributes, map.active, active)
+    addClass(attributes, map.activeClass, active ? map.activeClass : "")
     return h(C, attributes, ...children)
   }
 }
