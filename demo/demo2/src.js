@@ -75,7 +75,10 @@ const updates = {
   }
 }
 
-const keyupHandler = (ev) => {
+const onZipCreated = (el) => {
+  el.addEventListener('input', maybeComplementAddress)
+}
+const maybeComplementAddress = (ev) => {
   const zip = ev.currentTarget.value
   if (zip.match(new RegExp(zipPattern))) {
     onUpdate({
@@ -104,7 +107,7 @@ const view = (env) => {
         ))}
       </Field>
       <Field title="住所" path="/address" env={env} foldValidity>
-        <Textbox mg-path="/address/zip" onkeyup={keyupHandler} />
+        <Textbox mg-path="/address/zip" oncreate={onZipCreated} />
         <Textbox mg-path="/address/pref" />
         <Textbox mg-path="/address/city" />
         <Textbox mg-path="/address/street" />
