@@ -63,7 +63,6 @@ const data = {
 const updates = {
   complementAddress: (context, env) => {
     const zipSlot = API.getSlot('/address/zip', env)
-    console.log('complementAddress', zipSlot)
     return API.withEnv(env, 
       new Promise((fulfill, reject) => {
         new YubinBango.Core(zipSlot.input.replace('-', ''), fulfill)
@@ -79,11 +78,9 @@ const updates = {
 const keyupHandler = (ev) => {
   const zip = ev.currentTarget.value
   if (zip.match(new RegExp(zipPattern))) {
-    window.requestAnimationFrame(() => {
-      onUpdate({
-        update:'complementAddress', 
-        context: null
-      })
+    onUpdate({
+      update:'complementAddress', 
+      context: null
     })
   }
 }
