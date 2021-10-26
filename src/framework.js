@@ -355,19 +355,6 @@ export const start = (
 
   const schemaDb = S.buildDb(schema)
 
-  const callUpdate = (el, env) => {
-    if (! el.dataset.mgUpdate) return env
-    console.log('callUpdate effective')
-    const update = el.dataset.mgUpdate
-    const context = JSON.parse(el.dataset.mgContext || "null")
-    env = E.setRet((env0) => {env = env0}, env)
-    if (! update || !(updates[update] || apiProxies[update])) throw new Error('callUpdate/0: no update or unknown update')
-    const res = (updates[update] || apiProxies[update])(context, env)
-    env = E.setRet(null, E.isEnv(res) ? res : env)
-    env = E.validate("", env)
-    return env
-  }
-
   const actions0 = {
     onTextboxInput: (ev) => (state, actions) => {
       const path = ev.currentTarget.dataset.mgPath
