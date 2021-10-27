@@ -310,6 +310,11 @@ export const remove = (path, env) => {
  */
 export const replace = (path, value, env) => {
   const epath = /** @type {string[]} */ (internPath(path))
+  if (epath.length == 0) {
+    // replace whole data
+    const tree = wrap(value)
+    return {...env, tree, validationNeeded:true}
+  }
   const location = init2(epath)
   const name = last(epath)
   const slot0 = rpath(location, env.tree)
