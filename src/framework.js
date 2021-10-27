@@ -276,12 +276,129 @@ export const API = {
     }
   }, 
 
+  /**
+   * @param {string} name 
+   * @param {string} fromPath 
+   * @param {Env} env
+   */
   reorder: (name, fromPath, env) => {
     return API.startReordering(name, env)
       .then(API.wrap(([{path}, env]) => {
         env = API.endReordering(name, env)
         return API.move(fromPath, path, env)
       }))
+  }, 
+
+  /**
+   * 
+   * @param {Json} data
+   * @param {Object} options
+   * @param {string} options.confirmationMessage
+   */
+  reset: (data, options, env) => {
+    return API.openDialog('confirm', options.confirmationMessage, null, env)
+      .then(API.wrap((response, env) => {
+        env = API.closeDialog('confirm', env)
+        if (response.ok) {
+          return API.replace("", data, env)
+        } else {
+          return null
+        }
+      }))
+  }, 
+
+  /**
+   * @param {string} path
+   * @param {string} pointerPath
+   * @param {string} formPath
+   * @param {Env} env
+   */
+  editPart: (path, pointerPath, formPath, env) => {
+    env = API.add(pointerPath, path, env)
+    return API.copy(path, formPath, env)
+  }, 
+
+  /**
+   * @param {string} pathToAdd 
+   * @param {Json} data 
+   * @param {string} pointerPath
+   * @param {string} formPath 
+   * @param {Env} env
+   */
+  createPart: (pathToAdd, data, pointerPath, formPath, env) => {
+    env = API.add(pointerPath, pathToAdd, env)
+    return API.replace(formPath, data, env)
+  }, 
+
+  /**
+   * @param {string} pointerPath
+   * @param {string} formPath
+   * @param {Object} options
+   * @param {string | null} options.errorSelector
+   * @param {Env} env 
+   */
+  commitPart: (pointerPath, formPath, options, env) => {
+    const opts = {
+      errorSelector: null, 
+      ...options
+    }
+    env = API.touchAll(formPath, env)
+    env = API.validate(formPath, env)
+    const numErrors = API.countValidationErrors(formPath, env)
+    if (numErrors) {
+      if (opts.errorSelector) {
+        window.setTimeout(() => {
+          const targetEl = document.querySelector(opts.errorSelector)
+          if (targetEl) targetEl.scrollIntoView()
+        }, 100)
+      }
+      return env
+    } else {
+      const path = /** @type {string} */ (API.extract(pointerPath, env))
+      env = API.copy(formPath, path, env)
+      env = API.replace(formPath, null, env)
+      env = API.replace(pointerPath, '', env)
+      return env
+    }
+  }, 
+
+  /**
+   * @param {string} pointerPath
+   * @param {string} formPath 
+   * @param {Env} env 
+   */
+  discardPart: (pointerPath, formPath, env) => {
+    env = API.replace(formPath, null, env)
+    env = API.replace(pointerPath, '', env)
+    return env
+  }, 
+
+  /**
+   * 
+   * @param {string} path
+   * @param {Object} options
+   * @param {string} options.confirmationMessage
+   */
+  removePart: (path, options, env) => {
+    return API.openDialog('confirm', options.confirmationMessage, null, env)
+      .then(API.wrap((response, env) => {
+        env = API.closeDialog('confirm', env)
+        if (response.ok) {
+          return API.remove(path, env)
+        } else {
+          return null
+        }
+      }))
+  }, 
+
+  /**
+   * @param {string} path 
+   * @param {string} pathToAdd 
+   * @param {Env} env
+   */
+  copyPart: (path, pathToAdd, env) => {
+    env = API.copy(path, pathToAdd, env)
+    return env
   }
 }
 
