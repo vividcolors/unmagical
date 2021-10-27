@@ -195,7 +195,7 @@ export const API = {
   }, 
 
   withEnv: (env, p) => {
-    E.doReturn(env)
+    if (env) E.doReturn(env)
     return p
   }, 
 
@@ -463,7 +463,7 @@ export const start = (
       const update = ('currentTarget' in ev) ? ev.currentTarget.dataset.mgUpdate : ev.update
       const context = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgContext || "null") : ev.context
       let baseEnv = state.baseEnv
-      baseEnv = E.setRet((env0) => {if (env0) baseEnv = env0}, baseEnv)
+      baseEnv = E.setRet((env0) => {baseEnv = env0}, baseEnv)
       if (! update || !(updates[update] || apiProxies[update])) throw new Error('onUpdate/0: no update or unknown update')
       const res = (updates[update] || apiProxies[update])(context, baseEnv)
       baseEnv = E.setRet(null, E.isEnv(res) ? res : baseEnv)

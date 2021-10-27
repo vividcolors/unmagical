@@ -63,7 +63,7 @@ const data = {
 const updates = {
   complementAddress: (context, env) => {
     const zipSlot = API.getSlot('/address/zip', env)
-    return API.withEnv(env, 
+    return API.withEnv(null, 
       new Promise((fulfill, reject) => {
         new YubinBango.Core(zipSlot.input.replace('-', ''), fulfill)
       }).then(API.wrap(([result, env]) => {
@@ -89,7 +89,6 @@ const maybeComplementAddress = (ev) => {
 }
 
 const view = (env) => {
-  console.log('view', env)
   const zipSlot = API.getSlot('/address/zip', env)
   return (
     <div>
