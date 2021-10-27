@@ -42,7 +42,7 @@ export const defaultMessages = {
   'schema.ruleError.enum': 'Invalid input',   // 不正な入力です
   'schema.ruleError.const': 'Invalid input',   // 不正な入力です
   'schema.ruleError.required': 'Missing properties',  // フィールドが不足しています
-  'schema.ruleError.requiredAnyOf': 'Unknown instance',  // 未知のインスタンスです
+  'schema.ruleError.switchRequired': 'Unknown instance',  // 未知のインスタンスです
   'schema.ruleError.same': 'Not a same value', 
   'schema.ruleError.multipleOf': 'Please enter a multiple of {{0}}',  // %Sの倍数を入力してください
   'schema.ruleError.maximum': 'Please enter {{0}} or less',  // %s以下を入力してください
@@ -171,14 +171,17 @@ export const defaultRules = {
     }
     return true
   }, 
-  requiredAnyOf: (param, value) => {
-    if (! Array.isArray(param)) throw new Error('invalid parameter')
-    if (typeof value != 'object') return true
-    const test = f => value.hasOwnProperty(f)
-    for (let fs of param) {
-      if (fs.every(test)) return true
+  switchRequired: (param, value, path, env) => {
+    if (typeOf(param) != 'object' || !('tagProperty' in /** @type {object} */ (param))) throw new Error('invalid parameter')
+    if (typeOf(value) != 'object') return true
+    const tag = /** @type {string} */ (E.extract(path + '/' + param.tagProperty, env))
+    if (!tag || !param.types[tag]) return 'schema.ruleError.switchRequired'
+    const required = param.types[tag]
+    if (! Array.isArray(required)) throw new Error('invalid parameter')
+    for (let i = 0; i < required.length; i++) {
+      if (! value.hasOwnProperty(required[i])) return 'schema.ruleError.switchRequired'
     }
-    return 'schema.ruleError.requiredAnyOf'
+    return true
   }, 
   same: (param, value, path, env) => {
     if (typeof param != 'string') throw new Error('invalid parameter')

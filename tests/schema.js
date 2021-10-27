@@ -1,12 +1,16 @@
 
 import * as S from '../src/schema'
+import * as E from '../src/env'
 
 export const run = (assert, assertError, assertUndefined) => {
   const v = S.validate(S.defaultRules, {})
   const c = S.coerce(S.defaultRules, {})
 
+  let s = null
+  let env = null
+
   // type null
-  let s = {type:'null'}
+  s = {type:'null'}
   assert(1, () => v(null, {}, s).invalid, false)
   assert(1.1, () => v(1, {}, s).invalid, true)
   assert(1.2, () => v("abc", {}, s).invalid, true)
@@ -135,20 +139,25 @@ export const run = (assert, assertError, assertUndefined) => {
   assert(16.2, () => v({foo:1, bar:1, baz:1}, {}, s).invalid, false)
   assert(16.3, () => v(1, {}, {...s, type:'integer'}).invalid, false)
 
-  // rule requiredAnyOf
+  // rule switchRequired
   s = {
     type:'object', 
-    requiredAnyOf: [
-      ['tag', 'op', 'lhs', 'rhs'], 
-      ['tag', 'f', 'arg'], 
-      ['tag', 'val', 'line'], 
-      ['tag', 'var']
-    ]
+    switchRequired: {
+      tagProperty: 'type', 
+      types: {
+        infix: ['type', 'op', 'lhs', 'rhs'], 
+        app: ['type', 'f', 'arg'], 
+        var: ['type', 'var'], 
+        lit: ['type', 'val'], 
+        lambda: ['type', 'param', 'expr']
+      }
+    }
   }
-  let data = {tag:'infix', op:'*', lhs:{tag:'var', var:'n'}, rhs:{tag:'app', f:'fact', arg:{tag:'infix', op:'-', lhs:{tag:'var', var:'n'}, rhs:{tag:'lit', val:1}}}}  // n * fact(n - 1)
-  assert(17, () => v(data, {}, s).invalid, false)
-  assert(17.1, () => v(data.lhs, {}, s).invalid, false)
-  assert(17.2, () => v(data.rhs.arg.rhs, {}, s).invalid, true)
+  let data = {type:'infix', op:'*', lhs:{type:'var', var:'n'}, rhs:{type:'app', f:'fact', arg:{type:'infix', op:'-', lhs:{type:'var', var:'n'}, rhs:{type:'lit'}}}}  // n * fact(n - 1)
+  env = E.makeEnv(data, {}, v)
+  assert(17, () => v(data, {}, s, '', env).invalid, false)
+  assert(17.1, () => v(data.lhs, {}, s, '/lhs', env).invalid, false)
+  assert(17.2, () => v(data.rhs.arg.rhs, {}, s, '/rhs/arg/rhs', env).invalid, true)
   assert(17.3, () => v(1, {}, {...s, type:'integer'}).invalid, false)
 
   // rule multipleOf
@@ -219,4 +228,13 @@ export const run = (assert, assertError, assertUndefined) => {
   assert(24.1, () => v([1,2,3,4], {}, s).invalid, false)
   assert(24.2, () => v(null, {}, s).invalid, false)
   assert(24.3, () => v(true, {}, {...s, type:'boolean'}).invalid, false)
+
+  // rule same
+  s = {type:'string',same:'/first'}
+  data = {first:'a', second:'a'}
+  env = E.makeEnv(data, {}, v)
+  assert(25, () => v('a', {}, s, '/second', env).invalid, false)
+  assert(25.1, () => v('b', {}, s, '/second', env).invalid, true)
+  s = {same:'/first'}
+  assert(25.2, () => v('a', {}, s, '/second', env).invalid, false)
 }
