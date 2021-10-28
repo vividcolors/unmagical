@@ -292,11 +292,10 @@ export const API = {
   /**
    * 
    * @param {Json} data
-   * @param {Object} options
-   * @param {string} options.confirmationMessage
+   * @param {string} confirmationMessage
    */
-  reset: (data, options, env) => {
-    return API.openDialog('confirm', options.confirmationMessage, null, env)
+  reset: (data, confirmationMessage, env) => {
+    return API.openDialog('confirm', confirmationMessage, null, env)
       .then(API.wrap((response, env) => {
         env = API.closeDialog('confirm', env)
         if (response.ok) {
@@ -308,45 +307,49 @@ export const API = {
   }, 
 
   /**
-   * @param {string} path
-   * @param {string} pointerPath
+   * @param {string} partPath
    * @param {string} formPath
    * @param {Env} env
    */
-  editPart: (path, pointerPath, formPath, env) => {
-    env = API.add(pointerPath, path, env)
-    return API.copy(path, formPath, env)
+  editPart: (partPath, formPath, env) => {
+    const actionPath = formPath + '/action'
+    const dataPath = formPath + '/data'
+    env = API.add(actionPath, partPath, env)
+    return API.copy(partPath, dataPath, env)
   }, 
 
   /**
    * @param {string} pathToAdd 
    * @param {Json} data 
-   * @param {string} pointerPath
    * @param {string} formPath 
    * @param {Env} env
    */
-  createPart: (pathToAdd, data, pointerPath, formPath, env) => {
-    env = API.add(pointerPath, pathToAdd, env)
-    return API.replace(formPath, data, env)
+  createPart: (pathToAdd, data, formPath, env) => {
+    const actionPath = formPath + '/action'
+    const dataPath = formPath + '/data'
+    env = API.add(actionPath, pathToAdd, env)
+    return API.replace(dataPath, data, env)
   }, 
 
   /**
-   * @param {string} pointerPath
    * @param {string} formPath
    * @param {Object} options
    * @param {string | null} options.errorSelector
-   * @param {string | null} options.nextIdPath
+   * @param {string | null} options.idProperty
    * @param {Env} env 
    */
-  commitPart: (pointerPath, formPath, options, env) => {
+  commitPart: (formPath, options, env) => {
     const opts = {
       errorSelector: null, 
-      nextIdPath: null, 
+      idProperty: 'id', 
       ...options
     }
-    env = API.touchAll(formPath, env)
-    env = API.validate(formPath, env)
-    const numErrors = API.countValidationErrors(formPath, env)
+    const actionPath = formPath + '/action'
+    const dataPath = formPath + '/data'
+    const nextIdPath = formPath + '/nextId'
+    env = API.touchAll(dataPath, env)
+    env = API.validate(dataPath, env)
+    const numErrors = API.countValidationErrors(dataPath, env)
     if (numErrors) {
       if (opts.errorSelector) {
         window.setTimeout(() => {
@@ -356,46 +359,47 @@ export const API = {
       }
       return env
     } else {
-      if (opts.nextIdPath) {
-        const nextId = /** @type {number} */ (API.extract(opts.nextIdPath, env))
-        env = API.add(opts.nextIdPath, nextId + 1, env)
-      }
-      const path = /** @type {string} */ (API.extract(pointerPath, env))
+      const path = /** @type {string} */ (API.extract(actionPath, env))
+      const data = API.extract(dataPath, env)
       if (path[path.length - 1] == '-') {
-        env = API.copy(formPath, path, env)
+        if (opts.idProperty) {
+          const nextId = /** @type {number} */ (API.extract(nextIdPath, env))
+          env = API.add(nextIdPath, nextId + 1, env)
+          data[opts.idProperty] = nextId
+        }
+        env = API.add(path, data, env)
       } else {
-        const data = API.extract(formPath, env)
         env = API.replace(path, data, env)
       }
-      env = API.replace(formPath, null, env)
-      env = API.replace(pointerPath, '', env)
+      env = API.replace(dataPath, null, env)
+      env = API.replace(actionPath, '', env)
       return env
     }
   }, 
 
   /**
-   * @param {string} pointerPath
    * @param {string} formPath 
    * @param {Env} env 
    */
-  discardPart: (pointerPath, formPath, env) => {
-    env = API.replace(formPath, null, env)
-    env = API.replace(pointerPath, '', env)
+  discardPart: (formPath, env) => {
+    const actionPath = formPath + '/action'
+    const dataPath = formPath + '/data'
+    env = API.replace(dataPath, null, env)
+    env = API.replace(actionPath, '', env)
     return env
   }, 
 
   /**
    * 
-   * @param {string} path
-   * @param {Object} options
-   * @param {string} options.confirmationMessage
+   * @param {string} partPath
+   * @param {string} confirmationMessage
    */
-  removePart: (path, options, env) => {
-    return API.openDialog('confirm', options.confirmationMessage, null, env)
+  removePart: (partPath, confirmationMessage, env) => {
+    return API.openDialog('confirm', confirmationMessage, null, env)
       .then(API.wrap(([ok, env]) => {
         env = API.closeDialog('confirm', env)
         if (ok) {
-          env = API.remove(path, env)
+          env = API.remove(partPath, env)
           return env
         } else {
           return env
@@ -404,25 +408,27 @@ export const API = {
   }, 
 
   /**
-   * @param {string} path 
-   * @param {string} pathToAdd 
+   * @param {string} partPath 
+   * @param {string} formPath 
    * @param {Object} options
-   * @param {string | null} options.nextIdPath
+   * @param {string | null} options.pathToAdd
    * @param {string | null} options.idProperty
    * @param {Env} env
    */
-  copyPart: (path, pathToAdd, options, env) => {
+  copyPart: (partPath, formPath, options, env) => {
     const opts = {
-      nextIdPath: null, 
-      idProperty: null, 
+      pathToAdd: '', 
+      idProperty: 'id', 
       ...options
     }
-    const data = API.extract(path, env)
-    if (opts.nextIdPath) {
-      const nextId = /** @type {number} */ (API.extract(opts.nextIdPath, env))
+    const nextIdPath = formPath + '/nextId'
+    const data = API.extract(partPath, env)
+    if (opts.idProperty) {
+      const nextId = /** @type {number} */ (API.extract(nextIdPath, env))
       data[opts.idProperty] = nextId
-      env = API.add(opts.nextIdPath, nextId + 1, env)
+      env = API.add(nextIdPath, nextId + 1, env)
     }
+    const pathToAdd = opts.pathToAdd || partPath
     env = API.add(pathToAdd, data, env)
     return env
   }
@@ -466,22 +472,22 @@ const apiProxies = {
     return API.reset(context.data, context.options, env)
   }, 
   editPart: (context, env) => {
-    return API.editPart(context.path, context.pointerPath, context.formPath, env)
+    return API.editPart(context[0], context[1], env)
   }, 
   createPart: (context, env) => {
-    return API.createPart(context.pathToAdd, context.data, context.pointerPath, context.formPath, env)
+    return API.createPart(context[0], context[1], context[2], env)
   }, 
   commitPart: (context, env) => {
-    return API.commitPart(context.pointerPath, context.formPath, context.options, env)
+    return API.commitPart(context[0], context[1], env)
   }, 
   discardPart: (context, env) => {
-    return API.discardPart(context.pointerPath, context.formPath, env)
+    return API.discardPart(context[0], env)
   }, 
   removePart: (context, env) => {
-    return API.removePart(context.path, context.options, env)
+    return API.removePart(context[0], context[1], env)
   }, 
   copyPart: (context, env) => {
-    return API.copyPart(context.path, context.pathToAdd, context.options, env)
+    return API.copyPart(context[0], context[1], context[2], env)
   }
 }
 

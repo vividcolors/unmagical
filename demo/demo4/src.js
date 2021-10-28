@@ -7,7 +7,6 @@ const ClickableText = playUpdateButton("p", {onclick:'onclick'})
 const instantiateSortable = (name, path, onStart, onEnd, options) => {
   var instance = null;
   var marker = null;
-  console.log('instantiateSortable', options)
   const effectiveOptions = {
     ...options, 
     onStart: (ev) => {
@@ -82,9 +81,14 @@ const schema = {
       type: 'array', 
       items: {type:'object', properties:itemProps}
     }, 
-    activePath: {type: 'string'}, 
-    activeItem: {type:'object?', properties:itemProps}, 
-    nextId: {type: 'integer'}
+    form: {
+      type: 'object', 
+      properties: {
+        action: {type: 'string'}, 
+        data: {type:'object?', properties:itemProps}, 
+        nextId: {type: 'integer'}
+      }
+    }
   }
 }
 
@@ -93,9 +97,11 @@ const data = {
     {id:1, done:false, subject:'牛乳を買う'}, 
     {id:2, done:false, subject:'お金をおろす'}
   ], 
-  activePath: '', 
-  activeItem: null, 
-  nextId: 3
+  form: {
+    action: '', 
+    data: null, 
+    nextId: 3
+  }
 }
 
 const onTodoItemCreate = (el) => {
@@ -116,15 +122,15 @@ const onTodoItemRemove = (el, done) => {
   prepareToDestroy(el, anim, done)
 }
 
-const TodoItem = ({path, activePath, env}) => {
+const TodoItem = ({path, editing, env}) => {
   const id = API.extract(path + '/id', env)
-  const handleStyle = activePath ? {pointerEvents:'none', opacity:0.26} : {}
+  const handleStyle = editing ? {pointerEvents:'none', opacity:0.26} : {}
   return (
     <div class="media" key={'item-'+id} id={id} oncreate={onTodoItemCreate} onremove={onTodoItemRemove}>
       <div class="media-left">
         <div class="columns is-gapless is-vcentered is-mobile">
           <div class="column">
-            <span class={`icon is-medium my-1 ${activePath ? '' : 'handle'}`}><span class="material-icons" style={handleStyle}>drag_handle</span></span>
+            <span class={`icon is-medium my-1 ${editing ? '' : 'handle'}`}><span class="material-icons" style={handleStyle}>drag_handle</span></span>
           </div>
           <div class="column">
             <label class="checkbox px-2 py-1">
@@ -134,20 +140,20 @@ const TodoItem = ({path, activePath, env}) => {
         </div>
       </div>
       <div class="media-content">
-        <ClickableText class="py-2 is-fullwidth " style={{cursor:'pointer'}} mg-update="editPart" mg-context={{path, pointerPath:'/activePath', formPath:'/activeItem'}}>{API.extract(path + '/subject', env)}</ClickableText>
+        <ClickableText class="py-2 is-fullwidth " style={{cursor:'pointer'}} mg-update="editPart" mg-context={[path, '/form']}>{API.extract(path + '/subject', env)}</ClickableText>
       </div>
       <div class="media-right">
-        <UpdateButton class="button is-info is-inverted mx-1" mg-update="copyPart" mg-context={{path, pathToAdd:'/todos/-', options:{nextIdPath:'/nextId', idProperty:'id'}}}><span class="icon"><span class="material-icons">content_copy</span></span></UpdateButton>
-        <UpdateButton class="button is-danger is-inverted mx-1" mg-update="removePart" mg-context={{path, options:{confirmationMessage:'このTODOを削除します。よろしいですか？'}}}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
+        <UpdateButton class="button is-info is-inverted mx-1" mg-update="copyPart" mg-context={[path, '/form', {}]}><span class="icon"><span class="material-icons">content_copy</span></span></UpdateButton>
+        <UpdateButton class="button is-danger is-inverted mx-1" mg-update="removePart" mg-context={[path, 'このTODOを削除します。よろしいですか？']}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
       </div>
     </div>
   )
 }
 
-const TodoForm = ({path, activePath, env}) => {
-  const id = API.extract('/activeItem/id', env)
+const TodoForm = ({env}) => {
+  const id = API.extract('/form/data/id', env)
   return (
-    <div class="media" key={'item-'+id} id={id}>
+    <div class="media" key={`item-${id}`} id={id}>
       <div class="media-left">
         <div class="columns is-gapless is-vcentered is-mobile">
           <div class="column">
@@ -155,45 +161,44 @@ const TodoForm = ({path, activePath, env}) => {
           </div>
           <div class="column">
             <label class="checkbox px-2 py-1">
-              <Checkbox type="checkbox" mg-path="/activeItem/done" />
+              <Checkbox type="checkbox" mg-path="/form/data/done" />
             </label>
           </div>
         </div>
       </div>
       <div class="media-content">
-        <Field path="/activeItem/subject" env={env}>
-          <Textbox mg-path="/activeItem/subject" class="input" type="text" />
+        <Field path="/form/data/subject" env={env}>
+          <Textbox mg-path="/form/data/subject" class="input" type="text" />
         </Field>
       </div>
       <div class="media-right">
-        <UpdateButton class="button is-primary is-inverted mx-1" mg-update="commitPart" mg-context={{pointerPath:'/activePath', formPath:'/activeItem', options:{nextIdPath:'/nextId'}}}><span class="icon"><span class="material-icons">check</span></span></UpdateButton>
-        <UpdateButton class="button is-danger is-inverted mx-1" mg-update="discardPart" mg-context={{pointerPath:'/activePath', formPath:'/activeItem'}}><span class="icon"><span class="material-icons">clear</span></span></UpdateButton>
+        <UpdateButton class="button is-primary is-inverted mx-1" mg-update="commitPart" mg-context={['/form', {}]}><span class="icon"><span class="material-icons">check</span></span></UpdateButton>
+        <UpdateButton class="button is-danger is-inverted mx-1" mg-update="discardPart" mg-context={['/form']}><span class="icon"><span class="material-icons">clear</span></span></UpdateButton>
       </div>
     </div>
   )
 }
 
-const TodoButton = ({nextId}) => {
+const TodoButton = () => {
   return (
     <div class="media" key="add">
       <div class="media-content">
-        <UpdateButton class="button is-primary" mg-update="createPart" mg-context={{pathToAdd:'/todos/-', data:{id:nextId, done:false, subject:''}, pointerPath:'/activePath', formPath:'/activeItem'}}>追加</UpdateButton>
+        <UpdateButton class="button is-primary" mg-update="createPart" mg-context={['/todos/-', {id:0, done:false, subject:''}, '/form']}>追加</UpdateButton>
       </div>
     </div>
   )
 }
 
 const view = (env) => {
-  const activePath = API.extract('/activePath', env)
-  const nextId = API.extract('/nextId', env)
+  const formAction = API.extract('/form/action', env)
   return (
     <div class="container my-3">
       <ReorderableList mg-name="todos" path="/todos" options={{group:'todos', handle:'.handle'}}>
         {API.extract('/todos', env).map((item, i) => {
           const path = '/todos/' + i
-          return (path == activePath) ? <TodoForm path={path} activePath={activePath} env={env} /> : <TodoItem path={path} activePath={activePath} env={env} />
+          return (path == formAction) ? <TodoForm env={env} /> : <TodoItem path={path} editing={!!formAction} env={env} />
         })}
-        {activePath.endsWith('-') ? <TodoForm path={activePath} activePath={activePath} env={env} /> : <TodoButton nextId={nextId} />}
+        {formAction.endsWith('-') ? <TodoForm env={env} /> : <TodoButton />}
       </ReorderableList>
       <Dialog mg-name="confirm" title="確認" hideCancelButton={false} />
     </div>
