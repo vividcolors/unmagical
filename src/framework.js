@@ -335,11 +335,13 @@ export const API = {
    * @param {string} formPath
    * @param {Object} options
    * @param {string | null} options.errorSelector
+   * @param {string | null} options.nextIdPath
    * @param {Env} env 
    */
   commitPart: (pointerPath, formPath, options, env) => {
     const opts = {
       errorSelector: null, 
+      nextIdPath: null, 
       ...options
     }
     env = API.touchAll(formPath, env)
@@ -354,8 +356,17 @@ export const API = {
       }
       return env
     } else {
+      if (opts.nextIdPath) {
+        const nextId = /** @type {number} */ (API.extract(opts.nextIdPath, env))
+        env = API.add(opts.nextIdPath, nextId + 1, env)
+      }
       const path = /** @type {string} */ (API.extract(pointerPath, env))
-      env = API.copy(formPath, path, env)
+      if (path[path.length - 1] == '-') {
+        env = API.copy(formPath, path, env)
+      } else {
+        const data = API.extract(formPath, env)
+        env = API.replace(path, data, env)
+      }
       env = API.replace(formPath, null, env)
       env = API.replace(pointerPath, '', env)
       return env
@@ -381,12 +392,13 @@ export const API = {
    */
   removePart: (path, options, env) => {
     return API.openDialog('confirm', options.confirmationMessage, null, env)
-      .then(API.wrap((response, env) => {
+      .then(API.wrap(([ok, env]) => {
         env = API.closeDialog('confirm', env)
-        if (response.ok) {
-          return API.remove(path, env)
+        if (ok) {
+          env = API.remove(path, env)
+          return env
         } else {
-          return null
+          return env
         }
       }))
   }, 
@@ -394,10 +406,24 @@ export const API = {
   /**
    * @param {string} path 
    * @param {string} pathToAdd 
+   * @param {Object} options
+   * @param {string | null} options.nextIdPath
+   * @param {string | null} options.idProperty
    * @param {Env} env
    */
-  copyPart: (path, pathToAdd, env) => {
-    env = API.copy(path, pathToAdd, env)
+  copyPart: (path, pathToAdd, options, env) => {
+    const opts = {
+      nextIdPath: null, 
+      idProperty: null, 
+      ...options
+    }
+    const data = API.extract(path, env)
+    if (opts.nextIdPath) {
+      const nextId = /** @type {number} */ (API.extract(opts.nextIdPath, env))
+      data[opts.idProperty] = nextId
+      env = API.add(opts.nextIdPath, nextId + 1, env)
+    }
+    env = API.add(pathToAdd, data, env)
     return env
   }
 }
@@ -435,6 +461,27 @@ const apiProxies = {
   }, 
   reorder: (context, env) => {
     return API.reorder(context.name, context.fromPath, env)
+  }, 
+  reset: (context, env) => {
+    return API.reset(context.data, context.options, env)
+  }, 
+  editPart: (context, env) => {
+    return API.editPart(context.path, context.pointerPath, context.formPath, env)
+  }, 
+  createPart: (context, env) => {
+    return API.createPart(context.pathToAdd, context.data, context.pointerPath, context.formPath, env)
+  }, 
+  commitPart: (context, env) => {
+    return API.commitPart(context.pointerPath, context.formPath, context.options, env)
+  }, 
+  discardPart: (context, env) => {
+    return API.discardPart(context.pointerPath, context.formPath, env)
+  }, 
+  removePart: (context, env) => {
+    return API.removePart(context.path, context.options, env)
+  }, 
+  copyPart: (context, env) => {
+    return API.copyPart(context.path, context.pathToAdd, context.options, env)
   }
 }
 
