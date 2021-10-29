@@ -1,4 +1,4 @@
-import {h, API, start, Textbox, GenericTextbox, Slider, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification} from '../../bindings/tailwind'
+import {h, API, start, Textbox, GenericTextbox, Slider, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification} from '../../src/bindings/tailwind'
 
 const master = {
   sex: ['男', '女'], 

@@ -1,7 +1,7 @@
 
-import * as C from '../src/components'
-import {API, start, h} from '../src/framework'
-export {API, start, h} from '../src/framework'
+import * as C from '../core/components'
+import {API, start, h} from '../core/framework'
+export {API, start, h} from '../core/framework'
 
 const attributeMap = {
   textbox: {

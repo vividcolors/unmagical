@@ -1,6 +1,6 @@
 
-import {h, API, start, Textbox, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../bindings/bulma'
-import {playSmartControl, playReorderable} from '../../src/components'
+import {h, API, start, Textbox, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
+import {playSmartControl, playReorderable} from '../../src/core/components'
 
 const createFlatpickr = (path, onchange, defaultValue, config0) => {
   let instance = null

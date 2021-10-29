@@ -1,6 +1,6 @@
 
-import {h, API, start, Textbox, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../bindings/bulma'
-import {playReorderable, playUpdateButton, prepareToDestroy} from '../../src/components'
+import {h, API, start, Textbox, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
+import {playReorderable, playUpdateButton, prepareToDestroy} from '../../src/core/components'
 
 const ClickableText = playUpdateButton("p", {onclick:'onclick'})
 
