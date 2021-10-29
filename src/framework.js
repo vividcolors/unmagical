@@ -1,5 +1,6 @@
 //@ts-check
 
+import template from 'string-template'
 import { normalizePath, commonPath } from './utils'
 import * as E from './env'
 import * as S from './schema'
@@ -211,15 +212,15 @@ export const API = {
   /**
    * 
    * @param {string} url
+   * @param {string} successMessage
+   * @param {string} failureMessage
    * @param {Object} options
    * @param {string} options.path
    * @param {string} options.errorSelector
    * @param {string} options.method
-   * @param {string} options.successMessage
    * @param {number|null} options.successMessageTimeout
-   * @param {string} options.failureMessage
    */
-  submit: (url, options, env) => {
+  submit: (url, successMessage, failureMessage, options, env) => {
     const opts = {
       path: '', 
       errorSelector: null, 
@@ -255,18 +256,20 @@ export const API = {
         fetch(url, fetchOptions)
         .catch(API.wrap(([response, env]) => {
           console.error('form submission failed', response)
-          return {ok:false}
-          //return {ok:true}
+          return {ok:false, status:-1, statusText:response.message, url}
         }))
         .then(API.wrap(([response, env]) => {
           env = API.closeProgress('loading', env)
+          const context = {status:response.status, statusText:response.statusText, url:response.url}
           if (response.ok) {
-            return API.openDialog('feedback', opts.successMessage, {timeout:opts.successMessageTimeout}, env)
+            const message = template(successMessage, context)
+            return API.openDialog('feedback', message, {timeout:opts.successMessageTimeout}, env)
             .then(API.wrap(([result, env]) => {
               return API.closeDialog('feedback', env)
             }))
           } else {
-            return API.openDialog('alert', opts.failureMessage, null, env)
+            const message = template(failureMessage, context)
+            return API.openDialog('alert', message, null, env)
             .then(API.wrap(([result, env]) => {
               return API.closeDialog('alert', env)
             }))
