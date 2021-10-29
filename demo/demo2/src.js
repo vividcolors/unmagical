@@ -61,7 +61,7 @@ const data = {
 }
 
 const updates = {
-  complementAddress: (context, env) => {
+  complementAddress: (env) => {
     const zipSlot = API.getSlot('/address/zip', env)
     return API.withEnv(null, 
       new Promise((fulfill, reject) => {
@@ -83,7 +83,7 @@ const maybeComplementAddress = (ev) => {
   if (zip.match(new RegExp(zipPattern))) {
     onUpdate({
       update:'complementAddress', 
-      context: null
+      context: []
     })
   }
 }

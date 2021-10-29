@@ -434,61 +434,25 @@ export const API = {
   }
 }
 
-const apiProxies = {
-  openDialog: (context, env) => {
-    return API.openDialog(context.name, context.message, context.options, env)
-  }, 
-  closeDialog: (context, env) => {
-    return API.closeDialog(context.name, env)
-  }, 
-  openProgress: (context, env) => {
-    return API.openProgress(context.name, null, env)
-  }, 
-  closeProgress: (context, env) => {
-    return API.closeProgress(context.name, env)
-  }, 
-  setPage: (context, env) => {
-    return API.setPage(context.name, context.current, env)
-  }, 
-  nextPage: (context, env) => {
-    return API.nextPage(context.name, env)
-  }, 
-  prevPage: (context, env) => {
-    return API.prevPage(context.name, env)
-  }, 
-  setSwitch: (context, env) => {
-    return API.setSwitch(context.name, context.shown, env)
-  }, 
-  toggleSwitch: (context, env) => {
-    return API.toggleSwitch(context.name, env)
-  }, 
-  submit: (context, env) => {
-    return API.submit(context.url, context.options, env)
-  }, 
-  reorder: (context, env) => {
-    return API.reorder(context.name, context.fromPath, env)
-  }, 
-  reset: (context, env) => {
-    return API.reset(context.data, context.options, env)
-  }, 
-  editPart: (context, env) => {
-    return API.editPart(context[0], context[1], env)
-  }, 
-  createPart: (context, env) => {
-    return API.createPart(context[0], context[1], context[2], env)
-  }, 
-  commitPart: (context, env) => {
-    return API.commitPart(context[0], context[1], env)
-  }, 
-  discardPart: (context, env) => {
-    return API.discardPart(context[0], env)
-  }, 
-  removePart: (context, env) => {
-    return API.removePart(context[0], context[1], env)
-  }, 
-  copyPart: (context, env) => {
-    return API.copyPart(context[0], context[1], context[2], env)
-  }
+const updateEnabledApis = {
+  openDialog: API.openDialog, 
+  closeDialog: API.closeDialog, 
+  openProgress: API.openProgress, 
+  closeProgress: API.closeProgress, 
+  setPage: API.setPage, 
+  nextPage: API.nextPage, 
+  prevPage: API.prevPage, 
+  setSwitch: API.setSwitch, 
+  toggleSwitch: API.toggleSwitch, 
+  submit: API.submit, 
+  reorder: API.reorder, 
+  reset: API.reset, 
+  editPart: API.editPart, 
+  createPart: API.createPart, 
+  commitPart: API.commitPart, 
+  discardPart: API.discardPart, 
+  removePart: API.removePart, 
+  copyPart: API.copyPart
 }
 
 /**
@@ -634,8 +598,11 @@ export const start = (
       const context = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgContext || "null") : ev.context
       let baseEnv = state.baseEnv
       baseEnv = E.setRet((env0) => {baseEnv = env0}, baseEnv)
-      if (! update || !(updates[update] || apiProxies[update])) throw new Error('onUpdate/0: no update or unknown update')
-      const res = (updates[update] || apiProxies[update])(context, baseEnv)
+      const func = updates[update] || updateEnabledApis[update]
+      if (! func) throw new Error('onUpdate/0: no update or unknown update')
+      if (! Array.isArray(context)) throw new Error('onUpdate/1: parameter must be an array')
+      if (context.length + 1 != func.length) throw new Error('onUpdate/2: bad number of parameters')
+      const res = func.apply(null, [...context, baseEnv])
       baseEnv = E.setRet(null, E.isEnv(res) ? res : baseEnv)
       baseEnv = E.validate("", baseEnv)
       let env = state.env

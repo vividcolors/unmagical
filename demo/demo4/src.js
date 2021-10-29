@@ -13,10 +13,7 @@ const instantiateSortable = (name, path, onStart, onEnd, options) => {
       marker = ev.item.nextElementSibling
       onStart({
         update: 'reorder', 
-        context: {
-          name, 
-          fromPath: path + '/' + ev.oldIndex
-        }
+        context: [name, path + '/' + ev.oldIndex]
       })
     }, 
     onEnd: (ev) => {
