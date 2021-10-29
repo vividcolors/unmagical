@@ -11,8 +11,9 @@ import {hasPath as rhasPath, init, path as rpath, assocPath, insert, last, disso
  * @typedef {import("./schema").SchemaDb} SchemaDb
  * @typedef {{
  *   tree: Json, 
+ *   validationNeeded: boolean, 
  *   schemaDb: SchemaDb, 
- *   validate: (value:any, schema:Schema) => Slot
+ *   validate: (value:any, slot:Slot, schema:Schema, path:string, env:Env) => Slot
  *   extra: {[name:string]:any}
  *   ret?: (env:Env) => void
  * }} Env
@@ -35,42 +36,64 @@ const init2 = (list) => {
   return init(init(list))
 }
 
-
-
+/**
+ * 
+ * @param {Json} value 
+ * @return {Slot} 
+ */
+const makeSlot = (value) => {
+  const rv = {'@value':value, invalid:false, message:''}
+  switch (typeOf(value)) {
+    case 'object': // FALLTHRU
+    case 'array': 
+      break
+    case 'number': // FALLTHRU
+    case 'integer': 
+      rv.input = '' + value
+      rv.touched = false
+      break
+    case 'boolean': 
+      rv.input = (value) ? 'true' : 'false'
+      rv.touched = false
+      break
+    case 'null': 
+      rv.input = ''
+      rv.touched = false
+      break
+    case 'string': 
+      rv.input = value
+      rv.touched = false
+      break
+  }
+  return rv
+}
 
 /**
  * 
  * @param {Json} data 
- * @param {string} path 
- * @param {SchemaDb} schemaDb 
- * @param {(value:any, schema:Schema) => Slot} validate 
  * @returns {Slot}
  */
-const wrap = (data, path, schemaDb, validate) => {
-  /** @type {(data:Json, path:string) => Slot} */
-  const inner = (data, path) => {
+const wrap = (data) => {
+  /** @type {(data:Json) => Slot} */
+  const inner = (data) => {
     switch (typeOf(data)) {
       case 'array': 
         const es = []
-        const path2 = path + '/*'
         for (let i = 0; i < /** @type {Json[]} */ (data).length; i++) {
-          es[i] = inner(data[i], path2)
+          es[i] = inner(data[i])
         }
-        const xa = validate(es, schemaDb[path])
-        return xa
+        return makeSlot(es)
       case 'object': 
         const rec = {}
         for (let p in /** @type {{[name:string]:Json}} */ (data)) {
-          rec[p] = inner(data[p], path + '/' + p)
+          rec[p] = inner(data[p])
         }
-        const xo = validate(rec, schemaDb[path])
-        return xo
+        return makeSlot(rec)
       default: 
-        const xs = validate(data, schemaDb[path])
-        return xs
+        return makeSlot(data)
     }
   }
-  return inner(data, path)
+  return inner(data)
 }
 
 /**
@@ -102,13 +125,14 @@ const strip = (tree) => {
  * Makes env.
  * @param {Json} data 
  * @param {SchemaDb} schemaDb 
- * @param {(value:any, schema:Schema) => Slot} validate
+ * @param {(value:any, slot:Slot, schema:Schema, path:string, env:Env) => Slot} validate
  * @returns {Env}
  */
 export const makeEnv = (data, schemaDb, validate) => {
-  const tree = wrap(data, "", schemaDb, validate)
+  const tree = wrap(data)
   return {
     tree, 
+    validationNeeded: true, 
     schemaDb, 
     validate, 
     extra: {}
@@ -122,7 +146,7 @@ export const makeEnv = (data, schemaDb, validate) => {
  * @returns {boolean}
  */
 export const isSame = (env0, env1) => {
-  return (env0.tree === env1.tree && env0.extra === env1.extra)
+  return (env0.tree === env1.tree && env0.extra === env1.extra && env0.validationNeeded === env1.validationNeeded)
 }
 
 /**
@@ -220,21 +244,21 @@ export const add = (path, value, env) => {
     if (index < 0 || index > slot0['@value'].length) {
       throw new Error('add/3 index out of range: ' + path)
     }
-    const value1 = wrap(value, normalizePath(path), env.schemaDb, env.validate)
+    const value1 = wrap(value)
     const lis = insert(index, value1, slot0['@value'])
-    const slot = env.validate(lis, env.schemaDb[normalizePathArray(location)])
+    const slot = makeSlot(lis)
     const tree = assocPath(location, slot, env.tree)
-    return {...env, tree}
+    return {...env, tree, validationNeeded:true}
   } else {
     // define or replace into object
     if (typeof name != 'string') {
       throw new Error('add/4 invalid name: ' + path)
     }
-    const value1 = wrap(value, normalizePath(path), env.schemaDb, env.validate)
+    const value1 = wrap(value)
     const rec = {...slot0['@value'], [name]:value1}
-    const slot = env.validate(rec, env.schemaDb[normalizePathArray(location)])
+    const slot = makeSlot(rec)
     const tree = assocPath(location, slot, env.tree)
-    return {...env, tree}
+    return {...env, tree, validationNeeded:true}
   }
 }
 
@@ -262,18 +286,18 @@ export const remove = (path, env) => {
       throw new Error('remove/3 out of range: ' + path)
     }
     const lis = rremove(name, 1, slot0['@value'])
-    const slot = env.validate(lis, env.schemaDb[normalizePathArray(location)])
+    const slot = makeSlot(lis)
     const tree = assocPath(location, slot, env.tree)
-    return {...env, tree}
+    return {...env, tree, validationNeeded:true}
   } else {
     // delete property from object
     if (! slot0['@value'].hasOwnProperty(name)) {
       throw new Error('remove/4: property not found: ' + path)
     }
     const rec = dissoc(name, slot0['@value'])
-    const slot = env.validate(rec, env.schemaDb[normalizePathArray(location)])
+    const slot = makeSlot(rec)
     const tree = assocPath(location, slot, env.tree)
-    return {...env, tree}
+    return {...env, tree, validationNeeded:true}
   }
 }
 
@@ -286,6 +310,11 @@ export const remove = (path, env) => {
  */
 export const replace = (path, value, env) => {
   const epath = /** @type {string[]} */ (internPath(path))
+  if (epath.length == 0) {
+    // replace whole data
+    const tree = wrap(value)
+    return {...env, tree, validationNeeded:true}
+  }
   const location = init2(epath)
   const name = last(epath)
   const slot0 = rpath(location, env.tree)
@@ -301,21 +330,21 @@ export const replace = (path, value, env) => {
     if (name < 0 || name >= slot0['@value'].length) {
       throw new Error('replace/3 out of range: ' + path)
     }
-    const value1 = wrap(value, normalizePath(path), env.schemaDb, env.validate)
+    const value1 = wrap(value)
     const lis = update(name, value1, slot0['@value'])
-    const slot = env.validate(lis, env.schemaDb[normalizePathArray(location)])
+    const slot = makeSlot(lis)
     const tree = assocPath(location, slot, env.tree)
-    return {...env, tree}
+    return {...env, tree, validationNeeded:true}
   } else {
     // replace a property of object
     if (typeof name != 'string') {
       throw new Error('replace/4 invalid name: ' + path)
     }
-    const value1 = wrap(value, normalizePath(path), env.schemaDb, env.validate)
+    const value1 = wrap(value)
     const rec = {...slot0['@value'], [name]:value1}
-    const slot = env.validate(rec, env.schemaDb[normalizePathArray(location)])
+    const slot = makeSlot(rec)
     const tree = assocPath(location, slot, env.tree)
-    return {...env, tree}
+    return {...env, tree, validationNeeded:true}
   }
 }
 
@@ -344,6 +373,51 @@ export const copy = (from, path, env) => {
   const value = extract(from, env)
   env = add(path, value, env)
   return env
+}
+
+/**
+ * 
+ * @param {string} path 
+ * @param {Env} env
+ * @returns {Env} 
+ */
+export const validate = (path, env) => {
+  /**
+   * 
+   * @param {Slot} slot0 
+   * @param {string} npath
+   * @param {string} path
+   * @returns {Slot} 
+   */
+  const inner = (slot0, npath, path) => {
+    const value0 = slot0['@value']
+    switch (typeOf(value0)) {
+      case 'array': 
+        const lis = []
+        for (let i = 0; i < (/** @type {Json[]} */(value0)).length; i++) {
+          lis[i] = inner(value0[i], npath + '/*', path + '/' + i)
+        }
+        return env.validate(lis, slot0, env.schemaDb[npath], path, env)
+      case 'object': 
+        const rec = {}
+        for (let p in  /** @type {{[name:string]:Json}} */(value0)) {
+          rec[p] = inner(value0[p], npath + '/' + p, path + '/' + p)
+        }
+        return env.validate(rec, slot0, env.schemaDb[npath], path, env)
+      default: 
+        const slot = env.validate(value0, slot0, env.schemaDb[npath], path, env)
+        return slot
+    }
+  }
+
+  const epath = internPath(path)
+  const slot0 = rpath(epath, env.tree)
+  if (! slot0) {
+    throw new Error('validate/1: not found: ' + path)
+  }
+  const slot = inner(slot0, normalizePath(path), path)
+  const tree = assocPath(epath, slot, env.tree)
+  return {...env, tree, validationNeeded:false}
 }
 
 /**
@@ -446,12 +520,14 @@ export const getExtra = (name, env) => {
 
 /**
  * 
- * @param {(env:Env) => void} ret 
+ * @param {((env:Env) => void)|null} ret 
  * @param {Env} env 
  * @returns {Env}
  */
 export const setRet = (ret, env) => {
-  return {...env, ret}
+  if (ret) return {...env, ret}
+  const {ret:_unused, ...env2} = env
+  return env2
 }
 
 /**

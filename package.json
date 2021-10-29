@@ -3,13 +3,16 @@
     "ajv": "^8.1.0",
     "hyperapp": "^1.2.10",
     "rambda": "^6.7.0",
-    "ramda": "^0.27.1"
+    "ramda": "^0.27.1",
+    "string-template": "^1.0.0"
   },
   "scripts": {
-    "build": "parcel build -d asset src/framework.js", 
-    "test": "parcel build --target node -d asset/test tests/_index.js && node asset/test/_index", 
-    "demo1": "parcel build -d demo/demo1 --out-file index.js demo/demo1/src.js", 
-    "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.js"
+    "build": "parcel build -d asset src/core/framework.js",
+    "test": "parcel build --target node -d asset/test tests/_index.js && node asset/test/_index",
+    "demo1": "parcel build -d demo/demo1 --out-file index.js demo/demo1/src.js",
+    "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.js",
+    "demo3": "parcel build -d demo/demo3 --out-file index.js demo/demo3/src.js",
+    "demo4": "parcel build -d demo/demo4 --out-file index.js demo/demo4/src.js"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",

@@ -1,7 +1,7 @@
 
-import * as C from '../src/components'
-import {API, start, h} from '../src/framework'
-export {API, start, h} from '../src/framework'
+import * as C from '../core/components'
+import {API, start, h} from '../core/framework'
+export {API, start, h} from '../core/framework'
 
 const attributeMap = {
   textbox: {
@@ -106,12 +106,15 @@ const onDialogRemoved = (el, done) => {
   C.prepareToDestroy(el, anim, done)
 }
 
-export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', hideCancelButton = false, message, ...props}) => {
+export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', title, hideCancelButton = false, message, ...props}) => {
   clazz += ' modal is-active'
   return (
     <div class={clazz} key={name} {...props} oncreate={onDialogCreated} onremove={onDialogRemoved}>
       <div class="modal-background"></div>
       <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">{title}</p>
+        </header>
         <section class="modal-card-body">
           <p>{message}</p>
         </section>
@@ -125,17 +128,21 @@ export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', hideCance
 }, attributeMap.dialog)
 
 const onNotificationCreated = (el) => {
+  const r = el.getBoundingClientRect()
   el.animate([
-    {maxHeight: 0}, 
-    {maxHeight: '300px'}
-  ], 200)
+    {offset:0, maxHeight: 0}, 
+    {offset:0.999, maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
+    {offset:1, maxHeight:'none'}
+  ], 150)
+  el.scrollIntoView()
 }
 
 const onNotificationRemoved = (el, done) => {
+  const r = el.getBoundingClientRect()
   const anim = el.animate([
-    {maxHeight: '300px'}, 
+    {maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
     {maxHeight: 0}
-  ], 200)
+  ], 150)
   C.prepareToDestroy(el, anim, done)
 }
 

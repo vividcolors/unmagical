@@ -27,6 +27,34 @@ export const normalizePath = (path) => {
 
 /**
  * 
+ * @param {string} base 
+ * @param {string} path 
+ * @returns {string}
+ */
+export const appendPath = (base, path) => {
+  if (path.charAt(0) == '' || path.charAt(0) == '/') return path  // absolute path
+  if (path === '0') return base  // easy frequent case
+  
+  const base1 = pathToArray(base)
+  let frag0 = path.split('/')
+  let frag = []
+  let unused = null
+
+  let upcount = +frag0[0]
+  frag = base1
+  if (upcount > frag.length) {
+    upcount = frag.length
+  }
+  frag.splice(frag.length - upcount, upcount)
+
+  frag0.shift()
+
+  if (frag0.length == 0 && frag.length == 0) return ''
+  return '/' + frag.concat(frag0).join('/')
+}
+
+/**
+ * 
  * @param {(string | number)[]} path
  * @returns {string} 
  */
@@ -73,3 +101,40 @@ export const emptyObject = {}
  * @type {T[]}
  */
 export const emptyArray = []
+
+/**
+ * Returns true if `x' is json value.
+ * @param {any} x
+ * @returns {boolean} 
+ */
+export const isJsonValue = (x) => {
+  switch (typeOf(x)) {
+    case 'null': 
+    case 'number': 
+    case 'boolean': 
+    case 'string': 
+    case 'object': 
+    case 'array': 
+      return true
+    default: 
+      return false
+  }
+}
+
+/**
+ * 
+ * @param {string} path1 
+ * @param {string} path2 
+ * @return {string}
+ */
+export const commonPath = (path1, path2) => {
+  const frags1 = path1.split('/')
+  const frags2 = path2.split('/')
+  const rv = []
+  for (let i = 0; i < frags1.length; i++) {
+    if (frags2.length <= i) break
+    if (frags1[i] != frags2[i]) break
+    rv.push(frags1[i])
+  }
+  return rv.join('/')
+}

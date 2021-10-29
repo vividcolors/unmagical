@@ -51,6 +51,9 @@ export const run = (assert, assertError) => {
 
   env = E.replace('/age', 30, env)
   assert(9, () => E.extract('/age', env), 30)
+  let env2 = E.replace('', {foo:1}, env)
+  assert(9.1, () => E.extract('/foo', env2), 1)
+  assertError(9.2, () => E.extract('/age', env2), 'extract/')
 
   env = E.add('/id', 'TS1101', env)
   env = E.move('/id', '/employeeId', env)

@@ -1,7 +1,7 @@
 
-import * as C from '../src/components'
-import {API, start, h} from '../src/framework'
-export {API, start, h} from '../src/framework'
+import * as C from '../core/components'
+import {API, start, h} from '../core/framework'
+export {API, start, h} from '../core/framework'
 
 const attributeMap = {
   textbox: {
@@ -71,6 +71,10 @@ export const Textbox = C.playTextbox(({invalid, class:clazz, ...props}, children
   )
 }, attributeMap.textbox)
 
+export const GenericTextbox = C.Textbox
+
+export const Slider = C.Slider
+
 export const Listbox = C.playListbox(({invalid, class:clazz, ...props}, children) => {
   clazz = "bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"  // initialize clazz
   if (invalid) clazz += " bg-red-500 bg-opacity-50"
@@ -82,12 +86,12 @@ export const Listbox = C.playListbox(({invalid, class:clazz, ...props}, children
 // We call playRadio() for label element to get `invalid' property.
 // Given `invalid' is used to compose class names.
 // Other radio-specific properties are located and moved to `input' child.
-export const Radio = C.playRadio(({invalid, checked, onchange, label, 'data-mg-path':path, 'data-mg-value-attribute':valueAttr, class:clazz, inputProps={}, spanProps={}, ...props}, children) => {
-  clazz = " inline-flex"  // initialize clazz
+export const Radio = C.playRadio(({invalid, checked, onchange, value, label, 'data-mg-path':path, 'data-mg-value-attribute':valueAttr, class:clazz, inputProps={}, spanProps={}, ...props}, children) => {
+  clazz = "inline-flex items-center mr-3"  // initialize clazz
   if (invalid) clazz += " bg-red-500 bg-opacity-50"
   return (
     <label class={clazz} {...props}>
-      <input type="radio" data-mg-path={path} data-mg-value-attribute={valueAttr} checked={checked} onchange={onchange} {...inputProps} />
+      <input type="radio" data-mg-path={path} data-mg-value-attribute={valueAttr} checked={checked} onchange={onchange} value={value} {...inputProps} />
       <span {...spanProps}>{label}</span>
     </label>
   )
@@ -108,7 +112,7 @@ const ButtonProto = ({primary = false, class:clazz, ...props}, children) => {
   clazz = primary 
     ? "text-white bg-blue-700 hover:bg-blue-800"
     : "text-black bg-gray-300 hover:bg-gray-400"
-  clazz = " focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
+  clazz += " focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
   return (
     <button class={clazz} {...props}>{children}</button>
   )
@@ -118,19 +122,19 @@ export const UpdateButton = C.playUpdateButton(ButtonProto, attributeMap.updateB
 
 export const SettleButton = C.playSettleButton(ButtonProto, attributeMap.settleButton)
 
-export const Field = ({path, env, title, class:clazz, ...props}, children) => {
+export const Field = ({path, env, title, foldValidity = false, class:clazz, ...props}, children) => {
   if (! API.test(path, env)) return null
   clazz = "mb-6"
   const slot = API.getSlot(path, env)
-  const invalid = slot.touched && slot.invalid
+  const {invalid, message} = foldValidity ? API.foldValidity(path, env) : {invalid:slot.invalid && slot.touched, message:slot.message}
   return (
     <div class={clazz} {...props}>
       {title ? (
         <div class="text-sm font-medium text-gray-900 block mb-2">{title}</div>
       ) : null}
       {children}
-      {invalid && slot.message ? (
-        <small class="text-sm text-red-500">{slot.message}</small>
+      {invalid && message ? (
+        <small class="text-sm text-red-500">{message}</small>
       ) : null}
     </div>
   )

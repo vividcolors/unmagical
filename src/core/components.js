@@ -10,6 +10,14 @@ export const defaultAttributeMap = {
     invalidClass: 'mg-invalid', 
     invalid: ''
   }, 
+  slider: {
+    oninput: 'oninput', 
+    onchange: 'onchange', 
+    value: 'value', 
+    class: 'class', 
+    invalidClass: 'mg-invalid', 
+    invalid: ''
+  }, 
   listbox: {
     onchange: 'onchange', 
     class: 'class', 
@@ -67,6 +75,16 @@ export const defaultAttributeMap = {
     class: 'class', 
     shown: 'shown', 
     shownClass: 'mg-shown'
+  }, 
+  smartControl: {
+    onchange: 'onchange', 
+    value: ''
+  }, 
+  reorderable: {
+    active: 'active', 
+    activeClass: 'mg-active', 
+    onstart: 'onstart', 
+    onend: 'onend'
   }
 }
 
@@ -143,6 +161,25 @@ export const playTextbox = (C, map = null) => {
 
 export const Textbox = playTextbox("input")
 
+export const playSlider = (C, map = null) => {
+  map = map || defaultAttributeMap.slider
+  return (props, children) => (state, actions) => {
+    const {'mg-path':path, ...attributes} = props
+    const slot = API.getSlot(path, state.env)
+    attributes['data-mg-path'] = path
+    attributes['data-mg-value-attribute'] = map.value
+    attributes[map.oninput] = actions.onSliderInput
+    attributes[map.onchange] = actions.onSliderChange
+    attributes[map.value] = slot.input
+    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    addAttr(attributes, map.invalid, invalid)
+    addClass(attributes, map.class, invalid ? map.invalidClass : "")
+    return h(C, attributes, ...children)
+  }
+}
+
+export const Slider = playSlider("input")
+
 export const playListbox = (C, map = null) => {
   map = map || defaultAttributeMap.listbox
   return (props, children) => (state, actions) => {
@@ -200,6 +237,18 @@ export const playCheckbox = (C, map = null) => {
 export const Checkbox = playCheckbox("input")
 
 // TODO: file, number, date, color, range, ...
+
+export const playSmartControl = (C, map = null) => {
+  map = map || defaultAttributeMap.smartControl
+  return (props, children) => (state, actions) => {
+    const {...attributes} = props
+    const path = props['mg-path']
+    const slot = API.getSlot(path, state.env)
+    attributes[map.onchange] = actions.onSmartControlChange
+    addAttr(attributes, map.value, slot.input)
+    return h(C, attributes, ...children)
+  }
+}
 
 export const playUpdateButton = (C, map = null) => {
   map = map || defaultAttributeMap.button
@@ -279,6 +328,21 @@ export const playSwitch = (C, map = null) => {
     if (! shown && map['@nullIfHidden']) return null
     addAttr(attributes, map.shown, shown)
     addClass(attributes, map.class, shown ? map.shownClass : "")
+    return h(C, attributes, ...children)
+  }
+}
+
+export const playReorderable = (C, map = null) => {
+  map = map || defaultAttributeMap.switch
+  return (props, children) => (state, actions) => {
+    const {...attributes} = props
+    const name = attributes['mg-name']
+    const extra = API.getExtra(name, state.env)
+    const active = !!extra
+    attributes[map.onstart] = actions.onUpdate
+    attributes[map.onend] = actions.onPromiseSettle
+    addAttr(attributes, map.active, active)
+    addClass(attributes, map.activeClass, active ? map.activeClass : "")
     return h(C, attributes, ...children)
   }
 }
