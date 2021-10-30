@@ -107,7 +107,7 @@ const view = (env) => {
           })}
         </tbody>
       </table>
-      <Dialog mg-name="alert" title="エラー" hideCancelButton={true} />
+      <Dialog mg-name="alert" title="エラー" message="エラーが発生しました（{name}: {message}）" hideCancelButton={true} />
     </div>
   )
 }
@@ -115,4 +115,4 @@ const view = (env) => {
 const containerEl = document.getElementById('app')
 const {onUpdate} = start({data, schema, view, containerEl})
 
-onUpdate({update:'load', context:['http://localhost:3000/contacts?_limit=10', '/contacts', '失敗です', {totalPath:'/nav/total', totalHeader:'X-Total-Count'}]})
+onUpdate({update:'load', context:['http://localhost:3000/contactss?_limit=10', '/contacts', {totalPath:'/nav/total', totalHeader:'X-Total-Count'}]})

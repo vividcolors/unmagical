@@ -52,7 +52,7 @@ export const defaultAttributeMap = {
   }, 
   dialog: {
     '@nullIfHidden': true, 
-    message: 'message', 
+    data: 'data', 
     class: 'class', 
     shown: 'shown', 
     shownClass: 'mg-shown'
@@ -281,11 +281,11 @@ export const playDialog = (C, map = null) => {
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const name = attributes['mg-name']
-    const message = API.getDialog(name, state.env)
-    if (message === null && map['@nullIfHidden']) return null
-    attributes[map.message] = message
-    addAttr(attributes, map.shown, (message !== null))
-    addClass(attributes, map.class, message !== null ? map.shownClass : "")
+    const data = API.getDialog(name, state.env)
+    if (data === null && map['@nullIfHidden']) return null
+    attributes[map.data] = data
+    addAttr(attributes, map.shown, (data !== null))
+    addClass(attributes, map.class, data !== null ? map.shownClass : "")
     return h(C, attributes, ...children)
   }
 }

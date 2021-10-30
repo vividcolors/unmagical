@@ -1,4 +1,5 @@
 
+import template from 'string-template'
 import * as C from '../core/components'
 import {API, start, h} from '../core/framework'
 export {API, start, h} from '../core/framework'
@@ -51,11 +52,11 @@ const attributeMap = {
   }, 
   dialog: {
     '@nullIfHidden': true, 
-    message: 'message'
+    data: 'data'
   }, 
   notification: {
     '@nullIfHidden': true, 
-    message: 'message'
+    data: 'data'
   }, 
   progress: {
     '@nullIfHidden': true, 
@@ -106,17 +107,17 @@ const onDialogRemoved = (el, done) => {
   C.prepareToDestroy(el, anim, done)
 }
 
-export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', title, hideCancelButton = false, message, ...props}) => {
+export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', title, message, hideCancelButton = false, data, ...props}) => {
   clazz += ' modal is-active'
   return (
     <div class={clazz} key={name} {...props} oncreate={onDialogCreated} onremove={onDialogRemoved}>
       <div class="modal-background"></div>
       <div class="modal-card">
         <header class="modal-card-head">
-          <p class="modal-card-title">{title}</p>
+          <p class="modal-card-title">{template(title, data)}</p>
         </header>
         <section class="modal-card-body">
-          <p>{message}</p>
+          <p>{template(message, data)}</p>
         </section>
         <footer class="modal-card-foot">
           <SettleButton class="button is-success" mg-name={name} mg-result={true}>OK</SettleButton>
@@ -146,12 +147,12 @@ const onNotificationRemoved = (el, done) => {
   C.prepareToDestroy(el, anim, done)
 }
 
-export const Notification = C.playDialog(({'mg-name':name, message, class:clazz = '', ...props}) => {
+export const Notification = C.playDialog(({'mg-name':name, data, message, class:clazz = '', ...props}) => {
   clazz += ' notification'
   return (
     <div class={clazz} key={name} {...props} oncreate={onNotificationCreated} onremove={onNotificationRemoved}>
       <SettleButton class="delete" mg-name={name} mg-result={true}></SettleButton>
-      <p>{message}</p>
+      <p>{template(message, data)}</p>
     </div>
   )
 }, attributeMap.notification)

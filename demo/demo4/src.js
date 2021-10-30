@@ -141,7 +141,7 @@ const TodoItem = ({path, editing, env}) => {
       </div>
       <div class="media-right">
         <UpdateButton class="button is-info is-inverted mx-1" mg-update="copyPart" mg-context={[path, '/form', {}]}><span class="icon"><span class="material-icons">content_copy</span></span></UpdateButton>
-        <UpdateButton class="button is-danger is-inverted mx-1" mg-update="removePart" mg-context={[path, 'このTODOを削除します。よろしいですか？']}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
+        <UpdateButton class="button is-danger is-inverted mx-1" mg-update="removePart" mg-context={[path]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
       </div>
     </div>
   )
@@ -197,7 +197,7 @@ const view = (env) => {
         })}
         {formAction.endsWith('-') ? <TodoForm env={env} /> : <TodoButton />}
       </ReorderableList>
-      <Dialog mg-name="confirm" title="確認" hideCancelButton={false} />
+      <Dialog mg-name="confirm" title="確認" message="このTODOを削除します。よろしいですか？" hideCancelButton={false} />
     </div>
   )
 }

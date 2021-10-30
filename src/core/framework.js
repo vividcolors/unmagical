@@ -1,6 +1,5 @@
 //@ts-check
 
-import template from 'string-template'
 import { normalizePath, commonPath } from './utils'
 import * as E from './env'
 import * as S from './schema'
@@ -111,18 +110,18 @@ export const API = {
 
   /**
    * @param {string} name
-   * @param {string} message
+   * @param {any} data
    * @param {Object|null} options
    * @param {number|null} params.timeout
    * @param {Env} env
    * @returns {Promise}
    */
-  openDialog: (name, message, options, env) => {
+  openDialog: (name, data, options, env) => {
     const timeoutId = (options && options.timeout)
       ? setTimeout(() => { actions.onPromiseSettle({name, result:true}) }, options.timeout)
       : null
     const p = new Promise((fulfill, reject) => {
-      env = E.setExtra(name, {message, fulfill, reject, timeoutId}, env)
+      env = E.setExtra(name, {data, fulfill, reject, timeoutId}, env)
     })
     E.doReturn(env)
     return p
@@ -140,7 +139,7 @@ export const API = {
   getDialog: (name, env) => {
     const extra = E.getExtra(name, env)
     if (! extra) return null
-    return extra.message
+    return extra.data
   }, 
 
   setPage: (name, current, env) => {
@@ -225,7 +224,7 @@ export const API = {
   }, 
 
   // TODO: reload
-  commitItem: (formPath, successMessage, failureMessage, options, env) => {
+  commitItem: (formPath, options, env) => {
     const opts = {
       errorSelector: null, 
       method: 'POST', 
@@ -273,8 +272,7 @@ export const API = {
             env = API.replace(actionPath, '', env)
           }
           const context = {status:response.status, statusText:response.statusText, url:response.url}
-          const message = template(successMessage, context)
-          return API.openDialog('feedback', message, {timeout:opts.successMessageTimeout}, env)
+          return API.openDialog('feedback', {}, {timeout:opts.successMessageTimeout}, env)
           .then(API.wrap(([result, env]) => {
             return API.closeDialog('feedback', env)
           }))
@@ -282,8 +280,8 @@ export const API = {
         .catch(API.wrap(([error, env]) => {
           env = API.closeProgress('loading', env)
           console.error('loading failed', error)
-          const message = template(failureMessage, {name:error.name, message:error.message, url})
-          return API.openDialog('alert', message, null, env)
+          const data = {name:error.name, message:error.message, url}
+          return API.openDialog('alert', data, null, env)
           .then(API.wrap(([result, env]) => {
             return API.closeDialog('alert', env)
           }))
@@ -301,8 +299,8 @@ export const API = {
   }, 
 
   // TODO: reload
-  deleteItem: (url, confirmationMessage, successMessage, failureMessage, options, env) => {
-    return API.openDialog('confirm', confirmationMessage, null, env)
+  deleteItem: (url, options, env) => {
+    return API.openDialog('confirm', {}, null, env)
       .then(API.wrap(([ok, env]) => {
         env = API.closeDialog('confirm', env)
         if (! ok) return env
@@ -324,8 +322,7 @@ export const API = {
           .then(API.wrap(([response, env]) => {
             env = API.closeProgress('loading', env)
             const context = {status:response.status, statusText:response.statusText, url:response.url}
-            const message = template(successMessage, context)
-            return API.openDialog('feedback', message, {timeout:opts.successMessageTimeout}, env)
+            return API.openDialog('feedback', {}, {timeout:opts.successMessageTimeout}, env)
             .then(API.wrap(([result, env]) => {
               return API.closeDialog('feedback', env)
             }))
@@ -334,8 +331,8 @@ export const API = {
           .catch(API.wrap(([error, env]) => {
             env = API.closeProgress('loading', env)
             console.error('deletion failed', error)
-            const message = template(failureMessage, {name:error.name, message:error.message, url})
-            return API.openDialog('alert', message, null, env)
+            const data = {name:error.name, message:error.message, url}
+            return API.openDialog('alert', data, null, env)
             .then(API.wrap(([result, env]) => {
               return API.closeDialog('alert', env)
             }))
@@ -344,7 +341,7 @@ export const API = {
       }))
   }, 
 
-  load: (url, itemsPath, failureMessage, options, env) => {
+  load: (url, itemsPath, options, env) => {
     const opts = {
       totalPath: '', 
       totalHeader: '', 
@@ -382,8 +379,8 @@ export const API = {
       .catch(API.wrap(([error, env]) => {
         env = API.closeProgress('loading', env)
         console.error('loading failed', error)
-        const message = template(failureMessage, {name:error.name, message:error.message, url})
-        return API.openDialog('alert', message, null, env)
+        const data = {name:error.name, message:error.message, url}
+        return API.openDialog('alert', data, null, env)
         .then(API.wrap(([result, env]) => {
           return API.closeDialog('alert', env)
         }))
@@ -394,22 +391,18 @@ export const API = {
   /**
    * 
    * @param {string} url
-   * @param {string} successMessage
-   * @param {string} failureMessage
    * @param {Object} options
    * @param {string} options.path
    * @param {string} options.errorSelector
    * @param {string} options.method
    * @param {number|null} options.successMessageTimeout
    */
-  submit: (url, successMessage, failureMessage, options, env) => {
+  submit: (url, options, env) => {
     const opts = {
       path: '', 
       errorSelector: null, 
       method: 'POST', 
-      successMessage: "Submission successful.", 
       successMessageTimeout: 5000, 
-      failureMessage: "Submission failed.", 
       ...options
     }
     env = API.touchAll(opts.path, env)
@@ -436,26 +429,26 @@ export const API = {
       return API.withEnv(env, 
         /** @ts-ignore */
         fetch(url, fetchOptions)
-        .catch(API.wrap(([response, env]) => {
-          console.error('form submission failed', response)
-          return {ok:false, status:-1, statusText:response.message, url}
-        }))
         .then(API.wrap(([response, env]) => {
-          env = API.closeProgress('loading', env)
-          const context = {status:response.status, statusText:response.statusText, url:response.url}
-          if (response.ok) {
-            const message = template(successMessage, context)
-            return API.openDialog('feedback', message, {timeout:opts.successMessageTimeout}, env)
-            .then(API.wrap(([result, env]) => {
-              return API.closeDialog('feedback', env)
-            }))
-          } else {
-            const message = template(failureMessage, context)
-            return API.openDialog('alert', message, null, env)
-            .then(API.wrap(([result, env]) => {
-              return API.closeDialog('alert', env)
-            }))
+          if (! response.ok) {
+            const error = new Error(response.statusText)
+            error.name = 'HTTP Error'
+            throw API.withEnv(env, error)
           }
+          env = API.closeProgress('loading', env)
+          return API.openDialog('feedback', {}, {timeout:opts.successMessageTimeout}, env)
+          .then(API.wrap(([result, env]) => {
+            return API.closeDialog('feedback', env)
+          }))
+        }))
+        .catch(API.wrap(([error, env]) => {
+          env = API.closeProgress('loading', env)
+          console.error('loading failed', error)
+          const data = {name:error.name, message:error.message, url}
+          return API.openDialog('alert', data, null, env)
+          .then(API.wrap(([result, env]) => {
+            return API.closeDialog('alert', env)
+          }))
         }))
       )
     }
@@ -477,10 +470,9 @@ export const API = {
   /**
    * 
    * @param {Json} data
-   * @param {string} confirmationMessage
    */
-  reset: (data, confirmationMessage, env) => {
-    return API.openDialog('confirm', confirmationMessage, null, env)
+  reset: (data, env) => {
+    return API.openDialog('confirm', {}, null, env)
       .then(API.wrap((response, env) => {
         env = API.closeDialog('confirm', env)
         if (response.ok) {
@@ -577,10 +569,9 @@ export const API = {
   /**
    * 
    * @param {string} partPath
-   * @param {string} confirmationMessage
    */
-  removePart: (partPath, confirmationMessage, env) => {
-    return API.openDialog('confirm', confirmationMessage, null, env)
+  removePart: (partPath, env) => {
+    return API.openDialog('confirm', {}, null, env)
       .then(API.wrap(([ok, env]) => {
         env = API.closeDialog('confirm', env)
         if (ok) {

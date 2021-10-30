@@ -110,7 +110,7 @@ const view = (env) => {
   const quotation = API.extract('/quotation', env)
   return (
     <div id="rootMarker">
-      <Notification mg-name="feedback" />
+      <Notification mg-name="feedback" message="成功しました。" />
       <Field path="/detail/os" env={env} class="field">
         <label class="label">OS</label>
         <div class="control">
@@ -177,8 +177,8 @@ const view = (env) => {
         </tr>
       </table>
       <hr />
-      <UpdateButton type="button" class="button is-primary" mg-name="loading" mg-update="submit" mg-context={["http://localhost/", "成功です！", "失敗しました（エラーコード：{status}）", {path:"/detail", errorSelector:".is-danger", method:"POST", successMessageTimeout:5000}]}>確定</UpdateButton>
-      <Dialog mg-name="alert" hideCancelButton={true} />
+      <UpdateButton type="button" class="button is-primary" mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/contacts", {path:"/detail", errorSelector:".is-danger", method:"POST", successMessageTimeout:5000}]}>確定</UpdateButton>
+      <Dialog mg-name="alert" title="エラー" message="エラーが発生しました（{name}: {message}）" hideCancelButton={true} />
     </div>
   )
 }
