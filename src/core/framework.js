@@ -298,19 +298,22 @@ export const API = {
     return env
   }, 
 
-  // TODO: reload
-  deleteItem: (url, options, env) => {
+  deleteItem: (url, loadUrl, queryPath, itemsPath, options, env) => {
     return API.openDialog('confirm', {}, null, env)
       .then(API.wrap(([ok, env]) => {
         env = API.closeDialog('confirm', env)
         if (! ok) return env
         const opts = {
-          method: 'DELETE', 
+          deleteMethod: 'DELETE', 
+          loadMethod: 'GET', 
+          totalPath: '', 
+          totalHeader: '', 
+          successMessageTimeout: 5000, 
           ...options
         }
         env = API.openProgress('loading', null, env)
         const fetchOptions = {
-          method: opts.method, 
+          method: opts.deleteMethod, 
           mode: 'cors', 
           header: {
             'Content-Type': 'application/json'
@@ -320,13 +323,44 @@ export const API = {
           /** @ts-ignore */
           fetch(url, fetchOptions)
           .then(API.wrap(([response, env]) => {
-            env = API.closeProgress('loading', env)
-            const context = {status:response.status, statusText:response.statusText, url:response.url}
-            return API.openDialog('feedback', {}, {timeout:opts.successMessageTimeout}, env)
-            .then(API.wrap(([result, env]) => {
-              return API.closeDialog('feedback', env)
-            }))
-
+            if (! response.ok) {
+              const error = new Error(response.statusText)
+              error.name = 'HTTP Error'
+              throw API.withEnv(env, error)
+            }
+            const fetchOptions2 = {
+              method: opts.loadMethod, 
+              mode: 'cors', 
+              header: {
+                'Content-Type': 'application/json'
+              }
+            }
+            const qs = new URLSearchParams(/** @type {Record<string, string>} */(API.extract(queryPath, env)))
+            const url = loadUrl + '?' + qs.toString()
+            return API.withEnv(env, 
+              /** @ts-ignore */
+              fetch(url, fetchOptions2)
+              .then(API.wrap(([response, env]) => {
+                if (! response.ok) {
+                  const error = new Error(response.statusText)
+                  error.name = 'HTTP Error'
+                  throw API.withEnv(env, error)
+                }
+                return API.withEnv(env, response.json())
+                  .then(API.wrap(([items, env]) => {
+                    env = API.closeProgress('loading', env)
+                    env = API.replace(itemsPath, items, env)
+                    if (opts.totalHeader && opts.totalPath) {
+                      const total = +(response.headers.get(opts.totalHeader))
+                      env = API.replace(opts.totalPath, total, env)
+                    }
+                    return API.openDialog('feedback', {}, {timeout:opts.successMessageTimeout}, env)
+                    .then(API.wrap(([result, env]) => {
+                      return API.closeDialog('feedback', env)
+                    }))
+                  }))
+              }))
+            )
           }))
           .catch(API.wrap(([error, env]) => {
             env = API.closeProgress('loading', env)
@@ -341,7 +375,7 @@ export const API = {
       }))
   }, 
 
-  load: (url, itemsPath, options, env) => {
+  load: (url, queryPath, itemsPath, options, env) => {
     const opts = {
       totalPath: '', 
       totalHeader: '', 
@@ -356,9 +390,11 @@ export const API = {
       }
     }
     env = API.openProgress('loading', null, env)
+    const qs = new URLSearchParams(/** @type {Record<string, string>} */(API.extract(queryPath, env)))
+    const url1 = url + '?' + qs.toString()
     return API.withEnv(env, 
       /** @ts-ignore */
-      fetch(url, fetchOptions)
+      fetch(url1, fetchOptions)
       .then(API.wrap(([response, env]) => {
         if (! response.ok) {
           const error = new Error(response.statusText)

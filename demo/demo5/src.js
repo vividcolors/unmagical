@@ -42,9 +42,10 @@ const data = {
   query: {
     name_like: '', 
     email_like: '', 
-    created_gte: '', 
-    created_lte: '', 
-    _page: 0
+    created_gte: '0', 
+    created_lte: '9', 
+    _page: 1, 
+    _limit: 10
   }, 
   nav: {
     total: 0, 
@@ -80,6 +81,7 @@ const view = (env) => {
   const contacts = API.extract('/contacts', env)
   return (
     <div class="container my-3">
+      <Notification mg-name="feedback" message="成功しました。" />
       <p>Total: {API.extract('/nav/total', env)}</p>
       <table class="table is-hoverable">
         <thead>
@@ -92,21 +94,29 @@ const view = (env) => {
         </thead>
         <tbody>
           {contacts.map((c) => {
+            const context = [
+              'http://localhost:3000/contacts/' + c.id, 
+              'http://localhost:3000/contacts', 
+              '/query', 
+              '/contacts', 
+              {totalPath:'/nav/total', totalHeader:'X-Total-Count'}
+            ]
             return (
-              <tr>
+              <tr key={c.id}>
                 <td>{c.id}</td>
                 <td>{c.created}</td>
                 <td>{c.name}</td>
                 <td>{c.email}</td>
                 <td>{c.content.replace('\n', '').slice(0, 10)}</td>
                 <td>
-                  <UpdateButton class="button is-danger is-inverted mx-1" mg-update="deleteItem" mg-context={null}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
+                  <UpdateButton class="button is-danger is-inverted mx-1" mg-update="deleteItem" mg-context={context}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
                 </td>
               </tr>
             )
           })}
         </tbody>
       </table>
+      <Dialog mg-name="confirm" title="確認" message="削除しますよ？" />
       <Dialog mg-name="alert" title="エラー" message="エラーが発生しました（{name}: {message}）" hideCancelButton={true} />
     </div>
   )
@@ -115,4 +125,4 @@ const view = (env) => {
 const containerEl = document.getElementById('app')
 const {onUpdate} = start({data, schema, view, containerEl})
 
-onUpdate({update:'load', context:['http://localhost:3000/contactss?_limit=10', '/contacts', {totalPath:'/nav/total', totalHeader:'X-Total-Count'}]})
+onUpdate({update:'load', context:['http://localhost:3000/contacts', '/query', '/contacts', {totalPath:'/nav/total', totalHeader:'X-Total-Count'}]})
