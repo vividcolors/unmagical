@@ -209,6 +209,187 @@ export const API = {
     }
   }, 
 
+  editItem: (itemPath, actionUrl, formPath, env) => {
+    const actionPath = formPath + '/action'
+    const dataPath = formPath + '/data'
+    env = API.add(actionPath, actionUrl, env)
+    return API.copy(itemPath, dataPath, env)
+  }, 
+
+  createItem: (data, actionUrl, formPath, env) => {
+    const actionPath = formPath + '/action'
+    const dataPath = formPath + '/data'
+    env = API.add(actionPath, actionUrl, env)
+    return API.replace(dataPath, data, env)
+  }, 
+
+  // TODO: reload
+  commitItem: (formPath, successMessage, failureMessage, options, env) => {
+    const opts = {
+      errorSelector: null, 
+      method: 'POST', 
+      successMessageTimeout: 5000, 
+      clearFormAfterSuccess: true, 
+      ...options
+    }
+    const actionPath = formPath + '/action'
+    const dataPath = formPath + '/data'
+    env = API.touchAll(dataPath, env)
+    env = API.validate(dataPath, env)
+    const numErrors = API.countValidationErrors(dataPath, env)
+    if (numErrors) {
+      if (opts.errorSelector) {
+        window.setTimeout(() => {
+          const targetEl = document.querySelector(opts.errorSelector)
+          if (targetEl) targetEl.scrollIntoView()
+        }, 100)
+      }
+      return env
+    } else {
+      const url = /** @type {string} */ (API.extract(actionPath, env))
+      const data = API.extract(dataPath, env)
+      const fetchOptions = {
+        method: opts.method, 
+        mode: 'cors', 
+        body: JSON.stringify(data), 
+        header: {
+          'Content-Type': 'application/json'
+        }
+      }
+      env = API.openProgress('loading', null, env)
+      return API.withEnv(env, 
+        /** @ts-ignore */
+        fetch(url, fetchOptions)
+        .then(API.wrap(([response, env]) => {
+          if (! response.ok) {
+            const error = new Error(response.statusText)
+            error.name = 'HTTP Error'
+            throw API.withEnv(env, error)
+          }
+          env = API.closeProgress('loading', env)
+          if (opts.clearFormAfterSuccess) {
+            env = API.replace(dataPath, null, env)
+            env = API.replace(actionPath, '', env)
+          }
+          const context = {status:response.status, statusText:response.statusText, url:response.url}
+          const message = template(successMessage, context)
+          return API.openDialog('feedback', message, {timeout:opts.successMessageTimeout}, env)
+          .then(API.wrap(([result, env]) => {
+            return API.closeDialog('feedback', env)
+          }))
+        }))
+        .catch(API.wrap(([error, env]) => {
+          env = API.closeProgress('loading', env)
+          console.error('loading failed', error)
+          const message = template(failureMessage, {name:error.name, message:error.message, url})
+          return API.openDialog('alert', message, null, env)
+          .then(API.wrap(([result, env]) => {
+            return API.closeDialog('alert', env)
+          }))
+        }))
+      )
+    }
+  }, 
+
+  discardItem: (formPath, env) => {
+    const actionPath = formPath + '/action'
+    const dataPath = formPath + '/data'
+    env = API.replace(dataPath, null, env)
+    env = API.replace(actionPath, '', env)
+    return env
+  }, 
+
+  // TODO: reload
+  deleteItem: (url, confirmationMessage, successMessage, failureMessage, options, env) => {
+    return API.openDialog('confirm', confirmationMessage, null, env)
+      .then(API.wrap(([ok, env]) => {
+        env = API.closeDialog('confirm', env)
+        if (! ok) return env
+        const opts = {
+          method: 'DELETE', 
+          ...options
+        }
+        env = API.openProgress('loading', null, env)
+        const fetchOptions = {
+          method: opts.method, 
+          mode: 'cors', 
+          header: {
+            'Content-Type': 'application/json'
+          }
+        }
+        return API.withEnv(env, 
+          /** @ts-ignore */
+          fetch(url, fetchOptions)
+          .then(API.wrap(([response, env]) => {
+            env = API.closeProgress('loading', env)
+            const context = {status:response.status, statusText:response.statusText, url:response.url}
+            const message = template(successMessage, context)
+            return API.openDialog('feedback', message, {timeout:opts.successMessageTimeout}, env)
+            .then(API.wrap(([result, env]) => {
+              return API.closeDialog('feedback', env)
+            }))
+
+          }))
+          .catch(API.wrap(([error, env]) => {
+            env = API.closeProgress('loading', env)
+            console.error('deletion failed', error)
+            const message = template(failureMessage, {name:error.name, message:error.message, url})
+            return API.openDialog('alert', message, null, env)
+            .then(API.wrap(([result, env]) => {
+              return API.closeDialog('alert', env)
+            }))
+          }))
+        )
+      }))
+  }, 
+
+  load: (url, itemsPath, failureMessage, options, env) => {
+    const opts = {
+      totalPath: '', 
+      totalHeader: '', 
+      method: 'GET', 
+      ...options
+    }
+    const fetchOptions = {
+      method: opts.method, 
+      mode: 'cors', 
+      header: {
+        'Content-Type': 'application/json'
+      }
+    }
+    env = API.openProgress('loading', null, env)
+    return API.withEnv(env, 
+      /** @ts-ignore */
+      fetch(url, fetchOptions)
+      .then(API.wrap(([response, env]) => {
+        if (! response.ok) {
+          const error = new Error(response.statusText)
+          error.name = 'HTTP Error'
+          throw API.withEnv(env, error)
+        }
+        return API.withEnv(env, response.json())
+          .then(API.wrap(([items, env]) => {
+            env = API.closeProgress('loading', env)
+            env = API.replace(itemsPath, items, env)
+            if (opts.totalHeader && opts.totalPath) {
+              const total = +(response.headers.get(opts.totalHeader))
+              env = API.replace(opts.totalPath, total, env)
+            }
+            return env
+          }))
+      }))
+      .catch(API.wrap(([error, env]) => {
+        env = API.closeProgress('loading', env)
+        console.error('loading failed', error)
+        const message = template(failureMessage, {name:error.name, message:error.message, url})
+        return API.openDialog('alert', message, null, env)
+        .then(API.wrap(([result, env]) => {
+          return API.closeDialog('alert', env)
+        }))
+      }))
+    )
+  }, 
+
   /**
    * 
    * @param {string} url
@@ -447,6 +628,12 @@ const updateEnabledApis = {
   prevPage: API.prevPage, 
   setSwitch: API.setSwitch, 
   toggleSwitch: API.toggleSwitch, 
+  editItem: API.editItem, 
+  createItem: API.createItem, 
+  commitItem: API.commitItem, 
+  discardItem: API.discardItem, 
+  deleteItem: API.deleteItem, 
+  load: API.load, 
   submit: API.submit, 
   reorder: API.reorder, 
   reset: API.reset, 
