@@ -1,5 +1,5 @@
 
-import * as E from '../src/env'
+import * as E from '../src/core/env'
 
 const validate = (value, schema) => {
   //console.log('validate called', value, path)

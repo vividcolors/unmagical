@@ -1,6 +1,5 @@
 
-import * as S from '../src/schema'
-import * as E from '../src/env'
+import * as S from '../src/core/schema'
 
 export const run = (assert, assertError, assertUndefined) => {
   const v = S.validate(S.defaultRules, {})
@@ -154,10 +153,9 @@ export const run = (assert, assertError, assertUndefined) => {
     }
   }
   let data = {type:'infix', op:'*', lhs:{type:'var', var:'n'}, rhs:{type:'app', f:'fact', arg:{type:'infix', op:'-', lhs:{type:'var', var:'n'}, rhs:{type:'lit'}}}}  // n * fact(n - 1)
-  env = E.makeEnv(data, {}, v)
-  assert(17, () => v(data, {}, s, '', env).invalid, false)
-  assert(17.1, () => v(data.lhs, {}, s, '/lhs', env).invalid, false)
-  assert(17.2, () => v(data.rhs.arg.rhs, {}, s, '/rhs/arg/rhs', env).invalid, true)
+  assert(17, () => v(data, {}, s, (path) => 'infix').invalid, false)
+  assert(17.1, () => v(data.lhs, {}, s, (path) => 'var').invalid, false)
+  assert(17.2, () => v(data.rhs.arg.rhs, {}, s, (path) => 'lit').invalid, true)
   assert(17.3, () => v(1, {}, {...s, type:'integer'}).invalid, false)
 
   // rule multipleOf
@@ -232,9 +230,8 @@ export const run = (assert, assertError, assertUndefined) => {
   // rule same
   s = {type:'string',same:'/first'}
   data = {first:'a', second:'a'}
-  env = E.makeEnv(data, {}, v)
-  assert(25, () => v('a', {}, s, '/second', env).invalid, false)
-  assert(25.1, () => v('b', {}, s, '/second', env).invalid, true)
+  assert(25, () => v('a', {}, s, (path) => 'a').invalid, false)
+  assert(25.1, () => v('b', {}, s, (path) => 'a').invalid, true)
   s = {same:'/first'}
-  assert(25.2, () => v('a', {}, s, '/second', env).invalid, false)
+  assert(25.2, () => v('a', {}, s, (path) => 'a').invalid, false)
 }

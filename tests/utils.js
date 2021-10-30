@@ -1,5 +1,5 @@
 
-import * as U from '../src/utils'
+import * as U from '../src/core/utils'
 
 export const run = (assert, assertError, assertUndefined) => {
   assert(1, () => U.appendPath('/a/b', '0/c/d'), '/a/b/c/d')

@@ -1,7 +1,6 @@
 //@ts-check
 
 import {emptyObject, typeOf, isJsonValue, appendPath} from './utils'
-import * as E from './env'
 
 /**
  * @typedef {null|number|string|boolean|any[]|{[name:string]:any}} Json 
@@ -17,7 +16,8 @@ import * as E from './env'
  *   type:string, 
  *   [rule:string]:Json
  * }} Schema
- * @typedef {(param:Json, value:Json, path:string, env:Env) => true|string} RuleFunc
+ * @typedef {(path:string) => Json} LookupFunc
+ * @typedef {(param:Json, value:Json, lookup:LookupFunc) => true|string} RuleFunc
  * @typedef {{[name:string]:RuleFunc}} Rules
  * @typedef {{[key:string]:string}} Dictionary
  * @typedef {{[path:string]:Schema}} SchemaDb
@@ -171,10 +171,10 @@ export const defaultRules = {
     }
     return true
   }, 
-  switchRequired: (param, value, path, env) => {
+  switchRequired: (param, value, lookup) => {
     if (typeOf(param) != 'object' || !('tagProperty' in /** @type {object} */ (param))) throw new Error('invalid parameter')
     if (typeOf(value) != 'object') return true
-    const tag = /** @type {string} */ (E.extract(path + '/' + param.tagProperty, env))
+    const tag = /** @type {string} */ (lookup('0/' + param.tagProperty))
     if (!tag || !param.types[tag]) return 'schema.ruleError.switchRequired'
     const required = param.types[tag]
     if (! Array.isArray(required)) throw new Error('invalid parameter')
@@ -183,10 +183,9 @@ export const defaultRules = {
     }
     return true
   }, 
-  same: (param, value, path, env) => {
+  same: (param, value, lookup) => {
     if (typeof param != 'string') throw new Error('invalid parameter')
-    const targetPath = appendPath(path, param)
-    const target = E.extract(targetPath, env)
+    const target = lookup(param)
     if (target !== value) return 'schema.ruleError.same'
     return true
   }, 
@@ -251,9 +250,9 @@ export const defaultRules = {
  * @description shallow validation
  * @param {Rules} rules
  * @param {Dictionary} dict
- * @returns {(value:any, slot:Slot, schema:Schema, path:string, env:Env) => Slot} 
+ * @returns {(value:any, slot:Slot, schema:Schema, lookup:LookupFunc) => Slot} 
  */
-export const validate = (rules, dict) => (value, slot, schema, path, env) => {
+export const validate = (rules, dict) => (value, slot, schema, lookup) => {
   if (! isJsonValue(value)) {
     const code = (schema && schema.type) ? 'schema.valueError.' + schema.type : 'schema.valueError.generic'
     return {...slot, '@value':value, invalid:true, message:makeMessage(dict, code, null)}
@@ -267,7 +266,7 @@ export const validate = (rules, dict) => (value, slot, schema, path, env) => {
   for (let p in schema) {
     const f = rules[p]
     if (! f) continue
-    const result = f(schema[p], value, path, env)
+    const result = f(schema[p], value, lookup)
     if (result !== true) {
       const message = makeMessage(dict, result, schema[p])
       return {...slot, '@value':value, invalid:true, message}

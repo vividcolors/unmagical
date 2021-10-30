@@ -1,6 +1,6 @@
 //@ts-check
 
-import {normalizePath, typeOf, isIntStr, normalizePathArray} from './utils'
+import {normalizePath, typeOf, isIntStr, normalizePathArray, appendPath} from './utils'
 import {hasPath as rhasPath, init, path as rpath, assocPath, insert, last, dissoc, remove as rremove, update } from 'ramda'
 
 /**
@@ -9,11 +9,12 @@ import {hasPath as rhasPath, init, path as rpath, assocPath, insert, last, disso
  * @typedef {import("./schema").Schema} Schema
  * @typedef {import("./schema").Slot} Slot
  * @typedef {import("./schema").SchemaDb} SchemaDb
+ * @typedef {import("./schema").LookupFunc} LookupFunc
  * @typedef {{
  *   tree: Json, 
  *   validationNeeded: boolean, 
  *   schemaDb: SchemaDb, 
- *   validate: (value:any, slot:Slot, schema:Schema, path:string, env:Env) => Slot
+ *   validate: (value:any, slot:Slot, schema:Schema, lookup:LookupFunc) => Slot
  *   extra: {[name:string]:any}
  *   ret?: (env:Env) => void
  * }} Env
@@ -125,7 +126,7 @@ const strip = (tree) => {
  * Makes env.
  * @param {Json} data 
  * @param {SchemaDb} schemaDb 
- * @param {(value:any, slot:Slot, schema:Schema, path:string, env:Env) => Slot} validate
+ * @param {(value:any, slot:Slot, schema:Schema, lookup:LookupFunc) => Slot} validate
  * @returns {Env}
  */
 export const makeEnv = (data, schemaDb, validate) => {
@@ -382,6 +383,18 @@ export const copy = (from, path, env) => {
  * @returns {Env} 
  */
 export const validate = (path, env) => {
+  let basePath = null
+
+  /**
+   * 
+   * @param {string} path 
+   * @returns {Json}
+   */
+  const lookup = (path) => {
+    const pathToLookup = appendPath(basePath, path)
+    return extract(pathToLookup, env)
+  }
+
   /**
    * 
    * @param {Slot} slot0 
@@ -397,15 +410,18 @@ export const validate = (path, env) => {
         for (let i = 0; i < (/** @type {Json[]} */(value0)).length; i++) {
           lis[i] = inner(value0[i], npath + '/*', path + '/' + i)
         }
-        return env.validate(lis, slot0, env.schemaDb[npath], path, env)
+        basePath = path
+        return env.validate(lis, slot0, env.schemaDb[npath], lookup)
       case 'object': 
         const rec = {}
         for (let p in  /** @type {{[name:string]:Json}} */(value0)) {
           rec[p] = inner(value0[p], npath + '/' + p, path + '/' + p)
         }
-        return env.validate(rec, slot0, env.schemaDb[npath], path, env)
+        basePath = path
+        return env.validate(rec, slot0, env.schemaDb[npath], lookup)
       default: 
-        const slot = env.validate(value0, slot0, env.schemaDb[npath], path, env)
+        basePath = path
+        const slot = env.validate(value0, slot0, env.schemaDb[npath], lookup)
         return slot
     }
   }
