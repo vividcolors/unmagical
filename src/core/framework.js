@@ -210,26 +210,27 @@ export const API = {
   }, 
 
   editItem: (itemPath, actionUrl, formPath, env) => {
-    const actionPath = formPath + '/action'
-    const dataPath = formPath + '/data'
-    env = API.add(actionPath, actionUrl, env)
-    return API.copy(itemPath, dataPath, env)
+    const form = {
+      action: actionUrl, 
+      data: API.extract(itemPath, env)
+    }
+    return API.add(formPath, form, env)
   }, 
 
   createItem: (data, actionUrl, formPath, env) => {
-    const actionPath = formPath + '/action'
-    const dataPath = formPath + '/data'
-    env = API.add(actionPath, actionUrl, env)
-    return API.replace(dataPath, data, env)
+    const form = {
+      action: actionUrl, 
+      data
+    }
+    return API.add(formPath, form, env)
   }, 
 
-  // TODO: reload
-  commitItem: (formPath, options, env) => {
+  commitItem: (formPath, loadUrl, queryPath, itemsPath, options, env) => {
     const opts = {
       errorSelector: null, 
-      method: 'POST', 
+      commitMethod: 'POST', 
+      loadMethod: 'GET', 
       successMessageTimeout: 5000, 
-      clearFormAfterSuccess: true, 
       ...options
     }
     const actionPath = formPath + '/action'
@@ -238,6 +239,7 @@ export const API = {
     env = API.validate(dataPath, env)
     const numErrors = API.countValidationErrors(dataPath, env)
     if (numErrors) {
+      console.log('commitItem/0', numErrors, env)
       if (opts.errorSelector) {
         window.setTimeout(() => {
           const targetEl = document.querySelector(opts.errorSelector)
@@ -249,10 +251,10 @@ export const API = {
       const url = /** @type {string} */ (API.extract(actionPath, env))
       const data = API.extract(dataPath, env)
       const fetchOptions = {
-        method: opts.method, 
+        method: opts.commitMethod, 
         mode: 'cors', 
         body: JSON.stringify(data), 
-        header: {
+        headers: {
           'Content-Type': 'application/json'
         }
       }
@@ -261,25 +263,49 @@ export const API = {
         /** @ts-ignore */
         fetch(url, fetchOptions)
         .then(API.wrap(([response, env]) => {
+          env = API.replace(formPath, null, env)
           if (! response.ok) {
             const error = new Error(response.statusText)
             error.name = 'HTTP Error'
             throw API.withEnv(env, error)
           }
-          env = API.closeProgress('loading', env)
-          if (opts.clearFormAfterSuccess) {
-            env = API.replace(dataPath, null, env)
-            env = API.replace(actionPath, '', env)
+          const fetchOptions2 = {
+            method: opts.loadMethod, 
+            mode: 'cors', 
+            headers: {
+              'Content-Type': 'application/json'
+            }
           }
-          const context = {status:response.status, statusText:response.statusText, url:response.url}
-          return API.openDialog('feedback', {}, {timeout:opts.successMessageTimeout}, env)
-          .then(API.wrap(([result, env]) => {
-            return API.closeDialog('feedback', env)
-          }))
+          const qs = new URLSearchParams(/** @type {Record<string, string>} */(API.extract(queryPath, env)))
+          const url = loadUrl + '?' + qs.toString()
+          return API.withEnv(env, 
+            /** @ts-ignore */
+            fetch(url, fetchOptions2)
+            .then(API.wrap(([response, env]) => {
+              if (! response.ok) {
+                const error = new Error(response.statusText)
+                error.name = 'HTTP Error'
+                throw API.withEnv(env, error)
+              }
+              return API.withEnv(env, response.json())
+                .then(API.wrap(([items, env]) => {
+                  env = API.closeProgress('loading', env)
+                  env = API.replace(itemsPath, items, env)
+                  if (opts.totalHeader && opts.totalPath) {
+                    const total = +(response.headers.get(opts.totalHeader))
+                    env = API.replace(opts.totalPath, total, env)
+                  }
+                  return API.openDialog('feedback', {}, {timeout:opts.successMessageTimeout}, env)
+                  .then(API.wrap(([result, env]) => {
+                    return API.closeDialog('feedback', env)
+                  }))
+                }))
+            }))
+          )
         }))
         .catch(API.wrap(([error, env]) => {
           env = API.closeProgress('loading', env)
-          console.error('loading failed', error)
+          console.error('commision failed', error)
           const data = {name:error.name, message:error.message, url}
           return API.openDialog('alert', data, null, env)
           .then(API.wrap(([result, env]) => {
@@ -291,10 +317,7 @@ export const API = {
   }, 
 
   discardItem: (formPath, env) => {
-    const actionPath = formPath + '/action'
-    const dataPath = formPath + '/data'
-    env = API.replace(dataPath, null, env)
-    env = API.replace(actionPath, '', env)
+    env = API.replace(formPath, null, env)
     return env
   }, 
 

@@ -65,6 +65,7 @@ const attributeMap = {
 }
 
 export const Textbox = C.playTextbox('input', attributeMap.textbox)
+export const Textarea = C.playTextbox('textarea', attributeMap.textbox)
 export const Listbox = C.playListbox('select', attributeMap.listbox)
 export const Radio = C.playRadio('input', attributeMap.radio)
 export const Checkbox = C.playCheckbox('input', attributeMap.checkbox)

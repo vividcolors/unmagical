@@ -1,18 +1,15 @@
 
-import {h, API, start, Textbox, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
+import {h, API, start, Textbox, Textarea, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
 import {playReorderable, playUpdateButton, prepareToDestroy} from '../../src/core/components'
 
 const ClickableText = playUpdateButton("p", {onclick:'onclick'})
 
-const contactSchema = {
-  type: 'object', 
-  properties: {
-    id: {type:'integer'}, 
-    created: {type:'string'}, 
-    name: {type:'string', minLength:1}, 
-    email: {type:'string', minLength:1}, 
-    content: {type:'string'}
-  }
+const contactProps = {
+  id: {type:'integer'}, 
+  created: {type:'string'}, 
+  name: {type:'string', minLength:1}, 
+  email: {type:'string', minLength:1}, 
+  content: {type:'string'}
 }
 
 const schema = {
@@ -20,19 +17,36 @@ const schema = {
   properties: {
     contacts: {
       type: 'array', 
-      items: contactSchema
+      items: {
+        type: 'object', 
+        properties: contactProps
+      }
     }, 
     query: {
-      name_like: {type:'string'}, 
-      email_like: {type:'string'}, 
-      created_gte: {type:'string'}, 
-      created_lte: {type:'string'}, 
-      _page: {type:'integer'}
+      type: 'object', 
+      properties: {
+        name_like: {type:'string'}, 
+        email_like: {type:'string'}, 
+        created_gte: {type:'string'}, 
+        created_lte: {type:'string'}, 
+        _page: {type:'integer'}
+      }
     }, 
     nav: {
-      total: {type:'integer'}, 
-      from: {type:'integer'}, 
-      to: {type:'integer'}
+      type: 'object', 
+      properties: {
+        total: {type:'integer'}
+      }
+    }, 
+    form: {
+      type: 'object?', 
+      properties: {
+        action: {type:'string'}, 
+        data: {
+          type: 'object', 
+          properties: contactProps
+        }
+      }
     }
   }
 }
@@ -48,9 +62,52 @@ const data = {
     _limit: 10
   }, 
   nav: {
-    total: 0, 
+    total: 0
+  }, 
+  form: null
+}
 
-  }
+const Modal = ({env}) => {
+  const form = API.extract('/form', env)
+  if (! form) return
+  return (
+    <div class="modal is-active">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <div class="modal-card-head">
+          <p class="modal-card-title">
+
+          </p>
+        </div>
+        <div class="modal-card-body">
+          <Field path="/form/data/id" env={env}>
+            <label class="label">ID</label>
+            <div class="control">{form.data.id > 0 ? form.data.id : '（新規追加）'}</div>
+          </Field>
+          <Field path="/form/data/created" env={env}>
+            <label class="created">日時</label>
+            <div class="control"><Textbox class="input" type="datetime-local" mg-path="/form/data/created" /></div>
+          </Field>
+          <Field path="/form/data/name" env={env}>
+            <label class="label">名前</label>
+            <div class="control"><Textbox class="input" mg-path="/form/data/name" /></div>
+          </Field>
+          <Field path="/form/data/email" env={env}>
+            <label class="label">メールアドレス</label>
+            <div class="control"><Textbox class="input" mg-path="/form/data/email" /></div>
+          </Field>
+          <Field path="/form/data/content" env={env}>
+            <label class="label">本文</label>
+            <div class="control"><Textarea class="textarea" mg-path="/form/data/content" /></div>
+          </Field>
+        </div>
+        <div class="modal-card-foot">
+          <UpdateButton class="button is-primary" mg-update="commitItem" mg-context={['/form', 'http://localhost:3000/contacts', '/query', '/contacts', {commitMethod:form.data.id > 0 ? 'PUT' : 'POST'}]}>確定</UpdateButton>
+          <UpdateButton class="button" mg-update="discardItem" mg-context={['/form']}>キャンセル</UpdateButton>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 const Pager = ({nav, _page, length}) => {
@@ -82,6 +139,7 @@ const view = (env) => {
   return (
     <div class="container my-3">
       <Notification mg-name="feedback" message="成功しました。" />
+      <UpdateButton class="button is-primary" mg-update="createItem" mg-context={[{id:0, created:'', name:'', email:'', content:''}, 'http://localhost:3000/contacts', '/form']}>新規追加</UpdateButton>
       <p>Total: {API.extract('/nav/total', env)}</p>
       <table class="table is-hoverable">
         <thead>
@@ -93,7 +151,7 @@ const view = (env) => {
           <th> </th>
         </thead>
         <tbody>
-          {contacts.map((c) => {
+          {contacts.map((c, i) => {
             const context = [
               'http://localhost:3000/contacts/' + c.id, 
               'http://localhost:3000/contacts', 
@@ -109,6 +167,7 @@ const view = (env) => {
                 <td>{c.email}</td>
                 <td>{c.content.replace('\n', '').slice(0, 10)}</td>
                 <td>
+                  <UpdateButton class="button is-info is-inverted mx-1" mg-update="editItem" mg-context={['/contacts/' + i, context[0], '/form']}><span class="icon"><span class="material-icons">edit</span></span></UpdateButton>
                   <UpdateButton class="button is-danger is-inverted mx-1" mg-update="deleteItem" mg-context={context}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
                 </td>
               </tr>
@@ -118,6 +177,7 @@ const view = (env) => {
       </table>
       <Dialog mg-name="confirm" title="確認" message="削除しますよ？" />
       <Dialog mg-name="alert" title="エラー" message="エラーが発生しました（{name}: {message}）" hideCancelButton={true} />
+      <Modal env={env} />
     </div>
   )
 }
