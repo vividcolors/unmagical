@@ -225,21 +225,25 @@ export const API = {
     return API.add(formPath, form, env)
   }, 
 
-  commitItem: (formPath, loadUrl, queryPath, itemsPath, options, env) => {
+  commitItem: (formPath, listPath, options, env) => {
     const opts = {
       errorSelector: null, 
       commitMethod: 'POST', 
       loadMethod: 'GET', 
       successMessageTimeout: 5000, 
+      totalCountHeader: '', 
       ...options
     }
     const actionPath = formPath + '/action'
     const dataPath = formPath + '/data'
+    const loadUrl = API.extract(listPath + '/baseUrl', env)
+    const queryPath = listPath + '/query'
+    const itemsPath = listPath + '/items'
+    const totalCountPath = listPath + '/totalCount'
     env = API.touchAll(dataPath, env)
     env = API.validate(dataPath, env)
     const numErrors = API.countValidationErrors(dataPath, env)
     if (numErrors) {
-      console.log('commitItem/0', numErrors, env)
       if (opts.errorSelector) {
         window.setTimeout(() => {
           const targetEl = document.querySelector(opts.errorSelector)
@@ -291,9 +295,9 @@ export const API = {
                 .then(API.wrap(([items, env]) => {
                   env = API.closeProgress('loading', env)
                   env = API.replace(itemsPath, items, env)
-                  if (opts.totalHeader && opts.totalPath) {
-                    const total = +(response.headers.get(opts.totalHeader))
-                    env = API.replace(opts.totalPath, total, env)
+                  if (opts.totalCountHeader && API.test(totalCountPath, env)) {
+                    const total = +(response.headers.get(opts.totalCountHeader))
+                    env = API.replace(totalCountPath, total, env)
                   }
                   return API.openDialog('feedback', {}, {timeout:opts.successMessageTimeout}, env)
                   .then(API.wrap(([result, env]) => {
@@ -321,24 +325,27 @@ export const API = {
     return env
   }, 
 
-  deleteItem: (url, loadUrl, queryPath, itemsPath, options, env) => {
+  deleteItem: (url, listPath, options, env) => {
+    const opts = {
+      deleteMethod: 'DELETE', 
+      loadMethod: 'GET', 
+      totalCountHeader: '', 
+      successMessageTimeout: 5000, 
+      ...options
+    }
+    const loadUrl = API.extract(listPath + '/baseUrl', env)
+    const queryPath = listPath + '/query'
+    const itemsPath = listPath + '/items'
+    const totalCountPath = listPath + '/totalCount'
     return API.openDialog('confirm', {}, null, env)
       .then(API.wrap(([ok, env]) => {
         env = API.closeDialog('confirm', env)
         if (! ok) return env
-        const opts = {
-          deleteMethod: 'DELETE', 
-          loadMethod: 'GET', 
-          totalPath: '', 
-          totalHeader: '', 
-          successMessageTimeout: 5000, 
-          ...options
-        }
         env = API.openProgress('loading', null, env)
         const fetchOptions = {
           method: opts.deleteMethod, 
           mode: 'cors', 
-          header: {
+          headers: {
             'Content-Type': 'application/json'
           }
         }
@@ -354,7 +361,7 @@ export const API = {
             const fetchOptions2 = {
               method: opts.loadMethod, 
               mode: 'cors', 
-              header: {
+              headers: {
                 'Content-Type': 'application/json'
               }
             }
@@ -373,9 +380,9 @@ export const API = {
                   .then(API.wrap(([items, env]) => {
                     env = API.closeProgress('loading', env)
                     env = API.replace(itemsPath, items, env)
-                    if (opts.totalHeader && opts.totalPath) {
-                      const total = +(response.headers.get(opts.totalHeader))
-                      env = API.replace(opts.totalPath, total, env)
+                    if (opts.totalCountHeader && API.test(totalCountPath, env)) {
+                      const total = +(response.headers.get(opts.totalCountHeader))
+                      env = API.replace(totalCountPath, total, env)
                     }
                     return API.openDialog('feedback', {}, {timeout:opts.successMessageTimeout}, env)
                     .then(API.wrap(([result, env]) => {
@@ -398,26 +405,29 @@ export const API = {
       }))
   }, 
 
-  load: (url, queryPath, itemsPath, options, env) => {
+  loadItems: (listPath, options, env) => {
     const opts = {
-      totalPath: '', 
-      totalHeader: '', 
+      totalCountHeader: '', 
       method: 'GET', 
       ...options
     }
+    const loadUrl = API.extract(listPath + '/baseUrl', env)
+    const queryPath = listPath + '/query'
+    const itemsPath = listPath + '/items'
+    const totalCountPath = listPath + '/totalCount'
     const fetchOptions = {
       method: opts.method, 
       mode: 'cors', 
-      header: {
+      headers: {
         'Content-Type': 'application/json'
       }
     }
     env = API.openProgress('loading', null, env)
     const qs = new URLSearchParams(/** @type {Record<string, string>} */(API.extract(queryPath, env)))
-    const url1 = url + '?' + qs.toString()
+    const url = loadUrl + '?' + qs.toString()
     return API.withEnv(env, 
       /** @ts-ignore */
-      fetch(url1, fetchOptions)
+      fetch(url, fetchOptions)
       .then(API.wrap(([response, env]) => {
         if (! response.ok) {
           const error = new Error(response.statusText)
@@ -428,9 +438,9 @@ export const API = {
           .then(API.wrap(([items, env]) => {
             env = API.closeProgress('loading', env)
             env = API.replace(itemsPath, items, env)
-            if (opts.totalHeader && opts.totalPath) {
-              const total = +(response.headers.get(opts.totalHeader))
-              env = API.replace(opts.totalPath, total, env)
+            if (opts.totalCountHeader && API.test(totalCountPath, env)) {
+              const total = +(response.headers.get(opts.totalCountHeader))
+              env = API.replace(totalCountPath, total, env)
             }
             return env
           }))
@@ -480,7 +490,7 @@ export const API = {
         method: opts.method, 
         mode: 'cors', 
         body: JSON.stringify(E.extract(opts.path, env)), 
-        header: {
+        headers: {
           'Content-Type': 'application/json'
         }
       }
@@ -684,7 +694,7 @@ const updateEnabledApis = {
   commitItem: API.commitItem, 
   discardItem: API.discardItem, 
   deleteItem: API.deleteItem, 
-  load: API.load, 
+  loadItems: API.loadItems, 
   submit: API.submit, 
   reorder: API.reorder, 
   reset: API.reset, 

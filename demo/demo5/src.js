@@ -16,26 +16,27 @@ const schema = {
   type: 'object', 
   properties: {
     contacts: {
-      type: 'array', 
-      items: {
-        type: 'object', 
-        properties: contactProps
-      }
-    }, 
-    query: {
       type: 'object', 
       properties: {
-        name_like: {type:'string'}, 
-        email_like: {type:'string'}, 
-        created_gte: {type:'string'}, 
-        created_lte: {type:'string'}, 
-        _page: {type:'integer'}
-      }
-    }, 
-    nav: {
-      type: 'object', 
-      properties: {
-        total: {type:'integer'}
+        baseUrl: {}, 
+        query: {
+          type: 'object', 
+          properties: {
+            name_like: {type:'string'}, 
+            email_like: {type:'string'}, 
+            created_gte: {type:'string'}, 
+            created_lte: {type:'string'}, 
+            _page: {type:'integer'}
+          }
+        }, 
+        totalCount: {type:'integer'}, 
+        items: {
+          type: 'array', 
+          items: {
+            type: 'object', 
+            properties: contactProps
+          }
+        }
       }
     }, 
     form: {
@@ -52,17 +53,18 @@ const schema = {
 }
 
 const data = {
-  contacts: [], 
-  query: {
-    name_like: '', 
-    email_like: '', 
-    created_gte: '0', 
-    created_lte: '9', 
-    _page: 1, 
-    _limit: 10
-  }, 
-  nav: {
-    total: 0
+  contacts: {
+    baseUrl: 'http://localhost:3000/contacts', 
+    query: {
+      name_like: '', 
+      email_like: '', 
+      created_gte: '0', 
+      created_lte: '9', 
+      _page: 1, 
+      _limit: 10
+    }, 
+    totalCount: 0, 
+    items: []
   }, 
   form: null
 }
@@ -102,7 +104,7 @@ const Modal = ({env}) => {
           </Field>
         </div>
         <div class="modal-card-foot">
-          <UpdateButton class="button is-primary" mg-update="commitItem" mg-context={['/form', 'http://localhost:3000/contacts', '/query', '/contacts', {commitMethod:form.data.id > 0 ? 'PUT' : 'POST'}]}>確定</UpdateButton>
+          <UpdateButton class="button is-primary" mg-update="commitItem" mg-context={['/form', '/contacts', {commitMethod:form.data.id > 0 ? 'PUT' : 'POST', totalCountHeader:'X-Total-Count'}]}>確定</UpdateButton>
           <UpdateButton class="button" mg-update="discardItem" mg-context={['/form']}>キャンセル</UpdateButton>
         </div>
       </div>
@@ -140,7 +142,7 @@ const view = (env) => {
     <div class="container my-3">
       <Notification mg-name="feedback" message="成功しました。" />
       <UpdateButton class="button is-primary" mg-update="createItem" mg-context={[{id:0, created:'', name:'', email:'', content:''}, 'http://localhost:3000/contacts', '/form']}>新規追加</UpdateButton>
-      <p>Total: {API.extract('/nav/total', env)}</p>
+      <p>Total: {API.extract('/contacts/totalCount', env)}</p>
       <table class="table is-hoverable">
         <thead>
           <th>ID</th>
@@ -151,14 +153,8 @@ const view = (env) => {
           <th> </th>
         </thead>
         <tbody>
-          {contacts.map((c, i) => {
-            const context = [
-              'http://localhost:3000/contacts/' + c.id, 
-              'http://localhost:3000/contacts', 
-              '/query', 
-              '/contacts', 
-              {totalPath:'/nav/total', totalHeader:'X-Total-Count'}
-            ]
+          {contacts.items.map((c, i) => {
+            const url = 'http://localhost:3000/contacts/' + c.id
             return (
               <tr key={c.id}>
                 <td>{c.id}</td>
@@ -167,8 +163,8 @@ const view = (env) => {
                 <td>{c.email}</td>
                 <td>{c.content.replace('\n', '').slice(0, 10)}</td>
                 <td>
-                  <UpdateButton class="button is-info is-inverted mx-1" mg-update="editItem" mg-context={['/contacts/' + i, context[0], '/form']}><span class="icon"><span class="material-icons">edit</span></span></UpdateButton>
-                  <UpdateButton class="button is-danger is-inverted mx-1" mg-update="deleteItem" mg-context={context}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
+                  <UpdateButton class="button is-info is-inverted mx-1" mg-update="editItem" mg-context={['/contacts/items/' + i, url, '/form']}><span class="icon"><span class="material-icons">edit</span></span></UpdateButton>
+                  <UpdateButton class="button is-danger is-inverted mx-1" mg-update="deleteItem" mg-context={[url, '/contacts', {totalCountHeader:'X-Total-Count'}]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
                 </td>
               </tr>
             )
@@ -185,4 +181,4 @@ const view = (env) => {
 const containerEl = document.getElementById('app')
 const {onUpdate} = start({data, schema, view, containerEl})
 
-onUpdate({update:'load', context:['http://localhost:3000/contacts', '/query', '/contacts', {totalPath:'/nav/total', totalHeader:'X-Total-Count'}]})
+onUpdate({update:'loadItems', context:['/contacts', {totalCountHeader:'X-Total-Count'}]})
