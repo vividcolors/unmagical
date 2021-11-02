@@ -598,7 +598,7 @@ export const API = {
       const path = /** @type {string} */ (API.extract(actionPath, env))
       const data = API.extract(dataPath, env)
       if (path[path.length - 1] == '-') {
-        if (opts.idProperty) {
+        if (opts.idProperty && API.test(nextIdPath, env)) {
           const nextId = /** @type {number} */ (API.extract(nextIdPath, env))
           env = API.add(nextIdPath, nextId + 1, env)
           data[opts.idProperty] = nextId
@@ -658,7 +658,7 @@ export const API = {
     }
     const nextIdPath = formPath + '/nextId'
     const data = API.extract(partPath, env)
-    if (opts.idProperty) {
+    if (opts.idProperty && API.test(nextIdPath, env)) {
       const nextId = /** @type {number} */ (API.extract(nextIdPath, env))
       data[opts.idProperty] = nextId
       env = API.add(nextIdPath, nextId + 1, env)
