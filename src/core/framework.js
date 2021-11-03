@@ -558,10 +558,12 @@ export const API = {
    * @param {Env} env
    */
   editPart: (partPath, formPath, env) => {
-    const actionPath = formPath + '/action'
-    const dataPath = formPath + '/data'
-    env = API.add(actionPath, partPath, env)
-    return API.copy(partPath, dataPath, env)
+    const form = {
+      action: partPath, 
+      data: API.extract(partPath, env)
+    }
+    env = API.replace(formPath, form, env)
+    return env
   }, 
 
   /**
@@ -571,20 +573,23 @@ export const API = {
    * @param {Env} env
    */
   createPart: (pathToAdd, data, formPath, env) => {
-    const actionPath = formPath + '/action'
-    const dataPath = formPath + '/data'
-    env = API.add(actionPath, pathToAdd, env)
-    return API.replace(dataPath, data, env)
+    const form = {
+      action: pathToAdd, 
+      data
+    }
+    env = API.replace(formPath, form, env)
+    return env
   }, 
 
   /**
    * @param {string} formPath
+   * @param {string | null} nextIdPath 
    * @param {Object} options
    * @param {string | null} options.errorSelector
    * @param {string | null} options.idProperty
    * @param {Env} env 
    */
-  commitPart: (formPath, options, env) => {
+  commitPart: (formPath, nextIdPath, options, env) => {
     const opts = {
       errorSelector: null, 
       idProperty: 'id', 
@@ -592,7 +597,6 @@ export const API = {
     }
     const actionPath = formPath + '/action'
     const dataPath = formPath + '/data'
-    const nextIdPath = formPath + '/nextId'
     env = API.touchAll(dataPath, env)
     env = API.validate(dataPath, env)
     const numErrors = API.countValidationErrors(dataPath, env)
@@ -608,17 +612,16 @@ export const API = {
       const path = /** @type {string} */ (API.extract(actionPath, env))
       const data = API.extract(dataPath, env)
       if (path[path.length - 1] == '-') {
-        if (opts.idProperty && API.test(nextIdPath, env)) {
+        if (opts.idProperty && nextIdPath) {
           const nextId = /** @type {number} */ (API.extract(nextIdPath, env))
-          env = API.add(nextIdPath, nextId + 1, env)
+          env = API.replace(nextIdPath, nextId + 1, env)
           data[opts.idProperty] = nextId
         }
         env = API.add(path, data, env)
       } else {
         env = API.replace(path, data, env)
       }
-      env = API.replace(dataPath, null, env)
-      env = API.replace(actionPath, '', env)
+      env = API.replace(formPath, null, env)
       return env
     }
   }, 
@@ -628,10 +631,7 @@ export const API = {
    * @param {Env} env 
    */
   discardPart: (formPath, env) => {
-    const actionPath = formPath + '/action'
-    const dataPath = formPath + '/data'
-    env = API.replace(dataPath, null, env)
-    env = API.replace(actionPath, '', env)
+    env = API.replace(formPath, null, env)
     return env
   }, 
 
@@ -654,21 +654,20 @@ export const API = {
 
   /**
    * @param {string} partPath 
-   * @param {string} formPath 
+   * @param {string | null} nextIdPath
    * @param {Object} options
    * @param {string | null} options.pathToAdd
    * @param {string | null} options.idProperty
    * @param {Env} env
    */
-  copyPart: (partPath, formPath, options, env) => {
+  copyPart: (partPath, nextIdPath, options, env) => {
     const opts = {
       pathToAdd: '', 
       idProperty: 'id', 
       ...options
     }
-    const nextIdPath = formPath + '/nextId'
     const data = API.extract(partPath, env)
-    if (opts.idProperty && API.test(nextIdPath, env)) {
+    if (opts.idProperty && nextIdPath) {
       const nextId = /** @type {number} */ (API.extract(nextIdPath, env))
       data[opts.idProperty] = nextId
       env = API.add(nextIdPath, nextId + 1, env)

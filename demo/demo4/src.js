@@ -65,10 +65,13 @@ const ReorderableList = playReorderable((
   onend: "onend"
 })
 
-const itemProps = {
-  id: {type:'integer'}, 
-  done: {type:'boolean'}, 
-  subject: {type:'string', minLength:1}
+const todoSchema = {
+  type: 'object', 
+  properties: {
+    id: {type:'integer'}, 
+    done: {type:'boolean'}, 
+    subject: {type:'string', minLength:1}
+  }
 }
 
 const schema = {
@@ -76,16 +79,16 @@ const schema = {
   properties: {
     todos: {
       type: 'array', 
-      items: {type:'object', properties:itemProps}
+      items: todoSchema
     }, 
     form: {
-      type: 'object', 
+      type: 'object?', 
       properties: {
         action: {type: 'string'}, 
-        data: {type:'object?', properties:itemProps}, 
-        nextId: {type: 'integer'}
+        data: todoSchema
       }
-    }
+    }, 
+    nextId: {type: 'integer'}
   }
 }
 
@@ -94,11 +97,8 @@ const data = {
     {id:1, done:false, subject:'牛乳を買う'}, 
     {id:2, done:false, subject:'お金をおろす'}
   ], 
-  form: {
-    action: '', 
-    data: null, 
-    nextId: 3
-  }
+  form: null, 
+  nextId: 3
 }
 
 const onTodoItemCreate = (el) => {
@@ -140,7 +140,7 @@ const TodoItem = ({path, editing, env}) => {
         <ClickableText class="py-2 is-fullwidth " style={{cursor:'pointer'}} mg-update="editPart" mg-context={[path, '/form']}>{API.extract(path + '/subject', env)}</ClickableText>
       </div>
       <div class="media-right">
-        <UpdateButton class="button is-info is-inverted mx-1" mg-update="copyPart" mg-context={[path, '/form', {}]}><span class="icon"><span class="material-icons">content_copy</span></span></UpdateButton>
+        <UpdateButton class="button is-info is-inverted mx-1" mg-update="copyPart" mg-context={[path, '/nextId', {}]}><span class="icon"><span class="material-icons">content_copy</span></span></UpdateButton>
         <UpdateButton class="button is-danger is-inverted mx-1" mg-update="removePart" mg-context={[path]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
       </div>
     </div>
@@ -169,7 +169,7 @@ const TodoForm = ({env}) => {
         </Field>
       </div>
       <div class="media-right">
-        <UpdateButton class="button is-primary is-inverted mx-1" mg-update="commitPart" mg-context={['/form', {}]}><span class="icon"><span class="material-icons">check</span></span></UpdateButton>
+        <UpdateButton class="button is-primary is-inverted mx-1" mg-update="commitPart" mg-context={['/form', '/nextId', {}]}><span class="icon"><span class="material-icons">check</span></span></UpdateButton>
         <UpdateButton class="button is-danger is-inverted mx-1" mg-update="discardPart" mg-context={['/form']}><span class="icon"><span class="material-icons">clear</span></span></UpdateButton>
       </div>
     </div>
@@ -187,15 +187,15 @@ const TodoButton = () => {
 }
 
 const view = (env) => {
-  const formAction = API.extract('/form/action', env)
+  const form = API.extract('/form', env)
   return (
     <div class="container my-3">
       <ReorderableList mg-name="todos" path="/todos" options={{group:'todos', handle:'.handle'}}>
         {API.extract('/todos', env).map((item, i) => {
           const path = '/todos/' + i
-          return (path == formAction) ? <TodoForm env={env} /> : <TodoItem path={path} editing={!!formAction} env={env} />
+          return (form && form.action == path) ? <TodoForm env={env} /> : <TodoItem path={path} editing={!!form} env={env} />
         })}
-        {formAction.endsWith('-') ? <TodoForm env={env} /> : <TodoButton />}
+        {(form && form.action.endsWith('-')) ? <TodoForm env={env} /> : <TodoButton />}
       </ReorderableList>
       <Dialog mg-name="confirm" title="確認" message="このTODOを削除します。よろしいですか？" hideCancelButton={false} />
     </div>
