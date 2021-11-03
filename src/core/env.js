@@ -168,6 +168,7 @@ const internPath = (path) => {
  * 
  * @param {string} path 
  * @param {Env} env 
+ * @returns {boolean}
  */
 export const test = (path, env) => {
   return hasPath(/** @type {string[]} */ (internPath(path)), env.tree)
@@ -213,7 +214,7 @@ export const getSlot = (path, env) => {
 export const setSlot = (path, slot, env) => {
   const epath = /** @type {string[]} */ (internPath(path))
   const slot0 = rpath(epath, env.tree)
-  if (! slot) {
+  if (! slot0) {
     throw new Error('setSlot/1: not found: ' + path)
   }
   const tree = assocPath(epath, slot, env.tree)
