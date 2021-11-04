@@ -72,15 +72,15 @@ export const Checkbox = C.playCheckbox('input', attributeMap.checkbox)
 export const UpdateButton = C.compose(C.playUpdateButton, C.playProgress)("button", attributeMap.updateButton)
 export const SettleButton = C.playSettleButton('button', attributeMap.settleButton)
 
-export const Field = ({path, env, ...props}, children) => {
+export const Field = ({path, env, foldValidity = false, ...props}, children) => {
   if (! API.test(path, env)) return null
   const slot = API.getSlot(path, env)
-  const invalid = slot.touched && slot.invalid
+  const {invalid, message} = foldValidity ? API.foldValidity(path, env) : {invalid:slot.invalid && slot.touched, message:slot.message}
   return (
     <div {...props}>
       {children}
-      {invalid && slot.message ? (
-        <p class="help is-danger">{slot.message}</p>
+      {invalid && message ? (
+        <p class="help is-danger">{message}</p>
       ) : null}
     </div>
   )

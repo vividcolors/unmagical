@@ -188,12 +188,31 @@ const ReorderableMenu = playReorderable((
   onend: "onend"
 })
 
-
+const zipPattern = '^[0-9]{3}-?[0-9]{4}$'
 const schema = {
   type: 'object', 
   properties: {
     date: {type:'string', minLength:1}, 
+    date2: {type:'string', minLength:1}, 
     color: {type:'string', minLength:1}, 
+    color2: {type:'string', minLength:1}, 
+    email: {
+      type: 'object', 
+      properties: {
+        firstTime: {type:'string', pattern:'^([a-zA-Z0-9])+([a-zA-Z0-9\._-])*@([a-zA-Z0-9_-])+([a-zA-Z0-9\._-]+)+$'}, 
+        secondTime: {type:'string', same:'1/firstTime'}
+      }
+    }, 
+    address: {
+      type: 'object', 
+      properties: {
+        zip: {type:'string', pattern:zipPattern}, 
+        pref: {type:'string', minLength:1}, 
+        city: {type:'string', minLength:1}, 
+        street: {type:'string', minLength:1}, 
+        bld: {type:'string'}
+      }
+    }, 
     persons: {
       type: 'array', 
       items: {type:'string'}
@@ -202,30 +221,80 @@ const schema = {
 }
 
 const data = {
-  date: '2021-11-03', 
+  date: '', 
+  date2: '', 
   color: '', 
+  color2: '', 
+  email: {firstTime:'', secondTime:''}, 
+  address: {zip:'', pref:'', city:'', street:'', bld:''}, 
   persons: ['Dad', 'Mam', 'Me', 'Doggy']
+}
+
+const updates = {
+  complementAddress: (env) => {
+    const zipSlot = API.getSlot('/address/zip', env)
+    return API.withEnv(null, 
+      new Promise((fulfill, reject) => {
+        new YubinBango.Core(zipSlot.input.replace('-', ''), fulfill)
+      }).then(API.wrap(([result, env]) => {
+        const bld = API.extract('/address/bld', env)
+        const address = {zip:zipSlot.input, pref:result.region, city:result.locality, street:result.street, bld}
+        return API.add('/address', address, env)
+      }))
+    )
+  }
+}
+
+const onZipCreated = (el) => {
+  el.addEventListener('input', maybeComplementAddress)
+}
+const maybeComplementAddress = (ev) => {
+  const zip = ev.currentTarget.value
+  if (zip.match(new RegExp(zipPattern))) {
+    onUpdate({
+      update:'complementAddress', 
+      context: []
+    })
+  }
 }
 
 const view = (env) => {
   const data = API.extract("", env)
-  console.log('view', data)
   return (
     <div class="block">
       <Field path="/date" env={env} class="field">
         <label class="label">カレンダー</label>
         <DatePicker mg-path="/date" class="input" clearable />
+        <p>value: {data.date}</p>
+      </Field>
+      <Field path="/date2" env={env} class="field">
+        <label class="label">input type="date"</label>
+        <Textbox class="input" type="date" mg-path="/date2" />
+        <p>value: {data.date2}</p>
       </Field>
       <Field path="/color" env={env} class="field">
         <label class="label">カラー</label>
         <ColorPicker mg-path="/color" class="button" />
+        <p>value: {data.color}</p>
       </Field>
-      <dl>
-        <dt>カレンダー</dt>
-        <dd>{data.date}</dd>
-        <dt>カラー</dt>
-        <dd>{data.color}</dd>
-      </dl>
+      <Field path="/color2" env={env} class="field">
+        <label class="label">input type="color"</label>
+        <Textbox class="input" type="color" mg-path="/color2" />
+        <p>value: {data.color2}</p>
+      </Field>
+      <Field path="/email" env={env} class="field" foldValidity>
+        <label class="label">メールアドレス</label>
+        <Textbox class="input" mg-path="/email/firstTime" />
+        <Textbox class="input" mg-path="/email/secondTime" />
+      </Field>
+      <Field path="/address" env={env} class="field" foldValidity>
+        <label class="label">住所</label>
+        <Textbox class="input" mg-path="/address/zip" oncreate={onZipCreated} />
+        <Textbox class="input" mg-path="/address/pref" />
+        <Textbox class="input" mg-path="/address/city" />
+        <Textbox class="input" mg-path="/address/street" />
+        <Textbox class="input" mg-path="/address/bld" />
+      </Field>
       <hr />
       <ReorderableMenu mg-name="persons" path="/persons">
         {data.persons.map(p => (<li key={p}><a>{p}</a></li>))}
@@ -236,4 +305,4 @@ const view = (env) => {
 
 const containerEl = document.getElementById('app')
 
-start({data, schema, view, containerEl})
+const {onUpdate} = start({data, schema, view, containerEl, updates})
