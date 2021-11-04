@@ -12,7 +12,8 @@ import {hasPath as rhasPath, init, path as rpath, assocPath, insert, last, disso
  * @typedef {import("./schema").LookupFunc} LookupFunc
  * @typedef {{
  *   tree: Json, 
- *   validationNeeded: boolean, 
+ *   trackUpdate: boolean
+ *   updatePoint: ((string|number)[])|null
  *   schemaDb: SchemaDb, 
  *   validate: (value:any, slot:Slot, schema:Schema, lookup:LookupFunc) => Slot
  *   extra: {[name:string]:any}
@@ -127,13 +128,15 @@ const strip = (tree) => {
  * @param {Json} data 
  * @param {SchemaDb} schemaDb 
  * @param {(value:any, slot:Slot, schema:Schema, lookup:LookupFunc) => Slot} validate
+ * @param {boolean} trackUpdate
  * @returns {Env}
  */
-export const makeEnv = (data, schemaDb, validate) => {
+export const makeEnv = (data, schemaDb, validate, trackUpdate) => {
   const tree = wrap(data)
   return {
     tree, 
-    validationNeeded: true, 
+    trackUpdate, 
+    updatePoint: trackUpdate ? [] : null, 
     schemaDb, 
     validate, 
     extra: {}
@@ -147,12 +150,13 @@ export const makeEnv = (data, schemaDb, validate) => {
  * @returns {boolean}
  */
 export const isSame = (env0, env1) => {
-  return (env0.tree === env1.tree && env0.extra === env1.extra && env0.validationNeeded === env1.validationNeeded)
+  return (env0.tree === env1.tree && env0.extra === env1.extra)
 }
 
 /**
  * Internalizes a path
  * @param {string} path 
+ * @returns {(string|number)[]}
  */
 const internPath = (path) => {
   const frags = path.split('/')
@@ -162,6 +166,64 @@ const internPath = (path) => {
     rv.push(isIntStr(frags[i]) ? +frags[i] : frags[i])
   }
   return rv
+}
+
+/**
+ * 
+ * @param {(string|number)[]} path 
+ * @returns {string}
+ */
+const externPath = (path) => {
+  let rv = ""
+  for (let i = 0; i < path.length; i += 2) {
+    rv += "/" + path[i + 1]
+  }
+  return rv
+}
+
+/**
+ * 
+ * @param {((string|number)[])|null} path0 
+ * @param {((string|number)[])|null} path1
+ * @returns {((string|number)[])|null} 
+ */
+const intersect = (path0, path1) => {
+  if (path0 === null) return path1
+  if (path1 === null) return path0
+
+  const rv = []
+  for (let i = 0; i < path0.length; i += 2) {
+    if (i >= path1.length) break
+    if (path0[i + 1] !== path1[i + 1]) break
+    rv.push(path0[i])
+    rv.push(path0[i + 1])
+  }
+  return rv
+}
+
+/**
+ * 
+ * @param {Env} env 
+ * @returns {Env}
+ */
+export const beginUpdateTracking = (env) => {
+  // Essentially, `updatePoint' should be set to null, but it can be omitted 
+  // because the value when disabled is null.
+  return {...env, trackUpdate:true}
+}
+
+/**
+ * 
+ * @param {Env} env 
+ * @returns {[string|null, Env]}
+ */
+export const endUpdateTracking = (env) => {
+  const updatePoint = env.updatePoint ? externPath(env.updatePoint) : null
+  console.log('update occurred at ' + JSON.stringify(updatePoint))
+  return [
+    updatePoint, 
+    {...env, trackUpdate:false, updatePoint:null}
+  ]
 }
 
 /**
@@ -210,6 +272,8 @@ export const getSlot = (path, env) => {
  * @param {Slot} slot 
  * @param {Env} env
  * @returns {Env} 
+ * 
+ * slot value must be a scalar.
  */
 export const setSlot = (path, slot, env) => {
   const epath = /** @type {string[]} */ (internPath(path))
@@ -217,8 +281,18 @@ export const setSlot = (path, slot, env) => {
   if (! slot0) {
     throw new Error('setSlot/1: not found: ' + path)
   }
+  switch (typeOf(slot0['@value'])) {
+    case 'null': 
+    case 'boolean': 
+    case 'number': 
+    case 'string': 
+      break
+    default: 
+      throw new Error('setSlot/2: not a scalar: ' + path)
+  }
   const tree = assocPath(epath, slot, env.tree)
-  return {...env, tree}
+  const updatePoint = env.trackUpdate ? intersect(env.updatePoint, epath) : env.updatePoint
+  return {...env, tree, updatePoint}
 }
 
 /**
@@ -250,7 +324,9 @@ export const add = (path, value, env) => {
     const lis = insert(index, value1, slot0['@value'])
     const slot = makeSlot(lis)
     const tree = assocPath(location, slot, env.tree)
-    return {...env, tree, validationNeeded:true}
+    // Insertion to a list is an update not to an item but to the list.
+    const updatePoint = env.trackUpdate ? intersect(env.updatePoint, location) : env.updatePoint
+    return {...env, tree, updatePoint}
   } else {
     // define or replace into object
     if (typeof name != 'string') {
@@ -260,7 +336,10 @@ export const add = (path, value, env) => {
     const rec = {...slot0['@value'], [name]:value1}
     const slot = makeSlot(rec)
     const tree = assocPath(location, slot, env.tree)
-    return {...env, tree, validationNeeded:true}
+    // Adding a property is an update to an object, while replacing a property is an update to an property value.
+    const updatePoint = !env.trackUpdate ? env.updatePoint 
+      : intersect(env.updatePoint, (name in slot0['@value']) ? epath : location)
+    return {...env, tree, updatePoint}
   }
 }
 
@@ -290,7 +369,8 @@ export const remove = (path, env) => {
     const lis = rremove(name, 1, slot0['@value'])
     const slot = makeSlot(lis)
     const tree = assocPath(location, slot, env.tree)
-    return {...env, tree, validationNeeded:true}
+    const updatePoint = env.trackUpdate ? intersect(env.updatePoint, location) : env.updatePoint
+    return {...env, tree, updatePoint}
   } else {
     // delete property from object
     if (! slot0['@value'].hasOwnProperty(name)) {
@@ -299,7 +379,8 @@ export const remove = (path, env) => {
     const rec = dissoc(name, slot0['@value'])
     const slot = makeSlot(rec)
     const tree = assocPath(location, slot, env.tree)
-    return {...env, tree, validationNeeded:true}
+    const updatePoint = env.trackUpdate ? intersect(env.updatePoint, location) : env.updatePoint
+    return {...env, tree, updatePoint}
   }
 }
 
@@ -315,7 +396,8 @@ export const replace = (path, value, env) => {
   if (epath.length == 0) {
     // replace whole data
     const tree = wrap(value)
-    return {...env, tree, validationNeeded:true}
+    const updatePoint = env.trackUpdate ? [] : env.updatePoint
+    return {...env, tree, updatePoint}
   }
   const location = init2(epath)
   const name = last(epath)
@@ -336,17 +418,22 @@ export const replace = (path, value, env) => {
     const lis = update(name, value1, slot0['@value'])
     const slot = makeSlot(lis)
     const tree = assocPath(location, slot, env.tree)
-    return {...env, tree, validationNeeded:true}
+    const updatePoint = env.trackUpdate ? intersect(env.updatePoint, epath) : env.updatePoint
+    return {...env, tree, updatePoint}
   } else {
     // replace a property of object
     if (typeof name != 'string') {
       throw new Error('replace/4 invalid name: ' + path)
     }
+    if (!(name in slot0['@value'])) {
+      throw new Error('replace/5 undefined property: ' + path)
+    }
     const value1 = wrap(value)
     const rec = {...slot0['@value'], [name]:value1}
     const slot = makeSlot(rec)
     const tree = assocPath(location, slot, env.tree)
-    return {...env, tree, validationNeeded:true}
+    const updatePoint = env.trackUpdate ? intersect(env.updatePoint, epath) : env.updatePoint
+    return {...env, tree, updatePoint}
   }
 }
 
@@ -423,6 +510,9 @@ export const validate = (path, env) => {
       default: 
         basePath = path
         const slot = env.validate(value0, slot0, env.schemaDb[npath], lookup)
+        if (slot['@value'] !== value0) {
+          throw new Error('validate/0: value changed: ' + path)
+        }
         return slot
     }
   }
@@ -434,7 +524,7 @@ export const validate = (path, env) => {
   }
   const slot = inner(slot0, normalizePath(path), path)
   const tree = assocPath(epath, slot, env.tree)
-  return {...env, tree, validationNeeded:false}
+  return {...env, tree}
 }
 
 /**
@@ -506,6 +596,52 @@ export const reduceDeep = (f, cur, path, env) => {
     throw new Error('reduceDeep/1: not found: ' + path)
   }
   return inner(cur, slot, path)
+}
+
+export const duplicate = (path, fromEnv, toEnv) => {
+  const epath = /** @type {string[]} */ (internPath(path))
+  if (epath.length == 0) {
+    // duplicate whole data
+    const tree = fromEnv.tree
+    const updatePoint = toEnv.trackUpdate ? [] : toEnv.updatePoint
+    return {...toEnv, tree, updatePoint}
+  }
+  const location = init2(epath)
+  const name = last(epath)
+  const slot0 = rpath(location, fromEnv.tree)
+  const type0 = typeOf(slot0['@value'])
+  if (type0 != 'object' && type0 != 'array') {
+    throw new Error('duplicate/1 neither an object nor an array: ' + path)
+  }
+  if (type0 == 'array') {
+    // duplicate an element in an array
+    if (typeof name != 'number' || name % 1 !== 0) {
+      throw new Error('duplicate/2 invalid index: ' + path)
+    }
+    if (name < 0 || name >= slot0['@value'].length) {
+      throw new Error('duplicate/3 out of range: ' + path)
+    }
+    const value1 = slot0['@value'][name]
+    const lis = update(name, value1, slot0['@value'])
+    const slot = makeSlot(lis)
+    const tree = assocPath(location, slot, toEnv.tree)
+    const updatePoint = toEnv.trackUpdate ? intersect(toEnv.updatePoint, epath) : toEnv.updatePoint
+    return {...toEnv, tree, updatePoint}
+  } else {
+    // duplicate a property of an object
+    if (typeof name != 'string') {
+      throw new Error('replace/4 invalid name: ' + path)
+    }
+    if (!(name in slot0['@value'])) {
+      throw new Error('replace/5 undefined property: ' + path)
+    }
+    const value1 = slot0['@value'][name]
+    const rec = {...slot0['@value'], [name]:value1}
+    const slot = makeSlot(rec)
+    const tree = assocPath(location, slot, toEnv.tree)
+    const updatePoint = toEnv.trackUpdate ? intersect(toEnv.updatePoint, epath) : toEnv.updatePoint
+    return {...toEnv, tree, updatePoint}
+  }
 }
 
 /**

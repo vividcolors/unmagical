@@ -177,7 +177,7 @@ const view = (env) => {
         </tr>
       </table>
       <hr />
-      <UpdateButton type="button" class="button is-primary" mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/contacts", {path:"/detail", errorSelector:".is-danger", method:"POST", successMessageTimeout:5000}]}>確定</UpdateButton>
+      <UpdateButton type="button" class="button is-primary" mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/", {path:"/detail", errorSelector:".is-danger", method:"POST", successMessageTimeout:5000}]}>確定</UpdateButton>
       <Dialog mg-name="alert" title="エラー" message="エラーが発生しました（{name}: {message}）" hideCancelButton={true} />
     </div>
   )
@@ -189,7 +189,7 @@ const findByProp = (name, value, lis) => {
   }
   return undefined
 }
-const evolve = (path, env) => {
+const evolve = (env, path, prevEnv) => {
   const addLine = (category, x, env) => {
     const line = {category, description:x.name, unitPrice:x.price, quantity:1, amount:x.price}
     return API.add('/quotation/lines/-', line, env)

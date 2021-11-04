@@ -1,6 +1,6 @@
 //@ts-check
 
-import { normalizePath, commonPath } from './utils'
+import { normalizePath } from './utils'
 import * as E from './env'
 import * as S from './schema'
 import { app, h as h0 } from 'hyperapp'
@@ -24,12 +24,12 @@ export const API = {
   test: E.test, 
   extract: E.extract, 
   getSlot: E.getSlot, 
-  setSlot: E.setSlot, 
   add: E.add, 
   remove: E.remove, 
   replace: E.replace, 
   move: E.move, 
   copy: E.copy, 
+  duplicate: E.duplicate, 
   validate: E.validate, 
   mapDeep: E.mapDeep, 
   reduceDeep: E.reduceDeep, 
@@ -716,7 +716,7 @@ let actions = null
  * @param {Schema} params.schema
  * @param {(Env) => import('hyperapp').VNode} params.view
  * @param {Element} params.containerEl
- * @param {((string, Env) => Env) | null} params.evolve
+ * @param {((env:Env, updatePointer:string, prevEnv:Env|null) => Env) | null} params.evolve
  * @param {{[name:string]:(any)}} params.updates
  * @param {((value:any, slot:Slot, schema:Schema, lookup:LookupFunc) => Slot) | null} params.validate
  * @param {((input:string, slot:Slot, schema:Schema) => Slot) | null} params.coerce
@@ -733,7 +733,7 @@ export const start = (
       coerce = null
     }) => {
   // complements reasonable defaults
-  if (! evolve) evolve = (_path, env) => env
+  if (! evolve) evolve = (env, _pointer, _prevEnv) => env
   if (! validate) validate = S.validate(S.defaultRules, S.defaultMessages)
   if (! coerce) coerce = S.coerce(S.defaultRules, S.defaultMessages)
 
@@ -759,9 +759,12 @@ export const start = (
       const npath = normalizePath(path)
       const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
       const slot = coerce(value, slot0, schemaDb[npath])
-      let baseEnv = E.setSlot(path, slot, state.baseEnv)
-      baseEnv = E.validate("", baseEnv)
-      let env = evolve(path, baseEnv)
+      let updatePointer
+      let baseEnv = E.beginUpdateTracking(state.baseEnv)
+      baseEnv = E.setSlot(path, slot, baseEnv)
+      baseEnv = E.validate("", baseEnv);
+      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
+      let env = evolve(baseEnv, updatePointer, baseEnv)
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
@@ -784,9 +787,12 @@ export const start = (
       const npath = normalizePath(path)
       const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
       const slot = coerce(value, slot0, schemaDb[npath])
-      let baseEnv = E.setSlot(path, slot, state.baseEnv)
-      baseEnv = E.validate("", baseEnv)
-      let env = evolve(path, baseEnv)
+      let updatePointer
+      let baseEnv = E.beginUpdateTracking(state.baseEnv)
+      baseEnv = E.setSlot(path, slot, baseEnv)
+      baseEnv = E.validate("", baseEnv);
+      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
+      let env = evolve(baseEnv, updatePointer, state.env)
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
@@ -796,9 +802,12 @@ export const start = (
       const npath = normalizePath(path)
       const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
       const slot = coerce(value, slot0, schemaDb[npath])
-      let baseEnv = E.setSlot(path, slot, state.baseEnv)
-      baseEnv = E.validate("", baseEnv)
-      let env = evolve(path, baseEnv)
+      let updatePointer
+      let baseEnv = E.beginUpdateTracking(state.baseEnv)
+      baseEnv = E.setSlot(path, slot, baseEnv)
+      baseEnv = E.validate("", baseEnv);
+      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
+      let env = evolve(baseEnv, updatePointer, state.env)
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
@@ -808,9 +817,12 @@ export const start = (
       const npath = normalizePath(path)
       const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
       const slot = coerce(value, slot0, schemaDb[npath])
-      let baseEnv = E.setSlot(path, slot, state.baseEnv)
-      baseEnv = E.validate("", baseEnv)
-      let env = evolve(path, baseEnv)
+      let updatePointer
+      let baseEnv = E.beginUpdateTracking(state.baseEnv)
+      baseEnv = E.setSlot(path, slot, baseEnv)
+      baseEnv = E.validate("", baseEnv);
+      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
+      let env = evolve(baseEnv, updatePointer, state.env)
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
@@ -821,32 +833,36 @@ export const start = (
       const npath = normalizePath(path)
       const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
       const slot = coerce(value, slot0, schemaDb[npath])
-      let baseEnv = E.setSlot(path, slot, state.baseEnv)
-      baseEnv = E.validate("", baseEnv)
-      let env = evolve(path, baseEnv)
+      let updatePointer
+      let baseEnv = E.beginUpdateTracking(state.baseEnv)
+      baseEnv = E.setSlot(path, slot, baseEnv)
+      baseEnv = E.validate("", baseEnv);
+      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
+      let env = evolve(baseEnv, updatePointer, state.env)
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
     onSmartControlChange: (pair) => (state, actions) => {
       const pairs = Array.isArray(pair) ? pair : [pair]
-      let cpath = Array.isArray(pair) ? pair[0].path : pair.path
-      let baseEnv = state.baseEnv
+      let updatePointer
+      let baseEnv = E.beginUpdateTracking(state.baseEnv)
       for (let i = 0; i < pairs.length; i++) {
         const {path, input} = pairs[i]
         const slot0 = {...E.getSlot(path, baseEnv), touched:true}
         const slot = coerce(input, slot0, schemaDb[normalizePath(path)])
         baseEnv = E.setSlot(path, slot, baseEnv)
-        cpath = commonPath(cpath, path)
       }
-      baseEnv = E.validate("", baseEnv)
-      let env = evolve(cpath, baseEnv)
+      baseEnv = E.validate("", baseEnv);
+      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
+      let env = evolve(baseEnv, updatePointer, state.env)
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
     onUpdate: (ev) => (state, actions) => {
       const update = ('currentTarget' in ev) ? ev.currentTarget.dataset.mgUpdate : ev.update
       const context = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgContext || "null") : ev.context
-      let baseEnv = state.baseEnv
+      let updatePointer
+      let baseEnv = E.beginUpdateTracking(state.baseEnv)
       baseEnv = E.setRet((env0) => {baseEnv = env0}, baseEnv)
       const func = updates[update] || updateEnabledApis[update]
       if (! func) throw new Error('onUpdate/0: no update or unknown update')
@@ -854,10 +870,11 @@ export const start = (
       if (context.length + 1 != func.length) throw new Error('onUpdate/2: bad number of parameters')
       const res = func.apply(null, [...context, baseEnv])
       baseEnv = E.setRet(null, E.isEnv(res) ? res : baseEnv)
-      baseEnv = E.validate("", baseEnv)
+      baseEnv = E.validate("", baseEnv);
+      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
       let env = state.env
       if (! E.isSame(state.baseEnv, baseEnv)) {
-        env = evolve("", baseEnv)
+        env = evolve(baseEnv, updatePointer, env)
         env = E.validate("", env)
       }
       return {...state, baseEnv, env}
@@ -873,14 +890,16 @@ export const start = (
       extra.fulfill(result)
     }, 
     onPromiseThen: (context) => (state, actions) => {
-      let baseEnv = state.baseEnv
+      let updatePointer
+      let baseEnv = E.beginUpdateTracking(state.baseEnv)
       baseEnv = E.setRet((env0) => {baseEnv = env0}, baseEnv)
       const res = context.handler([context.result, baseEnv])
       baseEnv = E.setRet(null, E.isEnv(res) ? res : baseEnv)
-      baseEnv = E.validate("", baseEnv)
+      baseEnv = E.validate("", baseEnv);
+      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
       let env = state.env
       if (! E.isSame(state.baseEnv, baseEnv)) {
-        env = evolve("", baseEnv)
+        env = evolve(baseEnv, updatePointer, env)
         env = E.validate("", env)
       }
       if (! E.isEnv(res)) {
@@ -890,9 +909,11 @@ export const start = (
     }
   }
 
-  let baseEnv = E.makeEnv(data, schemaDb, validate)
-  baseEnv = E.validate("", baseEnv)
-  let env = evolve("", baseEnv)
+  let updatePointer
+  let baseEnv = E.makeEnv(data, schemaDb, validate, true)
+  baseEnv = E.validate("", baseEnv);
+  [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
+  let env = evolve(baseEnv, updatePointer, null)
   env = E.validate("", env)
   const state = {
     baseEnv, 

@@ -15,7 +15,7 @@ export const run = (assert, assertError) => {
     ]
   }
 
-  let env = E.makeEnv(json, {}, validate)
+  let env = E.makeEnv(json, {}, validate, true)
   assert(1, () => E.extract('/name', env), 'Bob')
   assert(1.1, () => E.test('/name', env), true)
   assert(1.2, () => E.test('/foo', env), false)
@@ -82,5 +82,20 @@ export const run = (assert, assertError) => {
       return cur + `[${slot['@value']}]`
     }, "", '/buddies', env)
   }, '[Dad][Mam][Dad][Pochi]')
+
+  env = E.makeEnv(json, {}, validate, true)
+  assert(16, () => E.endUpdateTracking(env)[0], "")
+  env = E.endUpdateTracking(env)[1]
+  env = E.beginUpdateTracking(env)
+  env = E.replace('/age', 30, env)
+  assert(16.1, () => E.endUpdateTracking(env)[0], "/age")
+  env = E.add('/name', 'Jack', env)
+  assert(16.2, () => E.endUpdateTracking(env)[0], "")
+  env = E.makeEnv(json, {}, validate, false)
+  env = E.beginUpdateTracking(env)
+  env = E.add('/buddies/-', 'Puppy', env)
+  assert(16.3, () => E.endUpdateTracking(env)[0], "/buddies")
+  env = E.remove('/name', env)
+  assert(16.4, () => E.endUpdateTracking(env)[0], "")
 }
 
