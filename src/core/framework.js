@@ -542,12 +542,12 @@ export const API = {
    */
   reset: (data, env) => {
     return API.openDialog('confirm', {}, null, env)
-      .then(API.wrap((response, env) => {
+      .then(API.wrap(([ok, env]) => {
         env = API.closeDialog('confirm', env)
-        if (response.ok) {
+        if (ok) {
           return API.replace("", data, env)
         } else {
-          return null
+          return env
         }
       }))
   }, 

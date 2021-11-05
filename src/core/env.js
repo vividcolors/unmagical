@@ -286,6 +286,7 @@ export const setSlot = (path, slot, env) => {
     case 'boolean': 
     case 'number': 
     case 'string': 
+    case 'undefined': 
       break
     default: 
       throw new Error('setSlot/2: not a scalar: ' + path)

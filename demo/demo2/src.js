@@ -1,141 +1,83 @@
-import {h, API, start, Textbox, GenericTextbox, Slider, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification} from '../../src/bindings/tailwind'
+import {h, API, start, Input, Textarea, Range, Rating, Select, Radio, Checkbox, Switch, ColorPicker, UpdateButton, UpdateIconButton, SettleButton, Dialog, Alert, Drawer, Spinner} from '../../src/bindings/shoelace'
 
-const master = {
-  sex: ['男', '女'], 
-  job: ['給与所得者', '会社経営', '個人事業主', '主婦', '学生']
-}
-
-const zipPattern = '^[0-9]{3}-?[0-9]{4}$'
 const schema = {
   type: 'object', 
   properties: {
-    name: {
-      type: 'object', 
-      properties: {
-        firstName: {type:'string', minLength:1}, 
-        lastName: {type:'string', minLength:1}
-      }
-    }, 
-    email: {
-      type: 'object', 
-      properties: {
-        firstTime: {type:'string', pattern:'^([a-zA-Z0-9])+([a-zA-Z0-9\._-])*@([a-zA-Z0-9_-])+([a-zA-Z0-9\._-]+)+$'}, 
-        secondTime: {type:'string', same:'/email/firstTime'}
-      }
-    }, 
-    sex: {type:'string', enum:master.sex}, 
-    address: {
-      type: 'object', 
-      properties: {
-        zip: {type:'string', pattern:zipPattern}, 
-        pref: {type:'string', minLength:1}, 
-        city: {type:'string', minLength:1}, 
-        street: {type:'string', minLength:1}, 
-        bld: {type:'string'}
-      }
-    }, 
-    job: {type:'string', enum:master.job}, 
-    password: {
-      type: 'object', 
-      properties: {
-        firstTime: {type:'string', minLength:1}, 
-        secondTime: {type:'string', same:'1/firstTime'}
-      }
-    }, 
-    color: {type:'string', pattern:'^#[0-9a-fA-F]{6}$'}, 
-    date: {type:'string', minLength:1}, 
-    age: {type:'integer', minimum:15, maximum:45}
+    name: {type: 'string', minLength:1}, 
+    content: {type: 'string', minLength:1}, 
+    hours: {type: 'integer'}, 
+    rating: {type: 'number'}, 
+    position: {type: 'string', enum:['option-1', 'option-2']}, 
+    sex: {type: 'string', enum:['male', 'female']}, 
+    agree: {type: 'boolean'}, 
+    home: {type: 'boolean'}, 
+    bgcolor: {type: 'string', minLength:1}, 
+    dummy: {type:'integer'}
   }
 }
 
 const data = {
-  name: {firstName:'', lastName:''}, 
-  email: {firstTime:'', secondTime:''}, 
+  name: '', 
+  content: '', 
+  hours: null, 
+  rating: null, 
+  position: '', 
   sex: '', 
-  address: {zip:'', pref:'', city:'', street:'', bld:''}, 
-  job:'', 
-  password: {firstTime:'', secondTime:''}, 
-  color: '', 
-  date: '', 
-  age: 15
+  agree: false, 
+  home: false, 
+  bgcolor: '', 
+  dummy: 1
 }
 
-const updates = {
-  complementAddress: (env) => {
-    const zipSlot = API.getSlot('/address/zip', env)
-    return API.withEnv(null, 
-      new Promise((fulfill, reject) => {
-        new YubinBango.Core(zipSlot.input.replace('-', ''), fulfill)
-      }).then(API.wrap(([result, env]) => {
-        const bld = API.extract('/address/bld', env)
-        const address = {zip:zipSlot.input, pref:result.region, city:result.locality, street:result.street, bld}
-        return API.add('/address', address, env)
-      }))
-    )
-  }
-}
+// TODO: Menu
 
-const onZipCreated = (el) => {
-  el.addEventListener('input', maybeComplementAddress)
-}
-const maybeComplementAddress = (ev) => {
-  const zip = ev.currentTarget.value
-  if (zip.match(new RegExp(zipPattern))) {
-    onUpdate({
-      update:'complementAddress', 
-      context: []
-    })
-  }
-}
-
+const messageProps = {style:{color:"#FF0000"}}
 const view = (env) => {
-  const zipSlot = API.getSlot('/address/zip', env)
+  console.log('view', env)
   return (
-    <div>
-      <Field title="名前" path="/name" env={env} foldValidity>
-        <Textbox mg-path="/name/firstName" />
-        <Textbox mg-path="/name/lastName" />
-      </Field>
-      <Field title="メールアドレス" path="/email" env={env} foldValidity>
-        <Textbox mg-path="/email/firstTime" />
-        <Textbox mg-path="/email/secondTime" />
-      </Field>
-      <Field title="生別" path="/sex" env={env}>
-        {master.sex.map(s => (
-          <Radio mg-path="/sex" name="sex" value={s} label={s} />
-        ))}
-      </Field>
-      <Field title="住所" path="/address" env={env} foldValidity>
-        <Textbox mg-path="/address/zip" oncreate={onZipCreated} />
-        <Textbox mg-path="/address/pref" />
-        <Textbox mg-path="/address/city" />
-        <Textbox mg-path="/address/street" />
-        <Textbox mg-path="/address/bld" />
-      </Field>
-      <Field title="職業" path="/job" env={env}>
-        <Listbox mg-path="/job">
-          <option disabled value="">選んでください</option>
-          {master.job.map(j => (
-            <option value={j}>{j}</option>
-          ))}
-        </Listbox>
-      </Field>
-      <Field title="パスワード" path="/password" env={env} foldValidity>
-        <Textbox type="password" mg-path="/password/firstTime" />
-        <Textbox type="password" mg-path="/password/secondTime" />
-      </Field>
-      <Field title="色" path="/color" env={env}>
-        <GenericTextbox type="color" mg-path="/color" />
-      </Field>
-      <Field title="日付" path="/date" env={env}>
-        <Textbox type="date" mg-path="/date" />
-      </Field>
-      <Field title="年齢" path="/age" env={env}>
-        <Slider type="range" mg-path="/age" min={15} max={45} />
-      </Field>
-    </div>
+    <sl-form novalidate>
+      <Input mg-path="/name" label="お名前" messageProps={messageProps}>
+        <sl-icon name="house" slot="prefix"></sl-icon>
+        <div slot="help-text">Your Name.</div>
+      </Input>
+      <Textarea mg-path="/content" label="通信欄" messageProps={messageProps}>
+        <div slot="help-text">何でもどうぞ。</div>
+      </Textarea>
+      <Range mg-path="/hours" label="睡眠時間" messageProps={messageProps} min="4" max="12" step="1">
+        <div slot="help-text">二度寝はナシで。</div>
+      </Range>
+      <Rating mg-path="/rating" key="rating" />
+      <Select mg-path="/position" label="オプション" messageProps={messageProps}>
+        <sl-menu-item value="option-1">Option 1</sl-menu-item>
+        <sl-menu-item value="option-2">Option 2</sl-menu-item>
+        <sl-menu-item value="option-3">Invalid Option 3</sl-menu-item>
+        <div slot="help-text">選んでよ！</div>
+      </Select>
+      <sl-radio-group label="生別">
+        <Radio mg-path="/sex" value="male">男</Radio>
+        <Radio mg-path="/sex" value="female">女</Radio>
+        <Radio mg-path="/sex" value="other">どちらとも言えない</Radio>
+      </sl-radio-group>
+      <div><Checkbox mg-path="/agree">私たちの声明に同意する</Checkbox></div>
+      <div><Switch mg-path="/home">ホームボタンを表示する</Switch></div>
+      <div><ColorPicker mg-path="/bgcolor" /></div>
+      <div>
+        <UpdateButton mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/", {path:"/dummy", errorSelector:":invalid", method:"POST", successMessageTimeout:5000}]}>送信</UpdateButton>
+        <UpdateIconButton name="x-circle" mg-update="reset" mg-context={[data]} />
+        <UpdateButton mg-update="toggleSwitch" mg-context={["drawer"]}>Open Drawer</UpdateButton>
+        <UpdateButton mg-update="openProgress" mg-context={['spinner', null]}>Show Progress</UpdateButton>
+        <UpdateButton mg-update="closeProgress" mg-context={['spinner']}>Hide Progress</UpdateButton>
+      </div>
+      <Dialog key="confirm" mg-name="confirm" label="確認" message="リセットします。いいですか？" />
+      <Alert key="feedback" mg-name="feedback" type="success" message="やりました！" closable />
+      <Alert key="alert" mg-name="alert" env={env} type="danger" message="エラーが発生しました（{name}: {message}）" closable />
+      <Drawer mg-name="drawer" onUpdate={onUpdate}>
+        ドロワーです。
+      </Drawer>
+      <Spinner mg-name="spinner" />
+    </sl-form>
   )
 }
 
 const containerEl = document.getElementById('app')
-const {onUpdate} = start({data, schema, view, updates, containerEl})
+const {onUpdate} = start({schema, data, view, containerEl})

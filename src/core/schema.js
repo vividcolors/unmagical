@@ -282,6 +282,7 @@ export const validate = (rules, dict) => (value, slot, schema, lookup) => {
  * @returns {(input:string, slot:Slot, schema:Schema) => Slot}
  */
 export const coerce = (rules, dict) => (input, slot, schema) => {
+  input = "" + input  // coerce to string
   if (! schema) {
     throw new Error('coerce/0: no schema')
   }

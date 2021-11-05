@@ -8,7 +8,8 @@ export const defaultAttributeMap = {
     value: 'value', 
     class: 'class', 
     invalidClass: 'mg-invalid', 
-    invalid: ''
+    invalid: '', 
+    message: ''
   }, 
   slider: {
     oninput: 'oninput', 
@@ -16,7 +17,8 @@ export const defaultAttributeMap = {
     value: 'value', 
     class: 'class', 
     invalidClass: 'mg-invalid', 
-    invalid: ''
+    invalid: '', 
+    message: ''
   }, 
   listbox: {
     onchange: 'onchange', 
@@ -27,7 +29,8 @@ export const defaultAttributeMap = {
     option: {
       selected: 'selected', 
       value: 'value'
-    }
+    }, 
+    message: ''
   }, 
   radio: {
     onchange: 'onchange', 
@@ -35,14 +38,21 @@ export const defaultAttributeMap = {
     value: 'value', 
     class: 'class', 
     invalidClass: 'mg-invalid', 
-    invalid: ''
+    invalid: '', 
+    message: ''
   }, 
   checkbox: {
     onchange: 'onchange', 
     checked: 'checked', 
     class: 'class', 
     invalidClass: 'mg-invalid', 
-    invalid: ''
+    invalid: '', 
+    message: ''
+  }, 
+  smartControl: {
+    onchange: 'onchange', 
+    value: ''
+    // TODO: follow standard
   }, 
   updateButton: {
     onclick: 'onclick'
@@ -75,10 +85,6 @@ export const defaultAttributeMap = {
     class: 'class', 
     shown: 'shown', 
     shownClass: 'mg-shown'
-  }, 
-  smartControl: {
-    onchange: 'onchange', 
-    value: ''
   }, 
   reorderable: {
     active: 'active', 
@@ -147,6 +153,7 @@ export const playTextbox = (C, map = null) => {
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
+    if (! slot) return null
     attributes['data-mg-path'] = path
     attributes['data-mg-value-attribute'] = map.value
     attributes[map.oninput] = actions.onTextboxInput
@@ -155,6 +162,7 @@ export const playTextbox = (C, map = null) => {
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
+    addAttr(attributes, map.message, slot.message)
     return h(C, attributes, ...children)
   }
 }
@@ -166,6 +174,7 @@ export const playSlider = (C, map = null) => {
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
+    if (! slot) return null
     attributes['data-mg-path'] = path
     attributes['data-mg-value-attribute'] = map.value
     attributes[map.oninput] = actions.onSliderInput
@@ -174,6 +183,7 @@ export const playSlider = (C, map = null) => {
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
+    addAttr(attributes, map.message, slot.message)
     return h(C, attributes, ...children)
   }
 }
@@ -185,6 +195,7 @@ export const playListbox = (C, map = null) => {
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
+    if (! slot) return null
     attributes['data-mg-path'] = path
     attributes['data-mg-value-attribute'] = map.value
     attributes[map.onchange] = actions.onListboxChange
@@ -194,6 +205,7 @@ export const playListbox = (C, map = null) => {
     children.forEach((o) => {
       o.attributes[map.option.selected] = o.attributes[map.option.value] == slot['@value']
     })
+    addAttr(attributes, map.message, slot.message)
     return h(C, attributes, ...children)
   }
 }
@@ -205,6 +217,7 @@ export const playRadio = (C, map = null) => {
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
+    if (! slot) return null
     attributes['data-mg-path'] = path
     attributes['data-mg-value-attribute'] = map.value
     attributes[map.onchange] = actions.onRadioChange
@@ -212,6 +225,7 @@ export const playRadio = (C, map = null) => {
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
+    addAttr(attributes, map.message, slot.message)
     return h(C, attributes, ...children)
   }
 }
@@ -223,6 +237,7 @@ export const playCheckbox = (C, map = null) => {
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
+    if (! slot) return null
     attributes['data-mg-path'] = path
     attributes['data-mg-checked-attribute'] = map.checked
     attributes[map.onchange] = actions.onCheckboxChange
@@ -230,6 +245,7 @@ export const playCheckbox = (C, map = null) => {
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
+    addAttr(attributes, map.message, slot.message)
     return h(C, attributes, ...children)
   }
 }
@@ -244,6 +260,7 @@ export const playSmartControl = (C, map = null) => {
     const {...attributes} = props
     const path = props['mg-path']
     const slot = API.getSlot(path, state.env)
+    if (! slot) return null
     attributes[map.onchange] = actions.onSmartControlChange
     addAttr(attributes, map.value, slot.input)
     return h(C, attributes, ...children)
