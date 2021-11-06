@@ -84,12 +84,12 @@ const attributeMap = {
   dialog: {
     '@nullIfHidden': false, 
     data: 'data', 
-    shown: 'open'
+    shown: 'open', 
+    shownClass: ''
   }, 
   alert: {
     '@nullIfHidden': true, 
-    data: 'data', 
-    shown: ''
+    data: 'data'
   }, 
   drawer: {
     '@nullIfHidden': false, 
@@ -208,28 +208,44 @@ export const Dialog = C.playDialog(({'mg-name':name, message, data, hideCancelBu
   )
 }, attributeMap.dialog)
 
-// TODO
-export const Alert = C.playDialog(({'mg-name':name, env, message, data, ...props}) => {
-  delete props.oncreate
-  delete props.open
-  const onAlertCreate = (el) => {
-    el.toast()
-    el.addEventListener('sl-hide', ev => {
-      const extra = API.getExtra(name, env)
-      if (extra) {
-        window.requestAnimationFrame(() => {
-          extra.fulfill(true)
-        })
-      }
+function escapeHtml(html) {
+  const div = document.createElement('div');
+  div.textContent = html;
+  return div.innerHTML;
+}  
+const instantiateToast = ({'mg-name':name, icon, message, data, onUpdate, ...props}) => {
+  let toast = null
+  const createToast = () => {
+    const alert = Object.assign(document.createElement('sl-alert'), {
+      ...props, 
+      innerHTML: `
+        <sl-icon name="${icon}" slot="icon"></sl-icon>
+        ${escapeHtml(template(message, data))}
+      `
+    });
+    document.body.append(alert);
+    alert.toast();
+    toast = alert
+  }
+  const oncreate = (el) => {
+    createToast()
+    toast.addEventListener('sl-hide', ev => {
+      onUpdate({update:'closeFeedback', context:[name]})
     })
   }
   const ondestroy = (el) => {
-    console.log('ondestroy')
+    if (toast) {
+      toast.hide()
+      toast = null
+    }
   }
+  return [oncreate, ondestroy]
+}
+export const Alert = C.playFeedback(({key, ...props}) => {
+  console.log('Alert', key)
+  const [oncreate, ondestroy] = instantiateToast(props)
   return (
-    <sl-alert oncreate={onAlertCreate} ondestroy={ondestroy} {...props}>
-      {template(message, data)}
-    </sl-alert>
+    <div key={key} oncreate={oncreate} ondestroy={ondestroy} style={{display:"none"}}></div>
   )
 }, attributeMap.alert)
 

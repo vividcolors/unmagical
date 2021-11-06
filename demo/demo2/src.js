@@ -62,19 +62,19 @@ const view = (env) => {
       <div><Switch mg-path="/home">ホームボタンを表示する</Switch></div>
       <div><ColorPicker mg-path="/bgcolor" /></div>
       <div>
-        <UpdateButton mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/", {path:"/dummy", errorSelector:":invalid", method:"POST", successMessageTimeout:5000}]}>送信</UpdateButton>
+        <UpdateButton mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信</UpdateButton>
         <UpdateIconButton name="x-circle" mg-update="reset" mg-context={[data]} />
         <UpdateButton mg-update="toggleSwitch" mg-context={["drawer"]}>Open Drawer</UpdateButton>
         <UpdateButton mg-update="openProgress" mg-context={['spinner', null]}>Show Progress</UpdateButton>
         <UpdateButton mg-update="closeProgress" mg-context={['spinner']}>Hide Progress</UpdateButton>
       </div>
       <Dialog key="confirm" mg-name="confirm" label="確認" message="リセットします。いいですか？" />
-      <Alert key="feedback" mg-name="feedback" type="success" message="やりました！" closable />
-      <Alert key="alert" mg-name="alert" env={env} type="danger" message="エラーが発生しました（{name}: {message}）" closable />
-      <Drawer mg-name="drawer" onUpdate={onUpdate}>
+      <Alert key="success" mg-name="success" type="success" message="やりました！" closable duration="5000" />
+      <Alert key="failure" mg-name="failure" type="danger" message="エラーが発生しました（{name}: {message}）" closable />
+      <Drawer key="drawer" mg-name="drawer" onUpdate={onUpdate}>
         ドロワーです。
       </Drawer>
-      <Spinner mg-name="spinner" />
+      <Spinner key="spinner" mg-name="spinner" />
     </sl-form>
   )
 }

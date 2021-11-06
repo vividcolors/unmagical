@@ -142,6 +142,20 @@ export const API = {
     return extra.data
   }, 
 
+  openFeedback: (name, data, env) => {
+    return E.setExtra(name, data, env)
+  }, 
+
+  closeFeedback: (name, env) => {
+    const extra = E.getExtra(name, env)
+    if (! extra) return env
+    return E.setExtra(name, null, env)
+  }, 
+
+  getFeedback: (name, env) => {
+    return E.getExtra(name, env)
+  }, 
+
   setPage: (name, current, env) => {
     return E.setExtra(name, current, env)
   }, 
@@ -230,7 +244,6 @@ export const API = {
       errorSelector: null, 
       commitMethod: 'POST', 
       loadMethod: 'GET', 
-      successMessageTimeout: 5000, 
       totalCountHeader: '', 
       ...options
     }
@@ -299,10 +312,7 @@ export const API = {
                     const total = +(response.headers.get(opts.totalCountHeader))
                     env = API.replace(totalCountPath, total, env)
                   }
-                  return API.openDialog('feedback', {}, {timeout:opts.successMessageTimeout}, env)
-                  .then(API.wrap(([result, env]) => {
-                    return API.closeDialog('feedback', env)
-                  }))
+                  return API.openFeedback('success', {}, env)
                 }))
             }))
           )
@@ -311,10 +321,7 @@ export const API = {
           env = API.closeProgress('loading', env)
           console.error('commision failed', error)
           const data = {name:error.name, message:error.message, url}
-          return API.openDialog('alert', data, null, env)
-          .then(API.wrap(([result, env]) => {
-            return API.closeDialog('alert', env)
-          }))
+          return API.openFeedback('failure', data, env)
         }))
       )
     }
@@ -330,7 +337,6 @@ export const API = {
       deleteMethod: 'DELETE', 
       loadMethod: 'GET', 
       totalCountHeader: '', 
-      successMessageTimeout: 5000, 
       ...options
     }
     const loadUrl = API.extract(listPath + '/baseUrl', env)
@@ -384,10 +390,7 @@ export const API = {
                       const total = +(response.headers.get(opts.totalCountHeader))
                       env = API.replace(totalCountPath, total, env)
                     }
-                    return API.openDialog('feedback', {}, {timeout:opts.successMessageTimeout}, env)
-                    .then(API.wrap(([result, env]) => {
-                      return API.closeDialog('feedback', env)
-                    }))
+                    return API.openFeedback('success', {}, env)
                   }))
               }))
             )
@@ -396,10 +399,7 @@ export const API = {
             env = API.closeProgress('loading', env)
             console.error('deletion failed', error)
             const data = {name:error.name, message:error.message, url}
-            return API.openDialog('alert', data, null, env)
-            .then(API.wrap(([result, env]) => {
-              return API.closeDialog('alert', env)
-            }))
+            return API.openFeedback('failure', data, env)
           }))
         )
       }))
@@ -449,10 +449,7 @@ export const API = {
         env = API.closeProgress('loading', env)
         console.error('loading failed', error)
         const data = {name:error.name, message:error.message, url}
-        return API.openDialog('alert', data, null, env)
-        .then(API.wrap(([result, env]) => {
-          return API.closeDialog('alert', env)
-        }))
+        return API.openFeedback('failure', data, env)
       }))
     )
   }, 
@@ -471,7 +468,6 @@ export const API = {
       path: '', 
       errorSelector: null, 
       method: 'POST', 
-      successMessageTimeout: 5000, 
       ...options
     }
     env = API.touchAll(opts.path, env)
@@ -505,19 +501,13 @@ export const API = {
             throw API.withEnv(env, error)
           }
           env = API.closeProgress('loading', env)
-          return API.openDialog('feedback', {}, {timeout:opts.successMessageTimeout}, env)
-          .then(API.wrap(([result, env]) => {
-            return API.closeDialog('feedback', env)
-          }))
+          return API.openFeedback('success', {}, env)
         }))
         .catch(API.wrap(([error, env]) => {
           env = API.closeProgress('loading', env)
           console.error('loading failed', error)
           const data = {name:error.name, message:error.message, url}
-          return API.openDialog('alert', data, null, env)
-          .then(API.wrap(([result, env]) => {
-            return API.closeDialog('alert', env)
-          }))
+          return API.openFeedback('failure', data, env)
         }))
       )
     }
@@ -681,6 +671,8 @@ export const API = {
 const updateEnabledApis = {
   openDialog: API.openDialog, 
   closeDialog: API.closeDialog, 
+  openFeedback: API.openFeedback, 
+  closeFeedback: API.closeFeedback, 
   openProgress: API.openProgress, 
   closeProgress: API.closeProgress, 
   setPage: API.setPage, 

@@ -129,7 +129,7 @@ export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', title, me
   )
 }, attributeMap.dialog)
 
-const onNotificationCreated = (el) => {
+const onNotificationCreate = (el) => {
   const r = el.getBoundingClientRect()
   el.animate([
     {offset:0, maxHeight: 0}, 
@@ -139,7 +139,7 @@ const onNotificationCreated = (el) => {
   el.scrollIntoView()
 }
 
-const onNotificationRemoved = (el, done) => {
+const onNotificationRemove = (el, done) => {
   const r = el.getBoundingClientRect()
   const anim = el.animate([
     {maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
@@ -148,11 +148,28 @@ const onNotificationRemoved = (el, done) => {
   C.prepareToDestroy(el, anim, done)
 }
 
-export const Notification = C.playDialog(({'mg-name':name, data, message, class:clazz = '', ...props}) => {
+const withDuration = (duration, name, onUpdate) => {
+  let timeoutId = null
+  return [
+    (el) => {
+      timeoutId = setTimeout(() => onUpdate({update:"closeFeedback", context:[name]}), duration)
+      onNotificationCreate(el)
+    }, 
+    (el, done) => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+      onNotificationRemove(el, done)
+    }
+  ]
+}
+
+export const Notification = C.playFeedback(({'mg-name':name, data, message, duration = 0, class:clazz = '', onUpdate, ...props}) => {
   clazz += ' notification'
+  const [oncreate, onremove] = duration ? withDuration(duration, name, onUpdate) : [onNotificationCreate, onNotificationRemove]
   return (
-    <div class={clazz} key={name} {...props} oncreate={onNotificationCreated} onremove={onNotificationRemoved}>
-      <SettleButton class="delete" mg-name={name} mg-result={true}></SettleButton>
+    <div class={clazz} key={name} {...props} oncreate={oncreate} onremove={onremove}>
+      <UpdateButton class="delete" mg-update="closeFeedback" mg-context={[name]}></UpdateButton>
       <p>{template(message, data)}</p>
     </div>
   )

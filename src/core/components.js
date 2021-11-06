@@ -67,6 +67,13 @@ export const defaultAttributeMap = {
     shown: 'shown', 
     shownClass: 'mg-shown'
   }, 
+  feedback: {
+    '@nullIfHidden': true, 
+    data: 'data', 
+    class: 'class', 
+    shown: 'shown', 
+    shownClass: 'mg-shown'
+  }, 
   progress: {
     '@nullIfHidden': true, 
     current: 'current', 
@@ -303,6 +310,21 @@ export const playDialog = (C, map = null) => {
     attributes[map.data] = data
     addAttr(attributes, map.shown, (data !== null))
     addClass(attributes, map.class, data !== null ? map.shownClass : "")
+    return h(C, attributes, ...children)
+  }
+}
+
+export const playFeedback = (C, map = null) => {
+  map = map || defaultAttributeMap.feedback
+  return (props, children) => (state, actions) => {
+    const {...attributes} = props
+    const name = attributes['mg-name']
+    const data = API.getFeedback(name, state.env)
+    if (data === null && map['@nullIfHidden']) return null
+    attributes[map.data] = data
+    addAttr(attributes, map.shown, (data !== null))
+    addClass(attributes, map.class, data !== null ? map.shownClass : "")
+    attributes.onUpdate = actions.onUpdate
     return h(C, attributes, ...children)
   }
 }
