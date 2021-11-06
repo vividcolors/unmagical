@@ -120,6 +120,8 @@ const onTodoItemRemove = (el, done) => {
   prepareToDestroy(el, anim, done)
 }
 
+const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
+
 const TodoItem = ({path, editing, env}) => {
   const id = API.extract(path + '/id', env)
   const handleStyle = editing ? {pointerEvents:'none', opacity:0.26} : {}

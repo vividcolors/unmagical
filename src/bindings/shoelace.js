@@ -1,5 +1,4 @@
 
-import template from 'string-template'
 import * as C from '../core/components'
 import {API, start, h} from '../core/framework'
 export {API, start, h} from '../core/framework'
@@ -197,11 +196,12 @@ const onDialogCreate = (el) => {
   el.addEventListener('sl-request-close', event => event.preventDefault());
 }
 
-export const Dialog = C.playDialog(({'mg-name':name, message, data, hideCancelButton = false, ...props}) => {
+export const Dialog = C.playDialog(({'mg-name':name, createMessage = null, message = null, data, hideCancelButton = false, ...props}) => {
   delete props.oncreate
+  message = (data && createMessage) ? createMessage(data) : message
   return (
     <sl-dialog oncreate={onDialogCreate} {...props}>
-      {data && template(message, data)}
+      {message}
       <SettleButton mg-name={name} mg-result={true} slot="footer">OK</SettleButton>
       {!hideCancelButton ? (<SettleButton mg-name={name} mg-result={false} slot="footer">キャンセル</SettleButton>) : null}
     </sl-dialog>
@@ -213,14 +213,15 @@ function escapeHtml(html) {
   div.textContent = html;
   return div.innerHTML;
 }  
-const instantiateToast = ({'mg-name':name, icon, message, data, onUpdate, ...props}) => {
+const instantiateToast = ({'mg-name':name, icon, createMessage = null, message = null, data, onUpdate, ...props}) => {
   let toast = null
+  message = createMessage ? createMessage(data) : message
   const createToast = () => {
     const alert = Object.assign(document.createElement('sl-alert'), {
       ...props, 
       innerHTML: `
         <sl-icon name="${icon}" slot="icon"></sl-icon>
-        ${escapeHtml(template(message, data))}
+        ${escapeHtml(message)}
       `
     });
     document.body.append(alert);
@@ -242,7 +243,6 @@ const instantiateToast = ({'mg-name':name, icon, message, data, onUpdate, ...pro
   return [oncreate, ondestroy]
 }
 export const Alert = C.playFeedback(({key, ...props}) => {
-  console.log('Alert', key)
   const [oncreate, ondestroy] = instantiateToast(props)
   return (
     <div key={key} oncreate={oncreate} ondestroy={ondestroy} style={{display:"none"}}></div>

@@ -69,6 +69,8 @@ const data = {
   form: null
 }
 
+const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
+
 const Modal = ({env}) => {
   const form = API.extract('/form', env)
   if (! form) return
@@ -140,8 +142,8 @@ const view = (env) => {
   const contacts = API.extract('/contacts', env)
   return (
     <div class="container my-3">
-      <Notification mg-name="feedback" message="成功しました。" duration={5000} />
-      <Notification mg-name="failure" title="エラー" message="エラーが発生しました（{name}: {message}）" />
+      <Notification mg-name="success" message="成功しました。" duration={5000} />
+      <Notification mg-name="failure" title="エラー" createMessage={showError} />
       <UpdateButton class="button is-primary" mg-update="createItem" mg-context={[{id:0, created:'', name:'', email:'', content:''}, 'http://localhost:3000/contacts', '/form']}>新規追加</UpdateButton>
       <p>Total: {API.extract('/contacts/totalCount', env)}</p>
       <table class="table is-hoverable">

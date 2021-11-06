@@ -1,5 +1,4 @@
 
-import template from 'string-template'
 import * as C from '../core/components'
 import {API, start, h} from '../core/framework'
 export {API, start, h} from '../core/framework'
@@ -108,17 +107,18 @@ const onDialogRemoved = (el, done) => {
   C.prepareToDestroy(el, anim, done)
 }
 
-export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', title, message, hideCancelButton = false, data, ...props}) => {
+export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', title, createMessage = null, message = null, hideCancelButton = false, data, ...props}) => {
   clazz += ' modal is-active'
+  message = createMessage ? createMessage(data) : message
   return (
     <div class={clazz} key={name} {...props} oncreate={onDialogCreated} onremove={onDialogRemoved}>
       <div class="modal-background"></div>
       <div class="modal-card">
         <header class="modal-card-head">
-          <p class="modal-card-title">{template(title, data)}</p>
+          <p class="modal-card-title">{title}</p>
         </header>
         <section class="modal-card-body">
-          <p>{template(message, data)}</p>
+          <p>{message}</p>
         </section>
         <footer class="modal-card-foot">
           <SettleButton class="button is-success" mg-name={name} mg-result={true}>OK</SettleButton>
@@ -164,13 +164,14 @@ const withDuration = (duration, name, onUpdate) => {
   ]
 }
 
-export const Notification = C.playFeedback(({'mg-name':name, data, message, duration = 0, class:clazz = '', onUpdate, ...props}) => {
+export const Notification = C.playFeedback(({'mg-name':name, data, createMessage = null, message = null, duration = 0, class:clazz = '', onUpdate, ...props}) => {
   clazz += ' notification'
   const [oncreate, onremove] = duration ? withDuration(duration, name, onUpdate) : [onNotificationCreate, onNotificationRemove]
+  message = createMessage ? createMessage(data) : message
   return (
     <div class={clazz} key={name} {...props} oncreate={oncreate} onremove={onremove}>
       <UpdateButton class="delete" mg-update="closeFeedback" mg-context={[name]}></UpdateButton>
-      <p>{template(message, data)}</p>
+      <p>{message}</p>
     </div>
   )
 }, attributeMap.notification)

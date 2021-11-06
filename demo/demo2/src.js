@@ -32,6 +32,7 @@ const data = {
 // TODO: Menu
 
 const messageProps = {style:{color:"#FF0000"}}
+const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
 const view = (env) => {
   console.log('view', env)
   return (
@@ -62,7 +63,8 @@ const view = (env) => {
       <div><Switch mg-path="/home">ホームボタンを表示する</Switch></div>
       <div><ColorPicker mg-path="/bgcolor" /></div>
       <div>
-        <UpdateButton mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/contacts", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信</UpdateButton>
+        <UpdateButton mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/contacts", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信(成功)</UpdateButton>
+        <UpdateButton mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/abc", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信(失敗)</UpdateButton>
         <UpdateIconButton name="x-circle" mg-update="reset" mg-context={[data]} />
         <UpdateButton mg-update="toggleSwitch" mg-context={["drawer"]}>Open Drawer</UpdateButton>
         <UpdateButton mg-update="openProgress" mg-context={['spinner', null]}>Show Progress</UpdateButton>
@@ -70,7 +72,7 @@ const view = (env) => {
       </div>
       <Dialog key="confirm" mg-name="confirm" label="確認" message="リセットします。いいですか？" />
       <Alert key="success" mg-name="success" type="success" message="やりました！" closable duration="5000" />
-      <Alert key="failure" mg-name="failure" type="danger" message="エラーが発生しました（{name}: {message}）" closable />
+      <Alert key="failure" mg-name="failure" type="danger" createMessage={showError} closable />
       <Drawer key="drawer" mg-name="drawer" onUpdate={onUpdate}>
         ドロワーです。
       </Drawer>

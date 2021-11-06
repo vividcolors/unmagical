@@ -105,13 +105,15 @@ const data = {
   }
 }
 
+const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
+
 const view = (env) => {
   const flags = API.extract('/flags', env)
   const quotation = API.extract('/quotation', env)
   return (
     <div id="rootMarker">
       <Notification mg-name="success" message="成功しました。" duration={5000} />
-      <Notification mg-name="failure" title="エラー" message="エラーが発生しました（{name}: {message}）" />
+      <Notification mg-name="failure" title="エラー" createMessage={showError} />
       <Field path="/detail/os" env={env} class="field">
         <label class="label">OS</label>
         <div class="control">
