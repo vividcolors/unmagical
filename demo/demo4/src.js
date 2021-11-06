@@ -70,7 +70,8 @@ const todoSchema = {
   properties: {
     id: {type:'integer'}, 
     done: {type:'boolean'}, 
-    subject: {type:'string', minLength:1}
+    subject: {type:'string', minLength:1}, 
+    context: {type:'string', enum:['home', 'work']}
   }
 }
 
@@ -94,8 +95,8 @@ const schema = {
 
 const data = {
   todos: [
-    {id:1, done:false, subject:'牛乳を買う'}, 
-    {id:2, done:false, subject:'お金をおろす'}
+    {id:1, done:false, subject:'牛乳を買う', context:'home'}, 
+    {id:2, done:false, subject:'お金をおろす', context:'work'}
   ], 
   form: null, 
   nextId: 3
@@ -137,7 +138,7 @@ const TodoItem = ({path, editing, env}) => {
         </div>
       </div>
       <div class="media-content">
-        <ClickableText class="py-2 is-fullwidth " style={{cursor:'pointer'}} mg-update="editPart" mg-context={[path, '/form']}>{API.extract(path + '/subject', env)}</ClickableText>
+        <ClickableText class="py-2 is-fullwidth " style={{cursor:'pointer'}} mg-update="editPart" mg-context={[path, '/form']}>{API.extract(path + '/subject', env)} @{API.extract(path + '/context', env)}</ClickableText>
       </div>
       <div class="media-right">
         <UpdateButton class="button is-info is-inverted mx-1" mg-update="copyPart" mg-context={[path, '/nextId', {}]}><span class="icon"><span class="material-icons">content_copy</span></span></UpdateButton>
@@ -164,9 +165,24 @@ const TodoForm = ({env}) => {
         </div>
       </div>
       <div class="media-content">
-        <Field path="/form/data/subject" env={env}>
-          <Textbox mg-path="/form/data/subject" class="input" type="text" />
-        </Field>
+        <div class="columns">
+          <div class="column">
+            <Field path="/form/data/subject" env={env}>
+              <Textbox mg-path="/form/data/subject" class="input" type="text" />
+            </Field>
+          </div>
+          <div class="column">
+            <Field path="/form/data/context" env={env}>
+              <div class="select">
+                <Listbox mg-path="/form/data/context">
+                  <option value="" disabled></option>
+                  <option value="home">home</option>
+                  <option value="work">work</option>
+                </Listbox>
+              </div>
+            </Field>
+          </div>
+        </div>
       </div>
       <div class="media-right">
         <UpdateButton class="button is-primary is-inverted mx-1" mg-update="commitPart" mg-context={['/form', '/nextId', {}]}><span class="icon"><span class="material-icons">check</span></span></UpdateButton>
@@ -180,7 +196,7 @@ const TodoButton = () => {
   return (
     <div class="media" key="add">
       <div class="media-content">
-        <UpdateButton class="button is-primary" mg-update="createPart" mg-context={['/todos/-', {id:0, done:false, subject:''}, '/form']}>追加</UpdateButton>
+        <UpdateButton class="button is-primary" mg-update="createPart" mg-context={['/todos/-', {id:0, done:false, subject:'', context:''}, '/form']}>追加</UpdateButton>
       </div>
     </div>
   )

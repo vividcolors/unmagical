@@ -12,7 +12,7 @@ const schema = {
     agree: {type: 'boolean'}, 
     home: {type: 'boolean'}, 
     bgcolor: {type: 'string', minLength:1}, 
-    dummy: {type:'integer'}
+    dummy: {type:'object', properties:{i:{type:'integer'} }} 
   }
 }
 
@@ -26,7 +26,7 @@ const data = {
   agree: false, 
   home: false, 
   bgcolor: '', 
-  dummy: 1
+  dummy: {i:1}
 }
 
 // TODO: Menu
@@ -62,7 +62,7 @@ const view = (env) => {
       <div><Switch mg-path="/home">ホームボタンを表示する</Switch></div>
       <div><ColorPicker mg-path="/bgcolor" /></div>
       <div>
-        <UpdateButton mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信</UpdateButton>
+        <UpdateButton mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/contacts", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信</UpdateButton>
         <UpdateIconButton name="x-circle" mg-update="reset" mg-context={[data]} />
         <UpdateButton mg-update="toggleSwitch" mg-context={["drawer"]}>Open Drawer</UpdateButton>
         <UpdateButton mg-update="openProgress" mg-context={['spinner', null]}>Show Progress</UpdateButton>

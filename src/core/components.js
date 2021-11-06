@@ -197,6 +197,21 @@ export const playSlider = (C, map = null) => {
 
 export const Slider = playSlider("input")
 
+const convertChildren = (input, selectedAttr, valueAttr, children) => {
+  const inner = (children) => {
+    children.forEach(c => {
+      if (typeof c != 'object') return
+      if (valueAttr in c.attributes) {
+        c.attributes[selectedAttr] = c.attributes[valueAttr] == input
+      }
+      if (c.children) {
+        inner(c.children)
+      }
+    })
+  }
+  inner(children)
+}
+
 export const playListbox = (C, map = null) => {
   map = map || defaultAttributeMap.listbox
   return (props, children) => (state, actions) => {
@@ -209,9 +224,7 @@ export const playListbox = (C, map = null) => {
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
-    children.forEach((o) => {
-      o.attributes[map.option.selected] = o.attributes[map.option.value] == slot['@value']
-    })
+    convertChildren(slot.input, map.option.selected, map.option.value, children)
     addAttr(attributes, map.message, slot.message)
     return h(C, attributes, ...children)
   }
