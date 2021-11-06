@@ -80,10 +80,11 @@ const Modal = ({env}) => {
       <div class="modal-card">
         <div class="modal-card-head">
           <p class="modal-card-title">
-
+            コンタクト
           </p>
         </div>
         <div class="modal-card-body">
+          <Notification mg-name="failure2" title="エラー" createMessage={showError} />
           <Field path="/form/data/id" env={env}>
             <label class="label">ID</label>
             <div class="control">{form.data.id > 0 ? form.data.id : '（新規追加）'}</div>
@@ -106,7 +107,7 @@ const Modal = ({env}) => {
           </Field>
         </div>
         <div class="modal-card-foot">
-          <UpdateButton class="button is-primary" mg-update="commitItem" mg-context={['/form', '/contacts', {commitMethod:form.data.id > 0 ? 'PUT' : 'POST', totalCountHeader:'X-Total-Count'}]}>確定</UpdateButton>
+          <UpdateButton mg-name="loading2" class="button is-primary" mg-update="commitItem" mg-context={['/form', '/contacts', {commitMethod:form.data.id > 0 ? 'PUT' : 'POST', totalCountHeader:'X-Total-Count', failureName:'failure2', loadingName:'loading2'}]}>確定</UpdateButton>
           <UpdateButton class="button" mg-update="discardItem" mg-context={['/form']}>キャンセル</UpdateButton>
         </div>
       </div>

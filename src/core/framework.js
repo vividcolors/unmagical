@@ -88,6 +88,11 @@ export const API = {
     }, /** @type {{invalid:boolean,message:string}} */({invalid:false, message:''}), path, env)
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {Promise}
+   */
   startReordering: (name, env) => {
     const p = new Promise((fulfill, reject) => {
       env = E.setExtra(name, {fulfill, reject}, env)
@@ -96,12 +101,22 @@ export const API = {
     return p
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {Env}
+   */
   endReordering: (name, env) => {
     const extra = E.getExtra(name, env)
     if (! extra) return env
     return E.setExtra(name, null, env)
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {true|null}
+   */
   getReordering: (name, env) => {
     const extra = E.getExtra(name, env)
     if (! extra) return null
@@ -111,7 +126,7 @@ export const API = {
   /**
    * @param {string} name
    * @param {any} data
-   * @param {Object|null} options
+   * @param {Object} options
    * @param {number|null} params.timeout
    * @param {Env} env
    * @returns {Promise}
@@ -127,6 +142,11 @@ export const API = {
     return p
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {Env}
+   */
   closeDialog: (name, env) => {
     const extra = E.getExtra(name, env)
     if (! extra) return env
@@ -136,84 +156,168 @@ export const API = {
     return E.setExtra(name, null, env)
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {any|null}
+   */
   getDialog: (name, env) => {
     const extra = E.getExtra(name, env)
     if (! extra) return null
     return extra.data
   }, 
 
+  /**
+   * @param {string} name
+   * @param {any} data
+   * @param {Env} env
+   * @returns {Env}
+   */
   openFeedback: (name, data, env) => {
     return E.setExtra(name, data, env)
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {Env}
+   */
   closeFeedback: (name, env) => {
     const extra = E.getExtra(name, env)
     if (! extra) return env
     return E.setExtra(name, null, env)
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {any|null}
+   */
   getFeedback: (name, env) => {
     return E.getExtra(name, env)
   }, 
 
+  /**
+   * @param {string} name
+   * @param {number} current
+   * @param {Env} env
+   * @returns {Env}
+   */
   setPage: (name, current, env) => {
     return E.setExtra(name, current, env)
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {number}
+   */
   getPage: (name, env) => {
     const extra = E.getExtra(name, env)
     return (extra !== null) ? extra : 0
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {Env}
+   */
   nextPage: (name, env) => {
     const extra = E.getExtra(name, env)
     const current = (extra !== null) ? extra : 0
     return E.setExtra(name, current + 1, env)
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {Env}
+   */
   prevPage: (name, env) => {
     const extra = E.getExtra(name, env)
     const current = (extra !== null) ? extra : 0
     return E.setExtra(name, current - 1, env)
   }, 
 
+  /**
+   * @param {string} name
+   * @param {boolean} shown
+   * @param {Env} env
+   * @returns {Env}
+   */
   setSwitch: (name, shown, env) => {
     return E.setExtra(name, shown, env)
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {boolean}
+   */
   getSwitch: (name, env) => {
     const extra = E.getExtra(name, env)
     return (extra !== null) ? extra : false
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {Env}
+   */
   toggleSwitch: (name, env) => {
     const extra = E.getExtra(name, env)
     const current = (extra !== null) ? extra : false
     return E.setExtra(name, !current, env)
   }, 
 
-  /**
+  /*
    * TODO: progress bar, ReadStream, ...
+   */
+  /**
+   * @param {string} name
+   * @param {any} unknown
+   * @param {Env} env
+   * @returns {Env}
    */
   openProgress: (name, unknown, env) => {
     return E.setExtra(name, {current:-1}, env)
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {Env}
+   */
   closeProgress: (name, env) => {
     return E.setExtra(name, null, env)
   }, 
 
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {number|null}
+   */
   getProgress: (name, env) => {
     const extra = E.getExtra(name, env)
     if (! extra) return null
     return extra.current
   }, 
 
+  /**
+   * @template P
+   * @param {Env} env
+   * @param {P} p
+   * @returns {P}
+   */
   withEnv: (env, p) => {
     if (env) E.doReturn(env)
     return p
   }, 
 
+  /**
+   * @param {(result:any, env:Env) => any} handler
+   * @returns {(result:any) => any}
+   */
   wrap: (handler) => {  // Our customized handler :: [result, env] => ...
     return (result) => {  // This is the actual promise handler
       let result1 = null  // We will get the result in this variable.
@@ -223,6 +327,13 @@ export const API = {
     }
   }, 
 
+  /**
+   * @param {string} itemPath
+   * @param {string} actionUrl
+   * @param {string} formPath
+   * @param {Env} env
+   * @returns {Env}
+   */
   editItem: (itemPath, actionUrl, formPath, env) => {
     const form = {
       action: actionUrl, 
@@ -231,6 +342,13 @@ export const API = {
     return API.add(formPath, form, env)
   }, 
 
+  /**
+   * @param {Json} data
+   * @param {string} actionUrl
+   * @param {string} formPath
+   * @param {Env} env
+   * @returns {Env}
+   */
   createItem: (data, actionUrl, formPath, env) => {
     const form = {
       action: actionUrl, 
@@ -239,12 +357,29 @@ export const API = {
     return API.add(formPath, form, env)
   }, 
 
+  /**
+   * @param {string} formPath
+   * @param {string} listPath
+   * @param {Object} options
+   * @param {string} options.errorSelector
+   * @param {string} options.commitMethod
+   * @param {string} options.loadMethod
+   * @param {string} options.totalCountHeader
+   * @param {string} options.loadingName
+   * @param {string} options.successName
+   * @param {string} options.failureName
+   * @param {Env} env
+   * @returns {Env|Promise}
+   */
   commitItem: (formPath, listPath, options, env) => {
     const opts = {
       errorSelector: null, 
       commitMethod: 'POST', 
       loadMethod: 'GET', 
       totalCountHeader: '', 
+      loadingName: 'loading', 
+      successName: 'success', 
+      failureName: 'failure', 
       ...options
     }
     const actionPath = formPath + '/action'
@@ -275,7 +410,7 @@ export const API = {
           'Content-Type': 'application/json'
         }
       }
-      env = API.openProgress('loading', null, env)
+      env = API.openProgress(opts.loadingName, null, env)
       return API.withEnv(env, 
         /** @ts-ignore */
         fetch(url, fetchOptions)
@@ -306,48 +441,71 @@ export const API = {
               }
               return API.withEnv(env, response.json())
                 .then(API.wrap(([items, env]) => {
-                  env = API.closeProgress('loading', env)
+                  env = API.closeProgress(opts.loadingName, env)
                   env = API.replace(itemsPath, items, env)
                   if (opts.totalCountHeader && API.test(totalCountPath, env)) {
                     const total = +(response.headers.get(opts.totalCountHeader))
                     env = API.replace(totalCountPath, total, env)
                   }
-                  return API.openFeedback('success', {}, env)
+                  return API.openFeedback(opts.successName, {}, env)
                 }))
             }))
           )
         }))
         .catch(API.wrap(([error, env]) => {
-          env = API.closeProgress('loading', env)
+          env = API.closeProgress(opts.loadingName, env)
           console.error('commision failed', error)
           const data = {name:error.name, message:error.message, url}
-          return API.openFeedback('failure', data, env)
+          return API.openFeedback(opts.failureName, data, env)
         }))
       )
     }
   }, 
 
+  /**
+   * @param {string} formPath
+   * @param {Env} env
+   * @returns {Env}
+   */
   discardItem: (formPath, env) => {
     env = API.replace(formPath, null, env)
     return env
   }, 
 
+  /**
+   * @param {string} url
+   * @param {string} listPath
+   * @param {Object} options
+   * @param {string} options.deleteMethod
+   * @param {string} options.loadMethod
+   * @param {string} options.totalCountHeader
+   * @param {string} options.confirmName
+   * @param {string} options.loadingName
+   * @param {string} options.successName
+   * @param {string} options.failureName
+   * @param {Env} env
+   * @returns {Env|Promise}
+   */
   deleteItem: (url, listPath, options, env) => {
     const opts = {
       deleteMethod: 'DELETE', 
       loadMethod: 'GET', 
       totalCountHeader: '', 
+      confirmName: 'confirm', 
+      loadingName: 'loading', 
+      successName: 'success', 
+      failureName: 'failure', 
       ...options
     }
     const loadUrl = API.extract(listPath + '/baseUrl', env)
     const queryPath = listPath + '/query'
     const itemsPath = listPath + '/items'
     const totalCountPath = listPath + '/totalCount'
-    return API.openDialog('confirm', {}, null, env)
+    return API.openDialog(opts.confirmName, {}, null, env)
       .then(API.wrap(([ok, env]) => {
-        env = API.closeDialog('confirm', env)
+        env = API.closeDialog(opts.confirmName, env)
         if (! ok) return env
-        env = API.openProgress('loading', null, env)
+        env = API.openProgress(opts.loadingName, null, env)
         const fetchOptions = {
           method: opts.deleteMethod, 
           mode: 'cors', 
@@ -384,31 +542,42 @@ export const API = {
                 }
                 return API.withEnv(env, response.json())
                   .then(API.wrap(([items, env]) => {
-                    env = API.closeProgress('loading', env)
+                    env = API.closeProgress(opts.loadingName, env)
                     env = API.replace(itemsPath, items, env)
                     if (opts.totalCountHeader && API.test(totalCountPath, env)) {
                       const total = +(response.headers.get(opts.totalCountHeader))
                       env = API.replace(totalCountPath, total, env)
                     }
-                    return API.openFeedback('success', {}, env)
+                    return API.openFeedback(opts.successName, {}, env)
                   }))
               }))
             )
           }))
           .catch(API.wrap(([error, env]) => {
-            env = API.closeProgress('loading', env)
+            env = API.closeProgress(opts.loadingName, env)
             console.error('deletion failed', error)
             const data = {name:error.name, message:error.message, url}
-            return API.openFeedback('failure', data, env)
+            return API.openFeedback(opts.failureName, data, env)
           }))
         )
       }))
   }, 
 
+  /**
+   * @param {string} listPath
+   * @param {Object} options
+   * @param {string} options.totalCountHeader
+   * @param {string} options.method
+   * @param {string} options.loadingName
+   * @param {string} options.failureName
+   * @returns {Env|Promise}
+   */
   loadItems: (listPath, options, env) => {
     const opts = {
       totalCountHeader: '', 
       method: 'GET', 
+      loadingName: 'loading', 
+      failureName: 'failure', 
       ...options
     }
     const loadUrl = API.extract(listPath + '/baseUrl', env)
@@ -422,7 +591,7 @@ export const API = {
         'Content-Type': 'application/json'
       }
     }
-    env = API.openProgress('loading', null, env)
+    env = API.openProgress(opts.loadingName, null, env)
     const qs = new URLSearchParams(/** @type {Record<string, string>} */(API.extract(queryPath, env)))
     const url = loadUrl + '?' + qs.toString()
     return API.withEnv(env, 
@@ -436,7 +605,7 @@ export const API = {
         }
         return API.withEnv(env, response.json())
           .then(API.wrap(([items, env]) => {
-            env = API.closeProgress('loading', env)
+            env = API.closeProgress(opts.loadingName, env)
             env = API.replace(itemsPath, items, env)
             if (opts.totalCountHeader && API.test(totalCountPath, env)) {
               const total = +(response.headers.get(opts.totalCountHeader))
@@ -446,10 +615,10 @@ export const API = {
           }))
       }))
       .catch(API.wrap(([error, env]) => {
-        env = API.closeProgress('loading', env)
+        env = API.closeProgress(opts.loadingName, env)
         console.error('loading failed', error)
         const data = {name:error.name, message:error.message, url}
-        return API.openFeedback('failure', data, env)
+        return API.openFeedback(opts.failureName, data, env)
       }))
     )
   }, 
@@ -461,13 +630,20 @@ export const API = {
    * @param {string} options.path
    * @param {string} options.errorSelector
    * @param {string} options.method
-   * @param {number|null} options.successMessageTimeout
+   * @param {string} options.loadingName
+   * @param {string} options.successName
+   * @param {string} options.failureName
+   * @param {Env} env
+   * @returns {Env|Promise}
    */
   submit: (url, options, env) => {
     const opts = {
       path: '', 
       errorSelector: null, 
       method: 'POST', 
+      loadingName: 'loading', 
+      successName: 'success', 
+      failureName: 'failure', 
       ...options
     }
     env = API.touchAll(opts.path, env)
@@ -490,7 +666,7 @@ export const API = {
           'Content-Type': 'application/json'
         }
       }
-      env = API.openProgress('loading', null, env)
+      env = API.openProgress(opts.loadingName, null, env)
       return API.withEnv(env, 
         /** @ts-ignore */
         fetch(url, fetchOptions)
@@ -500,14 +676,14 @@ export const API = {
             error.name = 'HTTP Error'
             throw API.withEnv(env, error)
           }
-          env = API.closeProgress('loading', env)
-          return API.openFeedback('success', {}, env)
+          env = API.closeProgress(opts.loadingName, env)
+          return API.openFeedback(opts.successName, {}, env)
         }))
         .catch(API.wrap(([error, env]) => {
-          env = API.closeProgress('loading', env)
+          env = API.closeProgress(opts.loadingName, env)
           console.error('loading failed', error)
           const data = {name:error.name, message:error.message, url}
-          return API.openFeedback('failure', data, env)
+          return API.openFeedback(opts.failureName, data, env)
         }))
       )
     }
@@ -517,6 +693,7 @@ export const API = {
    * @param {string} name 
    * @param {string} fromPath 
    * @param {Env} env
+   * @returns {Env|Promise}
    */
   reorder: (name, fromPath, env) => {
     return API.startReordering(name, env)
@@ -529,11 +706,19 @@ export const API = {
   /**
    * 
    * @param {Json} data
+   * @param {Object} options
+   * @param {string} options.confirmName
+   * @param {Env} env
+   * @returns {Env|Promise}
    */
-  reset: (data, env) => {
-    return API.openDialog('confirm', {}, null, env)
+  reset: (data, options, env) => {
+    const opts = {
+      confirmName: 'confirm', 
+      ...options
+    }
+    return API.openDialog(opts.confirmName, {}, null, env)
       .then(API.wrap(([ok, env]) => {
-        env = API.closeDialog('confirm', env)
+        env = API.closeDialog(opts.confirmName, env)
         if (ok) {
           return API.replace("", data, env)
         } else {
@@ -546,6 +731,7 @@ export const API = {
    * @param {string} partPath
    * @param {string} formPath
    * @param {Env} env
+   * @returns {Env}
    */
   editPart: (partPath, formPath, env) => {
     const form = {
@@ -578,6 +764,7 @@ export const API = {
    * @param {string | null} options.errorSelector
    * @param {string | null} options.idProperty
    * @param {Env} env 
+   * @returns {Env}
    */
   commitPart: (formPath, nextIdPath, options, env) => {
     const opts = {
@@ -619,6 +806,7 @@ export const API = {
   /**
    * @param {string} formPath 
    * @param {Env} env 
+   * @returns {Env}
    */
   discardPart: (formPath, env) => {
     env = API.replace(formPath, null, env)
@@ -628,11 +816,19 @@ export const API = {
   /**
    * 
    * @param {string} partPath
+   * @param {Object} options
+   * @param {string} options.confirmName
+   * @param {Env} env
+   * @returns {Promise}
    */
-  removePart: (partPath, env) => {
-    return API.openDialog('confirm', {}, null, env)
+  removePart: (partPath, options, env) => {
+    const opts = {
+      confirmName: 'confirm', 
+      ...options
+    }
+    return API.openDialog(opts.confirmName, {}, null, env)
       .then(API.wrap(([ok, env]) => {
-        env = API.closeDialog('confirm', env)
+        env = API.closeDialog(opts.confirmName, env)
         if (ok) {
           env = API.remove(partPath, env)
           return env
