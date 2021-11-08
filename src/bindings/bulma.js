@@ -231,5 +231,3 @@ export const Pagination = ({width, pageProperty, limitProperty, listPath, env, l
     </nav>
   )
 }
-
-// Tabs

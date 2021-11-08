@@ -1,5 +1,5 @@
 
-import {h, API, start, Textbox, Textarea, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, Pagination} from '../../src/bindings/bulma'
+import {h, API, start, Textbox, Textarea, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, Pagination, Clickable} from '../../src/bindings/bulma'
 import {playReorderable, playUpdateButton, prepareToDestroy} from '../../src/core/components'
 
 const contactSchema = {
@@ -121,6 +121,7 @@ const view = (env) => {
   const contacts = API.extract('/contacts', env)
   const from = (contacts.query._page - 1) * contacts.query._limit + 1
   const to = from + contacts.items.length - 1
+  const tab = API.getPage("tab", env)
   return (
     <div class="container my-3">
       <Notification mg-name="success" message="成功しました。" duration={5000} />
@@ -173,6 +174,17 @@ const view = (env) => {
       </table>
       <Dialog mg-name="confirm" title="確認" message="削除しますよ？" />
       <Modal env={env} />
+      <div class="tabs">
+        <ul>
+          <li class={tab == 0 ? 'is-active' : ''}><Clickable mg-update="setPage" mg-context={["tab", 0]}>概要</Clickable></li>
+          <li class={tab == 1 ? 'is-active' : ''}><Clickable mg-update="setPage" mg-context={["tab", 1]}>詳細</Clickable></li>
+        </ul>
+      </div>
+      {tab == 0 ? (
+        <div>概要です。</div>
+      ) : tab == 1 ? (
+        <div>詳細です。</div>
+      ) : null}
     </div>
   )
 }
