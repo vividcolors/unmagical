@@ -1,6 +1,6 @@
 //@ts-check
 
-import { normalizePath } from './utils'
+import { normalizePath, normalizeQuery } from './utils'
 import * as E from './env'
 import * as S from './schema'
 import { app, h as h0 } from 'hyperapp'
@@ -368,6 +368,7 @@ export const API = {
    * @param {string} options.loadingName
    * @param {string} options.successName
    * @param {string} options.failureName
+   * @param {boolean} options.omitEmptyString
    * @param {Env} env
    * @returns {Env|Promise}
    */
@@ -380,6 +381,7 @@ export const API = {
       loadingName: 'loading', 
       successName: 'success', 
       failureName: 'failure', 
+      omitEmptyString: true, 
       ...options
     }
     const actionPath = formPath + '/action'
@@ -428,7 +430,7 @@ export const API = {
               'Content-Type': 'application/json'
             }
           }
-          const qs = new URLSearchParams(/** @type {Record<string, string>} */(API.extract(queryPath, env)))
+          const qs = new URLSearchParams(normalizeQuery(API.extract(queryPath, env), opts.omitEmptyString))
           const url = loadUrl + '?' + qs.toString()
           return API.withEnv(env, 
             /** @ts-ignore */
@@ -483,6 +485,7 @@ export const API = {
    * @param {string} options.loadingName
    * @param {string} options.successName
    * @param {string} options.failureName
+   * @param {boolean} options.omitEmptyString
    * @param {Env} env
    * @returns {Env|Promise}
    */
@@ -495,6 +498,7 @@ export const API = {
       loadingName: 'loading', 
       successName: 'success', 
       failureName: 'failure', 
+      omitEmptyString: true, 
       ...options
     }
     const loadUrl = API.extract(listPath + '/baseUrl', env)
@@ -529,7 +533,7 @@ export const API = {
                 'Content-Type': 'application/json'
               }
             }
-            const qs = new URLSearchParams(/** @type {Record<string, string>} */(API.extract(queryPath, env)))
+            const qs = new URLSearchParams(normalizeQuery(API.extract(queryPath, env), opts.omitEmptyString))
             const url = loadUrl + '?' + qs.toString()
             return API.withEnv(env, 
               /** @ts-ignore */
@@ -570,6 +574,10 @@ export const API = {
    * @param {string} options.method
    * @param {string} options.loadingName
    * @param {string} options.failureName
+   * @param {number} options.page
+   * @param {string} options.pageProperty
+   * @param {boolean} options.omitEmptyString
+   * @param {Env} env
    * @returns {Env|Promise}
    */
   loadItems: (listPath, options, env) => {
@@ -578,6 +586,9 @@ export const API = {
       method: 'GET', 
       loadingName: 'loading', 
       failureName: 'failure', 
+      page: null, 
+      pageProperty: null, 
+      omitEmptyString: true, 
       ...options
     }
     const loadUrl = API.extract(listPath + '/baseUrl', env)
@@ -591,8 +602,11 @@ export const API = {
         'Content-Type': 'application/json'
       }
     }
+    if (opts.page !== null && opts.pageProperty) {
+      env = API.replace(queryPath + '/' + opts.pageProperty, opts.page, env)
+    }
     env = API.openProgress(opts.loadingName, null, env)
-    const qs = new URLSearchParams(/** @type {Record<string, string>} */(API.extract(queryPath, env)))
+    const qs = new URLSearchParams(normalizeQuery(API.extract(queryPath, env), opts.omitEmptyString))
     const url = loadUrl + '?' + qs.toString()
     return API.withEnv(env, 
       /** @ts-ignore */
@@ -621,6 +635,43 @@ export const API = {
         return API.openFeedback(opts.failureName, data, env)
       }))
     )
+  }, 
+
+  /**
+   * @param {string} formPath
+   * @param {string} listPath
+   * @param {Object} options
+   * @param {string} options.errorSelector
+   * @param {string} options.totalCountHeader
+   * @param {string} options.method
+   * @param {string} options.loadingName
+   * @param {string} options.failureName
+   * @param {number} options.page
+   * @param {string} options.pageProperty
+   * @param {boolean} options.omitEmptyString
+   * @param {Env} env
+   * @returns {Env|Promise}
+   */
+  searchItems: (formPath, listPath, options, env) => {
+    let errorSelector = null
+    if ("errorSelector" in options) {
+      errorSelector = options.errorSelector
+      delete options.errorSelector
+    }    
+    env = API.touchAll(formPath, env)
+    env = API.validate(formPath, env)
+    const numErrors = API.countValidationErrors(formPath, env)
+    if (numErrors) {
+      if (errorSelector) {
+        window.setTimeout(() => {
+          const targetEl = document.querySelector(errorSelector)
+          if (targetEl) targetEl.scrollIntoView()
+        }, 100)
+      }
+      return env
+    }
+    env = API.copy(formPath, listPath + '/query', env)
+    return API.loadItems(listPath, options, env)
   }, 
 
   /**
@@ -882,6 +933,7 @@ const updateEnabledApis = {
   discardItem: API.discardItem, 
   deleteItem: API.deleteItem, 
   loadItems: API.loadItems, 
+  searchItems: API.searchItems, 
   submit: API.submit, 
   reorder: API.reorder, 
   reset: API.reset, 

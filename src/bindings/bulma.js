@@ -49,6 +49,9 @@ const attributeMap = {
   settleButton: {
     onclick: 'onclick'
   }, 
+  clickable: {
+    onclick: 'onclick'
+  }, 
   dialog: {
     '@nullIfHidden': true, 
     data: 'data'
@@ -70,6 +73,7 @@ export const Radio = C.playRadio('input', attributeMap.radio)
 export const Checkbox = C.playCheckbox('input', attributeMap.checkbox)
 export const UpdateButton = C.compose(C.playUpdateButton, C.playProgress)("button", attributeMap.updateButton)
 export const SettleButton = C.playSettleButton('button', attributeMap.settleButton)
+export const Clickable = C.playUpdateButton("a", {onclick:'onclick'})
 
 export const Field = ({path, env, foldValidity = false, ...props}, children) => {
   if (! API.test(path, env)) return null
@@ -183,3 +187,49 @@ export const Progress = C.playProgress(({class:clazz, ...props}) => {
   )
 }, attributeMap.progress)
 
+export const Modal = ({class:clazz, ...props}, children) => {
+  clazz += ' modal is-active'
+  return (
+    <div class={clazz} {...props} oncreate={onDialogCreated} onremove={onDialogRemoved}>
+      <div class="modal-background"></div>
+      {children}
+    </div>
+  )
+}
+
+const getSiblings = (pageNo, width, firstPageNo, lastPageNo) => {
+  const rv = []
+  for (let i = pageNo - width; i <= pageNo + width; i++) {
+    if (i < firstPageNo) continue
+    if (i > lastPageNo) continue
+    rv.push(i)
+  }
+  return rv
+}
+
+export const Pagination = ({width, pageProperty, limitProperty, listPath, env, loadItemsOptions, ...props}) => {
+  const query = API.extract(listPath + '/query', env)
+  const totalCount = API.extract(listPath + '/totalCount', env)
+  const pageNo = query[pageProperty]
+  const firstPageNo = totalCount == 0 ? 9999 : 1
+  const lastPageNo = totalCount == 0 ? 0 : Math.ceil(totalCount / query[limitProperty])
+  const siblings = getSiblings(pageNo, width, firstPageNo, lastPageNo)
+  if (! ('pagePropery' in loadItemsOptions)) {
+    loadItemsOptions = {...loadItemsOptions, pageProperty}
+  }
+  return (
+    <nav class="pagination" role="navigation" aria-label="pagination">
+      <Clickable class="pagination-previous" mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:pageNo - 1}]} disabled={firstPageNo >= pageNo}>Previous</Clickable>
+      <Clickable class="pagination-next" mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:pageNo + 1}]} disabled={lastPageNo <= pageNo}>Next</Clickable>
+      <ul class="pagination-list">
+        {firstPageNo < pageNo - width ? (<li><Clickable class="pagination-link" mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:firstPageNo}]}>{firstPageNo}</Clickable></li>) : null}
+        {firstPageNo < pageNo - width ? (<li><span class="pagination-ellipsis">&hellip;</span></li>) : null}
+        {siblings.map(pno => (<li><Clickable class={`pagination-link ${pno == pageNo ? 'is-current' : ''}`} mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:pno}]}>{pno}</Clickable></li>))}
+        {lastPageNo > pageNo + width ? (<li><span class="pagination-ellipsis">&hellip;</span></li>) : null}
+        {lastPageNo > pageNo + width ? (<li><Clickable class="pagination-link" mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:lastPageNo}]}>{lastPageNo}</Clickable></li>) : null}
+      </ul>
+    </nav>
+  )
+}
+
+// Tabs

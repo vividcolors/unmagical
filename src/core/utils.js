@@ -138,3 +138,31 @@ export const commonPath = (path1, path2) => {
   }
   return rv.join('/')
 }
+
+/**
+ * 
+ * @param {Object} obj 
+ * @param {boolean} omitEmptyString 
+ * @returns {Record<string, string>}
+ */
+export const normalizeQuery = (obj, omitEmptyString) => {
+  const rv = /** @type {Record<string, string>} */ ({})
+  for (let p in obj) {
+    switch (typeOf(p)) {
+      case 'null': 
+        if (!omitEmptyString) rv[p] = ''
+        break
+      case 'boolean': 
+        rv[p] = obj[p] ? 'true' : 'false'
+        break
+      case 'number': 
+        rv[p] = "" + obj[p]
+        break
+      case 'string': 
+        if (omitEmptyString && obj[p] === "") break
+        rv[p] = obj[p]
+        break
+    }
+  }
+  return rv
+}

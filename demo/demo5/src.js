@@ -1,15 +1,27 @@
 
-import {h, API, start, Textbox, Textarea, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
+import {h, API, start, Textbox, Textarea, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, Pagination} from '../../src/bindings/bulma'
 import {playReorderable, playUpdateButton, prepareToDestroy} from '../../src/core/components'
 
-const ClickableText = playUpdateButton("p", {onclick:'onclick'})
+const contactSchema = {
+  type: 'object', 
+  properties: {
+    id: {type:'integer'}, 
+    created: {type:'string'}, 
+    name: {type:'string', minLength:1}, 
+    email: {type:'string', minLength:1}, 
+    content: {type:'string'}
+  }
+}
 
-const contactProps = {
-  id: {type:'integer'}, 
-  created: {type:'string'}, 
-  name: {type:'string', minLength:1}, 
-  email: {type:'string', minLength:1}, 
-  content: {type:'string'}
+const searchSchema = {
+  type: 'object', 
+  properties: {
+    name_like: {type:'string'}, 
+    created_gte: {type:'string'}, 
+    created_lte: {type:'string'}, 
+    _page: {type:'integer'}, 
+    _limit: {type:'integer'}
+  }
 }
 
 const schema = {
@@ -19,36 +31,19 @@ const schema = {
       type: 'object', 
       properties: {
         baseUrl: {}, 
-        query: {
-          type: 'object', 
-          properties: {
-            name_like: {type:'string'}, 
-            email_like: {type:'string'}, 
-            created_gte: {type:'string'}, 
-            created_lte: {type:'string'}, 
-            _page: {type:'integer'}
-          }
-        }, 
+        query: searchSchema, 
         totalCount: {type:'integer'}, 
-        items: {
-          type: 'array', 
-          items: {
-            type: 'object', 
-            properties: contactProps
-          }
-        }
+        items: {type: 'array', items: contactSchema}
       }
     }, 
     form: {
       type: 'object?', 
       properties: {
         action: {type:'string'}, 
-        data: {
-          type: 'object', 
-          properties: contactProps
-        }
+        data: contactSchema
       }
-    }
+    }, 
+    search: searchSchema
   }
 }
 
@@ -57,16 +52,22 @@ const data = {
     baseUrl: 'http://localhost:3000/contacts', 
     query: {
       name_like: '', 
-      email_like: '', 
-      created_gte: '0', 
-      created_lte: '9', 
+      created_gte: '', 
+      created_lte: '', 
       _page: 1, 
-      _limit: 10
+      _limit: 6
     }, 
     totalCount: 0, 
     items: []
   }, 
-  form: null
+  form: null, 
+  search: {
+    name_like: '', 
+    created_gte: '', 
+    created_lte: '', 
+    _page: 1, 
+    _limit: 6
+  }
 }
 
 const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
@@ -115,38 +116,33 @@ const Modal = ({env}) => {
   )
 }
 
-const Pager = ({nav, _page, length}) => {
-  const limit = 10
-  const firstPage = 1
-  const lastPage = Math.ceil(total / limit)
-  const from = _page * limit + 1
-  const to = from + length - 1
-  return (
-    <div class="level">
-      <div class="level-left">
-        <div class="level-item">
-          <p>{nav.total} 件中 {from}～{to}</p>
-        </div>
-        <div class="level-item">
-          <div class="field has-addons">
-            <div class="control">
-              
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 const view = (env) => {
+  console.log('view', env)
   const contacts = API.extract('/contacts', env)
+  const from = (contacts.query._page - 1) * contacts.query._limit + 1
+  const to = from + contacts.items.length - 1
   return (
     <div class="container my-3">
       <Notification mg-name="success" message="成功しました。" duration={5000} />
       <Notification mg-name="failure" title="エラー" createMessage={showError} />
       <UpdateButton class="button is-primary" mg-update="createItem" mg-context={[{id:0, created:'', name:'', email:'', content:''}, 'http://localhost:3000/contacts', '/form']}>新規追加</UpdateButton>
-      <p>Total: {API.extract('/contacts/totalCount', env)}</p>
+      <nav class="level">
+        <div class="level-left">
+          <div class="level-item">{contacts.totalCount ? `${contacts.totalCount}件中 ${from}～${to}` : 'コンタクトはありません'}</div>
+        </div>
+        <div class="level-right">
+          <div class="level-item">
+            <Textbox class="input" mg-path="/search/name_like" placeholder="名前" />
+          </div>
+          <div class="level-item">
+            <Textbox class="input" mg-path="/search/created_gte" type="date" />～<Textbox class="input" mg-path="/search/created_lte" type="date" />
+          </div>
+          <div class="level-item">
+            <UpdateButton class="button" mg-update="searchItems" mg-context={["/search", "/contacts", {totalCountHeader:'X-Total-Count'}]}>検索</UpdateButton>
+          </div>
+        </div>
+      </nav>
+      <Pagination width={1} pageProperty="_page" limitProperty="_limit" listPath="/contacts" totalCount={contacts.totalCount} env={env} loadItemsOptions={{totalCountHeader:'X-Total-Count'}} />
       <table class="table is-hoverable">
         <thead>
           <th>ID</th>
