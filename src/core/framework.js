@@ -126,17 +126,12 @@ export const API = {
   /**
    * @param {string} name
    * @param {any} data
-   * @param {Object} options
-   * @param {number|null} params.timeout
    * @param {Env} env
    * @returns {Promise}
    */
-  openDialog: (name, data, options, env) => {
-    const timeoutId = (options && options.timeout)
-      ? setTimeout(() => { actions.onPromiseSettle({name, result:true}) }, options.timeout)
-      : null
+  openDialog: (name, data, env) => {
     const p = new Promise((fulfill, reject) => {
-      env = E.setExtra(name, {data, fulfill, reject, timeoutId}, env)
+      env = E.setExtra(name, {data, fulfill, reject}, env)
     })
     E.doReturn(env)
     return p
@@ -150,9 +145,6 @@ export const API = {
   closeDialog: (name, env) => {
     const extra = E.getExtra(name, env)
     if (! extra) return env
-    if (extra.timeoutId) {
-      clearTimeout(extra.timeoutId)
-    }
     return E.setExtra(name, null, env)
   }, 
 
@@ -505,7 +497,7 @@ export const API = {
     const queryPath = listPath + '/query'
     const itemsPath = listPath + '/items'
     const totalCountPath = listPath + '/totalCount'
-    return API.openDialog(opts.confirmName, {}, null, env)
+    return API.openDialog(opts.confirmName, {}, env)
       .then(API.wrap(([ok, env]) => {
         env = API.closeDialog(opts.confirmName, env)
         if (! ok) return env
@@ -767,7 +759,7 @@ export const API = {
       confirmName: 'confirm', 
       ...options
     }
-    return API.openDialog(opts.confirmName, {}, null, env)
+    return API.openDialog(opts.confirmName, {}, env)
       .then(API.wrap(([ok, env]) => {
         env = API.closeDialog(opts.confirmName, env)
         if (ok) {
@@ -877,7 +869,7 @@ export const API = {
       confirmName: 'confirm', 
       ...options
     }
-    return API.openDialog(opts.confirmName, {}, null, env)
+    return API.openDialog(opts.confirmName, {}, env)
       .then(API.wrap(([ok, env]) => {
         env = API.closeDialog(opts.confirmName, env)
         if (ok) {
@@ -1124,9 +1116,6 @@ export const start = (
       const result = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgResult || "null") : ev.result
       const extra = E.getExtra(name, state.baseEnv)
       if (! extra || ! extra.fulfill) throw new Error('onPromiseSettle/0: no callback or unknown callback')
-      if (extra.timeoutId) {
-        clearTimeout(extra.timeoutId)
-      }
       extra.fulfill(result)
     }, 
     onPromiseThen: (context) => (state, actions) => {
