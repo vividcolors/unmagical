@@ -1,129 +1,7 @@
 
-import {h, API, start, Textbox, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
+import {h, API, start, Input, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, DatePicker, ColorPicker} from '../../src/bindings/bulma'
 import {playSmartControl, playReorderable} from '../../src/core/components'
 
-const createFlatpickr = (path, onchange, defaultValue, config0) => {
-  let instance = null
-  return {
-    oncreate: (el) => {
-      const config = {
-        ...config0, 
-        defaultDate: defaultValue || null
-      }
-      const target = el.querySelector('input[type="text"]')
-      instance = flatpickr(target, config)
-      instance.config.onChange.push((selectedDates, dateStr) => {
-        onchange({path, input:dateStr})
-      })
-      const clearer = el.querySelector('button')
-      if (clearer) {
-        clearer.onclick = instance.clear
-      }
-    }, 
-    ondestroy: (el) => {
-      if (instance) {
-        instance.destroy()
-        instance = null
-      }
-    }
-  }
-}
-const DatePicker = playSmartControl(({
-  'mg-path':path, 
-  onchange, 
-  value, 
-  clearable = false, 
-  config = {}, 
-  ...props
-}) => {
-  const {oncreate, ondestroy} = createFlatpickr(path, onchange, value, config)
-  if (clearable) {
-    return (
-      <div class="field has-addons" oncreate={oncreate} ondestroy={ondestroy}>
-        <div class="control">
-          <input type="text" readonly {...props} />
-        </div>
-        <div class="control">
-          <button type="button" class="button">Clear</button>
-        </div>
-      </div>
-    )
-  } else {
-    return (
-      <div class="control">
-        <input type="text" oncreate={oncreate} ondestroy={ondestroy} readonly {...props} />
-      </div>
-    )
-  }
-}, {
-  onchange: 'onchange', 
-  value: 'value'
-})
-
-const createPickr = (path, onchange, defaultValue, options0) => {
-  let instance = null
-  return {
-    oncreate: (el) => {
-      const options = {
-        ...options0, 
-        useAsButton: true, 
-        default: defaultValue || null, 
-        el
-      }
-      instance = Pickr.create(options)
-      instance.on('clear', () => {
-        onchange({path, input:''})
-      }).on('save', (color) => {
-        const input = color ? color.toHEXA().toString() : null
-        instance.hide()
-        onchange({path, input})
-      })
-    }, 
-    ondestroy: (el) => {
-      if (instance) {
-        instance.destroy()
-      }
-    }
-  }
-}
-const ColorPicker = playSmartControl(({
-  'mg-path':path, 
-  onchange, 
-  value, 
-  options = {
-    components: {
-        // Main components
-        preview: true,
-        opacity: true,
-        hue: true,
-
-        // Input / output Options
-        interaction: {
-            hex: true,
-            rgba: true,
-            hsla: true,
-            hsva: true,
-            cmyk: true,
-            input: true,
-            clear: true,
-            save: true
-        }
-    }
-  }, 
-  ...props
-}) => {
-  const {oncreate, ondestroy} = createPickr(path, onchange, value, options)
-  return (
-    <div class="control">
-      <button type="button" oncreate={oncreate} ondestroy={ondestroy} {...props}>
-        <span class="icon"><i class="material-icons" style={{color:value}}>palette</i></span>
-      </button>
-    </div>
-  )
-}, {
-  onchange: 'onchange', 
-  value: 'value'
-})
 
 const instantiateSortable = (name, path, onStart, onEnd, options) => {
   var instance = null;
@@ -258,36 +136,68 @@ const maybeComplementAddress = (ev) => {
   }
 }
 
+const pickrOptions = {
+  components: {
+    // Main components
+    preview: true,
+    opacity: true,
+    hue: true,
+
+    // Input / output Options
+    interaction: {
+      hex: true,
+      rgba: true,
+      hsla: true,
+      hsva: true,
+      cmyk: true,
+      input: true,
+      clear: false,
+      save: true
+    }
+  }
+}
+
 const view = (env) => {
+  console.log('view', env)
   const data = API.extract("", env)
   return (
     <div class="block">
-      <Field path="/date" env={env} class="field">
-        <label class="label">カレンダー</label>
-        <DatePicker mg-path="/date" class="input" clearable />
-        <p>value: {data.date}</p>
+      <Field mg-path="/date" label="カレンダー">
+        <div class="field has-addons">
+          <div class="control">
+            <DatePicker mg-path="/date" class="input" clearerId="datepicker-clearer" />
+          </div>
+          <div class="control">
+            <a class="button is-info" id="datepicker-clearer">Clear</a>
+          </div>
+        </div>
       </Field>
-      <Field path="/date2" env={env} class="field">
-        <label class="label">input type="date"</label>
-        <Textbox class="input" type="date" mg-path="/date2" />
-        <p>value: {data.date2}</p>
+      <p>value: {data.date}</p>
+      <Field mg-path="/date2" label="input type=date">
+        <Input type="date" mg-path="/date2" />
       </Field>
-      <Field path="/color" env={env} class="field">
-        <label class="label">カラー</label>
-        <ColorPicker mg-path="/color" class="button" />
-        <p>value: {data.color}</p>
+      <p>value: {data.date2}</p>
+      <Field mg-path="/color" label="カラー">
+        <div class="field has-addons">
+          <div class="control">
+            <ColorPicker mg-path="/color" class="button" clearerId="colorpicker-clearer" options={pickrOptions} />
+          </div>
+          <div class="control">
+            <a class="button is-info" id="colorpicker-clearer">Clear</a>
+          </div>
+        </div>
       </Field>
-      <Field path="/color2" env={env} class="field">
-        <label class="label">input type="color"</label>
-        <Textbox class="input" type="color" mg-path="/color2" />
-        <p>value: {data.color2}</p>
+      <p>value: {data.color}</p>
+      <Field mg-path="/color2" label="input type=color">
+        <Input class="input" type="color" mg-path="/color2" />
       </Field>
-      <Field path="/email" env={env} class="field" foldValidity>
+      <p>value: {data.color2}</p>
+      {/*<Field mg-path="/email" class="field" foldValidity>
         <label class="label">メールアドレス</label>
         <Textbox class="input" mg-path="/email/firstTime" />
         <Textbox class="input" mg-path="/email/secondTime" />
       </Field>
-      <Field path="/address" env={env} class="field" foldValidity>
+      <Field mg0path="/address" class="field" foldValidity>
         <label class="label">住所</label>
         <Textbox class="input" mg-path="/address/zip" oncreate={onZipCreated} />
         <Textbox class="input" mg-path="/address/pref" />
@@ -298,7 +208,7 @@ const view = (env) => {
       <hr />
       <ReorderableMenu mg-name="persons" path="/persons">
         {data.persons.map(p => (<li key={p}><a>{p}</a></li>))}
-      </ReorderableMenu>
+  </ReorderableMenu> */}
     </div>
   )
 }

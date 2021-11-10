@@ -119,3 +119,13 @@ export const Pagination = C.playPagination(({page, prev, next, first, last, sibl
     </nav>
   )
 }, {current:'page'})
+
+export const DatePicker = C.playFlatpickr("input", {fixedClass:'input', invalidClass:'is-danger'})
+
+export const ColorPicker = C.playPickr(({value, iconClass = 'material-icons', iconText = 'palette', ...props}) => {
+  return (
+    <button {...props}>
+      <span class="icon"><i class={iconClass} style={{color:value}}>{iconText}</i></span>
+    </button>
+  )
+}, {fixedClass:'button', invalidClass:'is-danger'})

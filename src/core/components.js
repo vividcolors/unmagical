@@ -144,6 +144,21 @@ export const defaultAttributeMap = {
     shownClass: 'mg-shown', 
     fixedClass: '', 
     '@transition': 'fade'
+  }, 
+  flatpickr: {
+    invalid: '', 
+    class: 'class', 
+    invalidClass: 'mg-invalid', 
+    message: '', 
+    fixedClass: ''
+  }, 
+  pickr: {
+    value: 'value', 
+    invalid: '', 
+    class: 'class', 
+    invalidClass: 'mg-invalid', 
+    message: '', 
+    fixedClass: ''
   }
 }
 
@@ -676,6 +691,105 @@ export const playModal = (C, map = {}) => {
     attributes.onremove = dialogOnRemove[map['@transition']]
     addAttr(attributes, map.shown, shown)
     addClass(attributes, map.class, shown ? map.shownClass : "")
+    addClass(attributes, map.class, map.fixedClass)
+    return h(C, attributes, ...children)
+  }
+}
+
+const createFlatpickr = (path, onchange, defaultValue, clearerId, config) => {
+  let instance = null
+  return {
+    oncreate: (el) => {
+      const cfg = {
+        ...config, 
+        defaultDate: defaultValue || null
+      }
+      instance = flatpickr(el, cfg)
+      instance.config.onChange.push((selectedDates, dateStr) => {
+        onchange({path, input:dateStr})
+      })
+      if (clearerId) {
+        const clearer = document.getElementById(clearerId)
+        if (clearer) {
+          clearer.onclick = instance.clear
+        }
+      }
+    }, 
+    ondestroy: (el) => {
+      if (instance) {
+        instance.destroy()
+        instance = null
+      }
+    }
+  }
+}
+export const playFlatpickr = (C, map = {}) => {
+  map = {...defaultAttributeMap.flatpickr, ...map}
+  return (props, children) => (state, actions) => {
+    const {'mg-path':path, clearerId = null, config = {}, ...attributes} = props
+    const slot = API.getSlot(path, state.env)
+    if (! slot) return null
+    const {oncreate, ondestroy} = createFlatpickr(path, actions.onSmartControlChange, slot.input, clearerId, config)
+    attributes.oncreate = oncreate
+    attributes.ondestroy = ondestroy
+    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    addAttr(attributes, map.invalid, invalid)
+    addClass(attributes, map.class, invalid ? map.invalidClass : "")
+    addAttr(attributes, map.message, slot.message)
+    addClass(attributes, map.class, map.fixedClass)
+    return h(C, attributes, ...children)
+  }
+}
+
+const createPickr = (path, onchange, defaultValue, clearerId, options) => {
+  let instance = null
+  return {
+    oncreate: (el) => {
+      const opts = {
+        ...options, 
+        useAsButton: true, 
+        default: defaultValue || null, 
+        el
+      }
+      instance = Pickr.create(opts)
+      instance.on('clear', () => {
+        onchange({path, input:''})
+      }).on('save', (color) => {
+        const input = color ? color.toHEXA().toString() : null
+        instance.hide()
+        onchange({path, input})
+      })
+      if (clearerId) {
+        const clearer = document.getElementById(clearerId)
+        if (clearer) {
+          clearer.onclick = (ev) => {
+            instance.setColor(null)
+          }
+        }
+      }
+    }, 
+    ondestroy: (el) => {
+      if (instance) {
+        instance.destroy()
+        instance = null
+      }
+    }
+  }
+}
+export const playPickr = (C, map = {}) => {
+  map = {...defaultAttributeMap.pickr, ...map}
+  return (props, children) => (state, actions) => {
+    const {'mg-path':path, clearerId = null, options = {}, ...attributes} = props
+    const slot = API.getSlot(path, state.env)
+    if (! slot) return null
+    const {oncreate, ondestroy} = createPickr(path, actions.onSmartControlChange, slot.input, clearerId, options)
+    attributes.oncreate = oncreate
+    attributes.ondestroy = ondestroy
+    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    addAttr(attributes, map.value, slot.input)
+    addAttr(attributes, map.invalid, invalid)
+    addClass(attributes, map.class, invalid ? map.invalidClass : "")
+    addAttr(attributes, map.message, slot.message)
     addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
