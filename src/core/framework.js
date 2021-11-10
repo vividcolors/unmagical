@@ -562,7 +562,10 @@ export const API = {
                       const total = +(response.headers.get(opts.totalCountHeader))
                       env = API.replace(totalCountPath, total, env)
                     }
-                    return API.openFeedback(opts.successName, {}, env)
+                    return API.sleep(500, env)
+                      .then(API.wrap((_unused, env) => {
+                        return API.openFeedback(opts.successName, {}, env)
+                      }))
                   }))
               }))
             )
@@ -738,7 +741,10 @@ export const API = {
             throw API.withEnv(env, error)
           }
           env = API.closeProgress(opts.loadingName, env)
-          return API.openFeedback(opts.successName, {}, env)
+          return API.sleep(500, env)
+            .then(API.wrap((_unused, env) => {
+              return API.openFeedback(opts.successName, {}, env)
+            }))
         }))
         .catch(API.wrap((error, env) => {
           env = API.closeProgress(opts.loadingName, env)
