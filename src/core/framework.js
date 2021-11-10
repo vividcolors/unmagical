@@ -436,7 +436,7 @@ export const API = {
       return API.withEnv(env, 
         /** @ts-ignore */
         fetch(url, fetchOptions)
-        .then(API.wrap(([response, env]) => {
+        .then(API.wrap((response, env) => {
           if (! response.ok) {
             const error = new Error(response.statusText)
             error.name = 'HTTP Error'
@@ -454,14 +454,14 @@ export const API = {
           return API.withEnv(env, 
             /** @ts-ignore */
             fetch(url, fetchOptions2)
-            .then(API.wrap(([response, env]) => {
+            .then(API.wrap((response, env) => {
               if (! response.ok) {
                 const error = new Error(response.statusText)
                 error.name = 'HTTP Error'
                 throw API.withEnv(env, error)
               }
               return API.withEnv(env, response.json())
-                .then(API.wrap(([items, env]) => {
+                .then(API.wrap((items, env) => {
                   env = API.replace(itemsPath, items, env)
                   env = API.replace(formPath, null, env)
                   env = API.closeProgress(opts.loadingName, env)
@@ -470,7 +470,7 @@ export const API = {
                     env = API.replace(totalCountPath, total, env)
                   }
                   return API.startSleep('commitItemSleep', 500, env)
-                    .then(API.wrap(([response, env]) => {
+                    .then(API.wrap((response, env) => {
                       env = API.endSleep('commitItemSleep', env)
                       return API.openFeedback(opts.successName, {}, env)
                     }))
@@ -478,7 +478,7 @@ export const API = {
             }))
           )
         }))
-        .catch(API.wrap(([error, env]) => {
+        .catch(API.wrap((error, env) => {
           env = API.closeProgress(opts.loadingName, env)
           console.error('commision failed', error)
           const data = {name:error.name, message:error.message, url}
@@ -530,7 +530,7 @@ export const API = {
     const itemsPath = listPath + '/items'
     const totalCountPath = listPath + '/totalCount'
     return API.openDialog(opts.confirmName, {}, env)
-      .then(API.wrap(([ok, env]) => {
+      .then(API.wrap((ok, env) => {
         env = API.closeDialog(opts.confirmName, env)
         if (! ok) return env
         env = API.openProgress(opts.loadingName, null, env)
@@ -544,7 +544,7 @@ export const API = {
         return API.withEnv(env, 
           /** @ts-ignore */
           fetch(url, fetchOptions)
-          .then(API.wrap(([response, env]) => {
+          .then(API.wrap((response, env) => {
             if (! response.ok) {
               const error = new Error(response.statusText)
               error.name = 'HTTP Error'
@@ -562,14 +562,14 @@ export const API = {
             return API.withEnv(env, 
               /** @ts-ignore */
               fetch(url, fetchOptions2)
-              .then(API.wrap(([response, env]) => {
+              .then(API.wrap((response, env) => {
                 if (! response.ok) {
                   const error = new Error(response.statusText)
                   error.name = 'HTTP Error'
                   throw API.withEnv(env, error)
                 }
                 return API.withEnv(env, response.json())
-                  .then(API.wrap(([items, env]) => {
+                  .then(API.wrap((items, env) => {
                     env = API.closeProgress(opts.loadingName, env)
                     env = API.replace(itemsPath, items, env)
                     if (opts.totalCountHeader && API.test(totalCountPath, env)) {
@@ -581,7 +581,7 @@ export const API = {
               }))
             )
           }))
-          .catch(API.wrap(([error, env]) => {
+          .catch(API.wrap((error, env) => {
             env = API.closeProgress(opts.loadingName, env)
             console.error('deletion failed', error)
             const data = {name:error.name, message:error.message, url}
@@ -635,14 +635,14 @@ export const API = {
     return API.withEnv(env, 
       /** @ts-ignore */
       fetch(url, fetchOptions)
-      .then(API.wrap(([response, env]) => {
+      .then(API.wrap((response, env) => {
         if (! response.ok) {
           const error = new Error(response.statusText)
           error.name = 'HTTP Error'
           throw API.withEnv(env, error)
         }
         return API.withEnv(env, response.json())
-          .then(API.wrap(([items, env]) => {
+          .then(API.wrap((items, env) => {
             env = API.closeProgress(opts.loadingName, env)
             env = API.replace(itemsPath, items, env)
             if (opts.totalCountHeader && API.test(totalCountPath, env)) {
@@ -652,7 +652,7 @@ export const API = {
             return env
           }))
       }))
-      .catch(API.wrap(([error, env]) => {
+      .catch(API.wrap((error, env) => {
         env = API.closeProgress(opts.loadingName, env)
         console.error('loading failed', error)
         const data = {name:error.name, message:error.message, url}
@@ -745,7 +745,7 @@ export const API = {
       return API.withEnv(env, 
         /** @ts-ignore */
         fetch(url, fetchOptions)
-        .then(API.wrap(([response, env]) => {
+        .then(API.wrap((response, env) => {
           if (! response.ok) {
             const error = new Error(response.statusText)
             error.name = 'HTTP Error'
@@ -754,7 +754,7 @@ export const API = {
           env = API.closeProgress(opts.loadingName, env)
           return API.openFeedback(opts.successName, {}, env)
         }))
-        .catch(API.wrap(([error, env]) => {
+        .catch(API.wrap((error, env) => {
           env = API.closeProgress(opts.loadingName, env)
           console.error('loading failed', error)
           const data = {name:error.name, message:error.message, url}
@@ -772,7 +772,7 @@ export const API = {
    */
   reorder: (name, fromPath, env) => {
     return API.startReordering(name, env)
-      .then(API.wrap(([{path}, env]) => {
+      .then(API.wrap(({path}, env) => {
         env = API.endReordering(name, env)
         return API.move(fromPath, path, env)
       }))
@@ -792,7 +792,7 @@ export const API = {
       ...options
     }
     return API.openDialog(opts.confirmName, {}, env)
-      .then(API.wrap(([ok, env]) => {
+      .then(API.wrap((ok, env) => {
         env = API.closeDialog(opts.confirmName, env)
         if (ok) {
           return API.replace("", data, env)
@@ -902,7 +902,7 @@ export const API = {
       ...options
     }
     return API.openDialog(opts.confirmName, {}, env)
-      .then(API.wrap(([ok, env]) => {
+      .then(API.wrap((ok, env) => {
         env = API.closeDialog(opts.confirmName, env)
         if (ok) {
           env = API.remove(partPath, env)
@@ -1158,7 +1158,7 @@ export const start = (
       let updatePointer
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
       baseEnv = E.setRet((env0) => {baseEnv = env0}, baseEnv)
-      const res = context.handler([context.result, baseEnv])
+      const res = context.handler(context.result, baseEnv)
       baseEnv = E.setRet(null, E.isEnv(res) ? res : baseEnv)
       baseEnv = E.validate("", baseEnv);
       [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
