@@ -57,7 +57,7 @@ export const DeleteButton = C.playUpdateButton("button", {fixedClass:"delete"})
 
 export const Clickable = C.playUpdateButton("a")
 
-export const Dialog = C.playDialog(({'mg-name':name, title, createMessage = null, message = null, hideCancelButton = false, data, ...props}) => {
+export const Dialog = C.playDialog(({'mg-name':name, title, createMessage = null, message = null, hideCancelButton = false, okLabel = 'OK', cancelLabel = 'Cancel', data, ...props}) => {
   message = createMessage ? createMessage(data) : message
   return (
     <div key={name} {...props}>
@@ -70,8 +70,8 @@ export const Dialog = C.playDialog(({'mg-name':name, title, createMessage = null
           <p>{message}</p>
         </section>
         <footer class="modal-card-foot">
-          <SettleButton class="button is-success" mg-name={name} mg-result={true}>OK</SettleButton>
-          {! hideCancelButton ? (<SettleButton class="button" mg-name={name} mg-result={false}>キャンセル</SettleButton>) : null}
+          <SettleButton class="button is-success" mg-name={name} mg-result={true}>{okLabel}</SettleButton>
+          {! hideCancelButton ? (<SettleButton class="button" mg-name={name} mg-result={false}>{cancelLabel}</SettleButton>) : null}
         </footer>
       </div>
     </div>
