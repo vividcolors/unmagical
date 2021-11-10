@@ -339,7 +339,7 @@ export const API = {
    * @returns {(result:any) => any}
    */
   wrap: (handler) => {  // Our customized handler :: [result, env] => ...
-    return (result) => {  // This is the actual promise handler
+    return (result) => {  // This is the actual, standard promise handler
       let result1 = null  // We will get the result in this variable.
       const ret = (res1) => {result1 = res1}
       actions.onPromiseThen({result, handler, ret})  // enter into hyperapp. Its result is undefined.
@@ -1148,7 +1148,11 @@ export const start = (
       const result = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgResult || "null") : ev.result
       const extra = E.getExtra(name, state.baseEnv)
       if (! extra || ! extra.fulfill) throw new Error('onPromiseSettle/0: no callback or unknown callback')
-      extra.fulfill(result)
+      // Calling fulfill directly will cause the process to re-enter the hyperapp, 
+      // so use a different tick.
+      window.requestAnimationFrame(() => {
+        extra.fulfill(result)
+      })
     }, 
     onPromiseThen: (context) => (state, actions) => {
       let updatePointer
