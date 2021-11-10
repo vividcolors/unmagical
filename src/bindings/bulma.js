@@ -3,119 +3,64 @@ import * as C from '../core/components'
 import {API, start, h} from '../core/framework'
 export {API, start, h} from '../core/framework'
 
-const attributeMap = {
-  textbox: {
-    oninput: 'oninput', 
-    onblur: 'onblur', 
-    value: 'value', 
-    class: 'class', 
-    invalidClass: 'is-danger', 
-    invalid: ''
-  }, 
-  listbox: {
-    onchange: 'onchange', 
-    class: 'class', 
-    invalidClass: 'is-danger', 
-    invalid: '', 
-    value: 'value', 
-    option: {
-      selected: 'selected', 
-      value: 'value'
-    }
-  }, 
-  radio: {
-    onchange: 'onchange', 
-    checked: 'checked', 
-    value: 'value', 
-    class: 'class', 
-    invalidClass: '', 
-    invalid: ''
-  }, 
-  checkbox: {
-    onchange: 'onchange', 
-    checked: 'checked', 
-    class: 'class', 
-    invalidClass: '', 
-    invalid: ''
-  }, 
-  updateButton: {
-    onclick: 'onclick', 
-    '@nullIfHidden': false, 
-    current: '', 
-    class: 'class', 
-    shown: '', 
-    shownClass: 'is-loading'
-  }, 
-  settleButton: {
-    onclick: 'onclick'
-  }, 
-  clickable: {
-    onclick: 'onclick'
-  }, 
-  dialog: {
-    '@nullIfHidden': true, 
-    data: 'data'
-  }, 
-  notification: {
-    '@nullIfHidden': true, 
-    data: 'data'
-  }, 
-  progress: {
-    '@nullIfHidden': true, 
-    current: 'value'
-  }
-}
+export const Input = C.playTextbox('input', {fixedClass:'input', invalidClass:'is-danger'})
 
-export const Textbox = C.playTextbox('input', attributeMap.textbox)
-export const Textarea = C.playTextbox('textarea', attributeMap.textbox)
-export const Listbox = C.playListbox('select', attributeMap.listbox)
-export const Radio = C.playRadio('input', attributeMap.radio)
-export const Checkbox = C.playCheckbox('input', attributeMap.checkbox)
-export const UpdateButton = C.compose(C.playUpdateButton, C.playProgress)("button", attributeMap.updateButton)
-export const SettleButton = C.playSettleButton('button', attributeMap.settleButton)
-export const Clickable = C.playUpdateButton("a", {onclick:'onclick'})
+export const Textarea = C.playTextbox('textarea', {fixedClass:'textarea', invalidClass:'is-danger'})
 
-export const Field = ({path, env, foldValidity = false, ...props}, children) => {
-  if (! API.test(path, env)) return null
-  const slot = API.getSlot(path, env)
-  const {invalid, message} = foldValidity ? API.foldValidity(path, env) : {invalid:slot.invalid && slot.touched, message:slot.message}
+// bulma has no range-sliders
+
+export const Select = C.playListbox(({onchange, 'data-mg-path':dataMgPath, 'data-mg-value-attribute':dataMgValueAttribute, disabled = false, ...props}, children) => {
   return (
     <div {...props}>
+      <select onchange={onchange} data-mg-path={dataMgPath} data-mg-value-attribute={dataMgValueAttribute} disabled={disabled}>
+        {children}
+      </select>
+    </div>
+  )
+}, {fixedClass:'select', invalidClass:'is-danger'})
+
+export const Radio = C.playRadio(({onchange, 'data-mg-path':dataMgPath, 'data-mg-value-attribute':dataMgValueAttribute, disabled = false, name, checked = false, value, ...props}, children) => {
+  return (
+    <label disabled={disabled} {...props}>
+      <input type="radio" onchange={onchange} data-mg-path={dataMgPath} data-mg-value-attribute={dataMgValueAttribute} name={name} disabled={disabled} checked={checked} value={value} />
+      {children}
+    </label>
+  )
+}, {fixedClass:'radio'})
+
+export const Checkbox = C.playCheckbox(({onchange, 'data-mg-path':dataMgPath, 'data-mg-checked-attribute':dataMgCheckedAttribute, disabled = false, checked = false, ...props}, children) => {
+  return (
+    <label disabled={disabled} {...props}>
+      <input type="checkbox" onchange={onchange} data-mg-path={dataMgPath} data-mg-checked-attribute={dataMgCheckedAttribute} disabled={disabled} checked={checked} />
+      {children}
+    </label>
+  )
+})
+
+export const Field = C.playField(({invalid, message, label = '', ...props}, children) => {
+  return (
+    <div {...props}>
+      {label ? (<label class="label">{label}</label>) : null}
       {children}
       {invalid && message ? (
         <p class="help is-danger">{message}</p>
       ) : null}
     </div>
   )
-}
+}, {fixedClass:'field'})
 
-const onDialogCreated = (el) => {
-  C.suspendRoot()
-  el.animate([
-    {opacity: 0}, 
-    {opacity: 1}
-  ], 200)
-  const el2 = el.querySelector('.modal-card')
-  el2.animate([
-    {transform: 'translateY(5vh)'}, 
-    {transform: 'translateY(0)'}
-  ], 200)
-}
+export const UpdateButton = C.compose(C.playUpdateButton, C.playProgress)("button", {fixedClass:'button', shownClass:'is-loading'})
 
-const onDialogRemoved = (el, done) => {
-  C.resumeRoot()
-  const anim = el.animate([
-    {opacity: 1}, 
-    {opacity: 0}
-  ], 200)
-  C.prepareToDestroy(el, anim, done)
-}
+export const SettleButton = C.playSettleButton('button', {fixedClass:'button'})
 
-export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', title, createMessage = null, message = null, hideCancelButton = false, data, ...props}) => {
-  clazz += ' modal is-active'
+export const DeleteButton = C.playUpdateButton("button", {fixedClass:"delete"})
+
+export const Clickable = C.playUpdateButton("a")
+
+export const Dialog = C.playDialog(({'mg-name':name, title, createMessage = null, message = null, hideCancelButton = false, data, ...props}) => {
   message = createMessage ? createMessage(data) : message
   return (
-    <div class={clazz} key={name} {...props} oncreate={onDialogCreated} onremove={onDialogRemoved}>
+    <div key={name} {...props}>
       <div class="modal-background"></div>
       <div class="modal-card">
         <header class="modal-card-head">
@@ -131,103 +76,46 @@ export const Dialog = C.playDialog(({'mg-name':name, class:clazz = '', title, cr
       </div>
     </div>
   )
-}, attributeMap.dialog)
+}, {fixedClass:'modal is-active', '@nullIfHidden':true, '@transition':'fade'})
 
-const onNotificationCreate = (el) => {
-  const r = el.getBoundingClientRect()
-  el.animate([
-    {offset:0, maxHeight: 0}, 
-    {offset:0.999, maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
-    {offset:1, maxHeight:'none'}
-  ], 150)
-  el.scrollIntoView()
-}
-
-const onNotificationRemove = (el, done) => {
-  const r = el.getBoundingClientRect()
-  const anim = el.animate([
-    {maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
-    {maxHeight: 0}
-  ], 150)
-  C.prepareToDestroy(el, anim, done)
-}
-
-const withDuration = (duration, name, onUpdate) => {
-  let timeoutId = null
-  return [
-    (el) => {
-      timeoutId = setTimeout(() => onUpdate({update:"closeFeedback", context:[name]}), duration)
-      onNotificationCreate(el)
-    }, 
-    (el, done) => {
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
-      onNotificationRemove(el, done)
-    }
-  ]
-}
-
-export const Notification = C.playFeedback(({'mg-name':name, data, createMessage = null, message = null, duration = 0, class:clazz = '', onUpdate, ...props}) => {
-  clazz += ' notification'
-  const [oncreate, onremove] = duration ? withDuration(duration, name, onUpdate) : [onNotificationCreate, onNotificationRemove]
+export const Notification = C.playFeedback(({'mg-name':name, data, createMessage = null, message = null, ...props}) => {
   message = createMessage ? createMessage(data) : message
   return (
-    <div class={clazz} key={name} {...props} oncreate={oncreate} onremove={onremove}>
-      <UpdateButton class="delete" mg-update="closeFeedback" mg-context={[name]}></UpdateButton>
+    <div key={name} {...props}>
+      <DeleteButton mg-update="closeFeedback" mg-context={[name]}></DeleteButton>
       <p>{message}</p>
     </div>
   )
-}, attributeMap.notification)
+}, {fixedClass:'notification', '@nullIfHidden': true, '@transition':'slide'})
 
-export const Progress = C.playProgress(({class:clazz, ...props}) => {
-  clazz += ' progress'
+export const Progress = C.playProgress(({value, ...props}) => {
   return (
     <progress class={clazz} {...props}>indeterminated</progress>
   )
-}, attributeMap.progress)
+}, {fixedClass:'progress', '@nullIfHidden': true, current: 'value'})
 
-export const Modal = ({class:clazz, ...props}, children) => {
-  clazz += ' modal is-active'
+export const Modal = C.playModal((props, children) => {
   return (
-    <div class={clazz} {...props} oncreate={onDialogCreated} onremove={onDialogRemoved}>
+    <div {...props}>
       <div class="modal-background"></div>
       {children}
     </div>
   )
-}
+}, {fixedClass:'modal is-active'})
 
-const getSiblings = (pageNo, width, firstPageNo, lastPageNo) => {
-  const rv = []
-  for (let i = pageNo - width; i <= pageNo + width; i++) {
-    if (i < firstPageNo) continue
-    if (i > lastPageNo) continue
-    rv.push(i)
-  }
-  return rv
-}
-
-export const Pagination = ({width, pageProperty, limitProperty, listPath, env, loadItemsOptions, ...props}) => {
-  const query = API.extract(listPath + '/query', env)
-  const totalCount = API.extract(listPath + '/totalCount', env)
-  const pageNo = query[pageProperty]
-  const firstPageNo = totalCount == 0 ? 9999 : 1
-  const lastPageNo = totalCount == 0 ? 0 : Math.ceil(totalCount / query[limitProperty])
-  const siblings = getSiblings(pageNo, width, firstPageNo, lastPageNo)
-  if (! ('pagePropery' in loadItemsOptions)) {
-    loadItemsOptions = {...loadItemsOptions, pageProperty}
-  }
+const defaultShow = (n) => n
+export const Pagination = C.playPagination(({page, prev, next, first, last, siblings, show = defaultShow, prevLabel = 'Previous', nextLabel = 'Next', 'mg-list-path':listPath, loadItemsOptions, ...props}) => {
   return (
     <nav class="pagination" role="navigation" aria-label="pagination">
-      <Clickable class="pagination-previous" mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:pageNo - 1}]} disabled={firstPageNo >= pageNo}>Previous</Clickable>
-      <Clickable class="pagination-next" mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:pageNo + 1}]} disabled={lastPageNo <= pageNo}>Next</Clickable>
+      <Clickable class="pagination-previous" mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:prev}]} disabled={! prev}>{prevLabel}</Clickable>
+      <Clickable class="pagination-next" mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:next}]} disabled={! next}>{nextLabel}</Clickable>
       <ul class="pagination-list">
-        {firstPageNo < pageNo - width ? (<li><Clickable class="pagination-link" mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:firstPageNo}]}>{firstPageNo}</Clickable></li>) : null}
-        {firstPageNo < pageNo - width ? (<li><span class="pagination-ellipsis">&hellip;</span></li>) : null}
-        {siblings.map(pno => (<li><Clickable class={`pagination-link ${pno == pageNo ? 'is-current' : ''}`} mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:pno}]}>{pno}</Clickable></li>))}
-        {lastPageNo > pageNo + width ? (<li><span class="pagination-ellipsis">&hellip;</span></li>) : null}
-        {lastPageNo > pageNo + width ? (<li><Clickable class="pagination-link" mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:lastPageNo}]}>{lastPageNo}</Clickable></li>) : null}
+        {first ? (<li><Clickable class="pagination-link" mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:first}]}>{show(first)}</Clickable></li>) : null}
+        {first ? (<li><span class="pagination-ellipsis">&hellip;</span></li>) : null}
+        {siblings.map(pno => (<li><Clickable class={`pagination-link ${pno == page ? 'is-current' : ''}`} mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:pno}]}>{show(pno)}</Clickable></li>))}
+        {last ? (<li><span class="pagination-ellipsis">&hellip;</span></li>) : null}
+        {last ? (<li><Clickable class="pagination-link" mg-update="loadItems" mg-context={[listPath, {...loadItemsOptions, page:last}]}>{show(last)}</Clickable></li>) : null}
       </ul>
     </nav>
   )
-}
+}, {current:'page'})

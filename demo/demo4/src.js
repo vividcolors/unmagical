@@ -1,8 +1,6 @@
 
-import {h, API, start, Textbox, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
-import {playReorderable, playUpdateButton, prepareToDestroy} from '../../src/core/components'
-
-const ClickableText = playUpdateButton("p", {onclick:'onclick'})
+import {h, API, start, Input, Select, Radio, Checkbox, UpdateButton, Clickable, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
+import {playReorderable, playListItem} from '../../src/core/components'
 
 const instantiateSortable = (name, path, onStart, onEnd, options) => {
   var instance = null;
@@ -122,33 +120,33 @@ const onTodoItemRemove = (el, done) => {
 
 const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
 
-const TodoItem = ({path, editing, env}) => {
+const TodoItem = playListItem(({path, editing, env, ...props}) => {
   const id = API.extract(path + '/id', env)
   const handleStyle = editing ? {pointerEvents:'none', opacity:0.26} : {}
   return (
-    <div class="media" key={'item-'+id} id={id} oncreate={onTodoItemCreate} onremove={onTodoItemRemove}>
+    <div class="media" key={'item-'+id} id={id} {...props}>
       <div class="media-left">
         <div class="columns is-gapless is-vcentered is-mobile">
           <div class="column">
             <span class={`icon is-medium my-1 ${editing ? '' : 'handle'}`}><span class="material-icons" style={handleStyle}>drag_handle</span></span>
           </div>
           <div class="column">
-            <label class="checkbox px-2 py-1">
-              <Checkbox type="checkbox" mg-path={path + '/done'} />
-            </label>
+            <Checkbox class="px-2 py-1" mg-path={path + '/done'} />
           </div>
         </div>
       </div>
       <div class="media-content">
-        <ClickableText class="py-2 is-fullwidth " style={{cursor:'pointer'}} mg-update="editPart" mg-context={[path, '/form']}>{API.extract(path + '/subject', env)} @{API.extract(path + '/context', env)}</ClickableText>
+        <p class="py-2 is-fullwidth">
+          <Clickable style={{cursor:'pointer'}} mg-update="editPart" mg-context={[path, '/form']}>{API.extract(path + '/subject', env)} @{API.extract(path + '/context', env)}</Clickable>
+        </p>
       </div>
       <div class="media-right">
-        <UpdateButton class="button is-info is-inverted mx-1" mg-update="copyPart" mg-context={[path, '/nextId', {}]}><span class="icon"><span class="material-icons">content_copy</span></span></UpdateButton>
-        <UpdateButton class="button is-danger is-inverted mx-1" mg-update="removePart" mg-context={[path, {}]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
+        <UpdateButton class="is-info is-inverted mx-1" mg-update="copyPart" mg-context={[path, '/nextId', {}]}><span class="icon"><span class="material-icons">content_copy</span></span></UpdateButton>
+        <UpdateButton class="is-danger is-inverted mx-1" mg-update="removePart" mg-context={[path, {}]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
       </div>
     </div>
   )
-}
+})
 
 const TodoForm = ({env}) => {
   const id = API.extract('/form/data/id', env)
@@ -160,35 +158,31 @@ const TodoForm = ({env}) => {
             <span class="icon is-medium my-1"><span class="material-icons" style={{pointerEvents:'none', opacity:0.26}}>drag_handle</span></span>
           </div>
           <div class="column">
-            <label class="checkbox px-2 py-1">
-              <Checkbox type="checkbox" mg-path="/form/data/done" />
-            </label>
+            <Checkbox class="px-2 py-1" mg-path="/form/data/done" />
           </div>
         </div>
       </div>
       <div class="media-content">
         <div class="columns">
           <div class="column">
-            <Field path="/form/data/subject" env={env}>
-              <Textbox mg-path="/form/data/subject" class="input" type="text" />
+            <Field mg-path="/form/data/subject">
+              <Input mg-path="/form/data/subject" class="input" type="text" />
             </Field>
           </div>
           <div class="column">
-            <Field path="/form/data/context" env={env}>
-              <div class="select">
-                <Listbox mg-path="/form/data/context">
-                  <option value="" disabled></option>
-                  <option value="home">home</option>
-                  <option value="work">work</option>
-                </Listbox>
-              </div>
+            <Field mg-path="/form/data/context">
+              <Select mg-path="/form/data/context">
+                <option value="" disabled></option>
+                <option value="home">home</option>
+                <option value="work">work</option>
+              </Select>
             </Field>
           </div>
         </div>
       </div>
       <div class="media-right">
-        <UpdateButton class="button is-primary is-inverted mx-1" mg-update="commitPart" mg-context={['/form', '/nextId', {}]}><span class="icon"><span class="material-icons">check</span></span></UpdateButton>
-        <UpdateButton class="button is-danger is-inverted mx-1" mg-update="discardPart" mg-context={['/form']}><span class="icon"><span class="material-icons">clear</span></span></UpdateButton>
+        <UpdateButton class="is-primary is-inverted mx-1" mg-update="commitPart" mg-context={['/form', '/nextId', {}]}><span class="icon"><span class="material-icons">check</span></span></UpdateButton>
+        <UpdateButton class="is-danger is-inverted mx-1" mg-update="discardPart" mg-context={['/form']}><span class="icon"><span class="material-icons">clear</span></span></UpdateButton>
       </div>
     </div>
   )
@@ -198,7 +192,7 @@ const TodoButton = () => {
   return (
     <div class="media" key="add">
       <div class="media-content">
-        <UpdateButton class="button is-primary" mg-update="createPart" mg-context={['/todos/-', {id:0, done:false, subject:'', context:''}, '/form']}>追加</UpdateButton>
+        <UpdateButton class="is-primary" mg-update="createPart" mg-context={['/todos/-', {id:0, done:false, subject:'', context:''}, '/form']}>追加</UpdateButton>
       </div>
     </div>
   )

@@ -90,6 +90,34 @@ export const API = {
 
   /**
    * @param {string} name
+   * @param {number} ms
+   * @param {Env} env
+   * @returns {Promise}
+   */
+  startSleep: (name, ms, env) => {
+    const p = new Promise((fulfill, reject) => {
+      env = E.setExtra(name, {fulfill, reject}, env)
+      setTimeout(() => {
+        actions.onPromiseSettle({name, result:null})
+      }, ms)
+    })
+    E.doReturn(env)
+    return p
+  }, 
+
+  /**
+   * @param {string} name
+   * @param {Env} env
+   * @returns {Env}
+   */
+  endSleep: (name, env) => {
+    const extra = E.getExtra(name, env)
+    if (! extra) return env
+    return E.setExtra(name, null, env)
+  }, 
+
+  /**
+   * @param {string} name
    * @param {Env} env
    * @returns {Promise}
    */
@@ -409,7 +437,6 @@ export const API = {
         /** @ts-ignore */
         fetch(url, fetchOptions)
         .then(API.wrap(([response, env]) => {
-          env = API.replace(formPath, null, env)
           if (! response.ok) {
             const error = new Error(response.statusText)
             error.name = 'HTTP Error'
@@ -435,13 +462,18 @@ export const API = {
               }
               return API.withEnv(env, response.json())
                 .then(API.wrap(([items, env]) => {
-                  env = API.closeProgress(opts.loadingName, env)
                   env = API.replace(itemsPath, items, env)
+                  env = API.replace(formPath, null, env)
+                  env = API.closeProgress(opts.loadingName, env)
                   if (opts.totalCountHeader && API.test(totalCountPath, env)) {
                     const total = +(response.headers.get(opts.totalCountHeader))
                     env = API.replace(totalCountPath, total, env)
                   }
-                  return API.openFeedback(opts.successName, {}, env)
+                  return API.startSleep('commitItemSleep', 500, env)
+                    .then(API.wrap(([response, env]) => {
+                      env = API.endSleep('commitItemSleep', env)
+                      return API.openFeedback(opts.successName, {}, env)
+                    }))
                 }))
             }))
           )

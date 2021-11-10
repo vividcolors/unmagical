@@ -9,7 +9,8 @@ export const defaultAttributeMap = {
     class: 'class', 
     invalidClass: 'mg-invalid', 
     invalid: '', 
-    message: ''
+    message: '', 
+    fixedClass: ''
   }, 
   slider: {
     oninput: 'oninput', 
@@ -18,7 +19,8 @@ export const defaultAttributeMap = {
     class: 'class', 
     invalidClass: 'mg-invalid', 
     invalid: '', 
-    message: ''
+    message: '', 
+    fixedClass: ''
   }, 
   listbox: {
     onchange: 'onchange', 
@@ -30,7 +32,8 @@ export const defaultAttributeMap = {
       selected: 'selected', 
       value: 'value'
     }, 
-    message: ''
+    message: '', 
+    fixedClass: ''
   }, 
   radio: {
     onchange: 'onchange', 
@@ -39,7 +42,8 @@ export const defaultAttributeMap = {
     class: 'class', 
     invalidClass: 'mg-invalid', 
     invalid: '', 
-    message: ''
+    message: '', 
+    fixedClass: ''
   }, 
   checkbox: {
     onchange: 'onchange', 
@@ -47,57 +51,99 @@ export const defaultAttributeMap = {
     class: 'class', 
     invalidClass: 'mg-invalid', 
     invalid: '', 
-    message: ''
+    message: '', 
+    fixedClass: ''
   }, 
   smartControl: {
     onchange: 'onchange', 
-    value: ''
+    value: '', 
+    class: 'class', 
+    fixedClass: ''
     // TODO: follow standard
   }, 
+  field: {
+    class: 'class', 
+    invalidClass: '', 
+    invalid: 'invalid', 
+    message: 'message', 
+    fixedClass: ''
+  }, 
   updateButton: {
-    onclick: 'onclick'
+    onclick: 'onclick', 
+    class: 'class', 
+    fixedClass: ''
   }, 
   settleButton: {
-    onclick: 'onclick'
+    onclick: 'onclick', 
+    class: 'class', 
+    fixedClass: ''
   }, 
   dialog: {
     '@nullIfHidden': true, 
     data: 'data', 
     class: 'class', 
     shown: 'shown', 
-    shownClass: 'mg-shown'
+    shownClass: 'mg-shown', 
+    fixedClass: '', 
+    '@transition': 'fade'
   }, 
   feedback: {
     '@nullIfHidden': true, 
     data: 'data', 
     class: 'class', 
     shown: 'shown', 
-    shownClass: 'mg-shown'
+    shownClass: 'mg-shown', 
+    fixedClass: '', 
+    '@transition': 'slide'
   }, 
   progress: {
     '@nullIfHidden': true, 
     current: 'current', 
     class: 'class', 
     shown: 'shown', 
-    shownClass: 'mg-shown'
+    shownClass: 'mg-shown', 
+    fixedClass: ''
   }, 
   page: {
     '@nullIfHidden': true, 
     class: 'class', 
     shown: 'shown', 
-    shownClass: 'mg-shown'
+    shownClass: 'mg-shown', 
+    fixedClass: ''
   }, 
   'switch': {
     '@nullIfHidden': true, 
     class: 'class', 
     shown: 'shown', 
-    shownClass: 'mg-shown'
+    shownClass: 'mg-shown', 
+    fixedClass: ''
   }, 
   reorderable: {
     active: 'active', 
     activeClass: 'mg-active', 
     onstart: 'onstart', 
-    onend: 'onend'
+    onend: 'onend', 
+    fixedClass: ''
+  }, 
+  pagination: {
+    current: 'current', 
+    prev: 'prev', 
+    next: 'next', 
+    first: 'first', 
+    last: 'last', 
+    siblings: 'siblings', 
+    fixedClass: ''
+  }, 
+  listItem: {
+    '@transition': 'slide'
+  }, 
+  modal: {
+    '@nullIfHidden': true, 
+    class: 'class', 
+    shown: 'shown', 
+    shownClass: 'mg-shown', 
+    fixedClass: '', 
+    '@transition': 'fade'
   }
 }
 
@@ -155,8 +201,8 @@ const addAttr = (attributes, attr, value) => {
   attributes[attr] = value
 }
 
-export const playTextbox = (C, map = null) => {
-  map = map || defaultAttributeMap.textbox
+export const playTextbox = (C, map = {}) => {
+  map = {...defaultAttributeMap.textbox, ...map}
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
@@ -170,14 +216,15 @@ export const playTextbox = (C, map = null) => {
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
     addAttr(attributes, map.message, slot.message)
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
 
 export const Textbox = playTextbox("input")
 
-export const playSlider = (C, map = null) => {
-  map = map || defaultAttributeMap.slider
+export const playSlider = (C, map = {}) => {
+  map = {...defaultAttributeMap.slider, ...map}
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
@@ -191,6 +238,7 @@ export const playSlider = (C, map = null) => {
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
     addAttr(attributes, map.message, slot.message)
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
@@ -212,8 +260,8 @@ const convertChildren = (input, selectedAttr, valueAttr, children) => {
   inner(children)
 }
 
-export const playListbox = (C, map = null) => {
-  map = map || defaultAttributeMap.listbox
+export const playListbox = (C, map = {}) => {
+  map = {...defaultAttributeMap.listbox, ...map}
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
@@ -226,14 +274,15 @@ export const playListbox = (C, map = null) => {
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
     convertChildren(slot.input, map.option.selected, map.option.value, children)
     addAttr(attributes, map.message, slot.message)
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
 
 export const Listbox = playListbox("select")
 
-export const playRadio = (C, map = null) => {
-  map = map || defaultAttributeMap.radio
+export const playRadio = (C, map = {}) => {
+  map = {...defaultAttributeMap.radio, ...map}
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
@@ -246,14 +295,15 @@ export const playRadio = (C, map = null) => {
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
     addAttr(attributes, map.message, slot.message)
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
 
 export const Radio = playRadio("input")
 
-export const playCheckbox = (C, map = null) => {
-  map = map || defaultAttributeMap.checkbox
+export const playCheckbox = (C, map = {}) => {
+  map = {...defaultAttributeMap.checkbox, ...map}
   return (props, children) => (state, actions) => {
     const {'mg-path':path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
@@ -266,6 +316,7 @@ export const playCheckbox = (C, map = null) => {
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
     addAttr(attributes, map.message, slot.message)
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
@@ -274,8 +325,8 @@ export const Checkbox = playCheckbox("input")
 
 // TODO: file, number, date, color, range, ...
 
-export const playSmartControl = (C, map = null) => {
-  map = map || defaultAttributeMap.smartControl
+export const playSmartControl = (C, map = {}) => {
+  map = {...defaultAttributeMap.smartControl, ...map}
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const path = props['mg-path']
@@ -283,67 +334,191 @@ export const playSmartControl = (C, map = null) => {
     if (! slot) return null
     attributes[map.onchange] = actions.onSmartControlChange
     addAttr(attributes, map.value, slot.input)
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
 
-export const playUpdateButton = (C, map = null) => {
-  map = map || defaultAttributeMap.button
+export const playField = (C, map = {}) => {
+  map = {...defaultAttributeMap.field, ...map}
+  return (props, children) => (state, actions) => {
+    const {'mg-path':path, 'mg-fold-validity':foldValidity, ...attributes} = props
+    if (! API.test(path, state.env)) return null
+    const slot = API.getSlot(path, state.env)
+    const {invalid, message} = foldValidity ? API.foldValidity(path, env) : {invalid:slot.invalid && slot.touched, message:slot.message}
+    addAttr(attributes, map.invalid, invalid)
+    addClass(attributes, map.class, invalid ? map.invalidClass : "")
+    addAttr(attributes, map.message, slot.message)
+    addClass(attributes, map.class, map.fixedClass)
+    return h(C, attributes, ...children)
+  }
+}
+
+export const playUpdateButton = (C, map = {}) => {
+  map = {...defaultAttributeMap.updateButton, ...map}
   return (props, children) => (state, actions) => {
     const {'mg-update':update, 'mg-context':context, ...attributes} = props
     attributes['data-mg-update'] = update
     attributes['data-mg-context'] = JSON.stringify(typeof context == "undefined" ? null : context)
     attributes[map.onclick] = actions.onUpdate
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
 
 export const UpdateButton = playUpdateButton("button")
 
-export const playSettleButton = (C, map = null) => {
-  map = map || defaultAttributeMap.button
+export const playSettleButton = (C, map = {}) => {
+  map = {...defaultAttributeMap.settleButton, ...map}
   return (props, children) => (state, actions) => {
     const {'mg-name':name, 'mg-result':result, ...attributes} = props
     attributes['data-mg-name'] = name
     attributes['data-mg-result'] = JSON.stringify(typeof result == "undefined" ? null : result)
     attributes[map.onclick] = actions.onPromiseSettle
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
 
 export const SettleButton = playSettleButton("button")
 
-export const playDialog = (C, map = null) => {
-  map = map || defaultAttributeMap.dialog
+const dialogOnCreate = {
+  fade: (el) => {
+    suspendRoot()
+    el.animate([
+      {opacity: 0}, 
+      {opacity: 1}
+    ], 200)
+  }, 
+  scale: (el) => {
+    suspendRoot()
+    el.animate([
+      {transform: 'scale(0.8)'}, 
+      {transform: 'scale(1)'}
+    ])
+  }
+}
+const dialogOnRemove = {
+  fade: (el, done) => {
+    resumeRoot()
+    const anim = el.animate([
+      {opacity: 1}, 
+      {opacity: 0}
+    ], 200)
+    prepareToDestroy(el, anim, done)
+  }, 
+  scale: (el, done) => {
+    resumeRoot()
+    const anim = el.animate([
+      {transform: 'scale(1)'}, 
+      {transform: 'scale(0.8)'}
+    ], 200)
+    prepareToDestroy(el, anim, done)
+  }
+}
+
+export const playDialog = (C, map = {}) => {
+  map = {...defaultAttributeMap.dialog, ...map}
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const name = attributes['mg-name']
     const data = API.getDialog(name, state.env)
     if (data === null && map['@nullIfHidden']) return null
     attributes[map.data] = data
+    attributes.oncreate = dialogOnCreate[map['@transition']]
+    attributes.onremove = dialogOnRemove[map['@transition']]
     addAttr(attributes, map.shown, (data !== null))
     addClass(attributes, map.class, data !== null ? map.shownClass : "")
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
 
-export const playFeedback = (C, map = null) => {
-  map = map || defaultAttributeMap.feedback
+const feedbackOnCreate = {
+  fade: (el) => {
+    el.animate([
+      {opacity: 0}, 
+      {opacity: 1}
+    ], 200)
+    el.scrollIntoView()
+  }, 
+  zoom: (el) => {
+    el.animate([
+      {transform: 'scale(0.8)'}, 
+      {transform: 'scale(1)'}
+    ], 200)
+    el.scrollIntoView()
+  }, 
+  slide: (el) => {
+    const r = el.getBoundingClientRect()
+    el.animate([
+      {offset:0, maxHeight: 0}, 
+      {offset:0.999, maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
+      {offset:1, maxHeight:'none'}
+    ], 200)
+    el.scrollIntoView()
+  }
+}
+const feedbackOnRemove = {
+  fade: (el, done) => {
+    const anim = el.animate([
+      {opacity: 1}, 
+      {opacity: 0}
+    ], 200)
+    prepareToDestroy(el, anim, done)
+  }, 
+  zoom: (el, done) => {
+    const anim = el.animate([
+      {transform: 'scale(1)'}, 
+      {transform: 'scale(0.8)'}
+    ], 200)
+    prepareToDestroy(el, anim, done)
+  }, 
+  slide: (el, done) => {
+    const r = el.getBoundingClientRect()
+    const anim = el.animate([
+      {maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
+      {maxHeight: 0}
+    ], 200)
+    prepareToDestroy(el, anim, done)
+  }
+}
+
+export const playFeedback = (C, map = {}) => {
+  map = {...defaultAttributeMap.feedback, ...map}
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const name = attributes['mg-name']
+    const duration = attributes['mg-duration']
     const data = API.getFeedback(name, state.env)
     if (data === null && map['@nullIfHidden']) return null
     attributes[map.data] = data
+    attributes.oncreate = feedbackOnCreate[map['@transition']]
+    attributes.onremove = feedbackOnRemove[map['@transition']]
     addAttr(attributes, map.shown, (data !== null))
     addClass(attributes, map.class, data !== null ? map.shownClass : "")
-    attributes.onUpdate = actions.onUpdate
+    if (duration && duration > 0) {
+      let timeoutId = null
+      const oncreate = attributes.oncreate
+      addAttr(attributes, 'oncreate', (el) => {
+        timeoutId = setTimeout(() => actions.onUpdate({update:"closeFeedback", context:[name]}), duration)
+        if (oncreate) oncreate(el)
+      })
+      const onremove = attributes.onremove
+      addAttr(attributes, 'onremove', (el, done) => {
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+        }
+        if (onremove) onremove(el, done)
+      })
+    }
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
 
-export const playProgress = (C, map = null) => {
-  map = map || defaultAttributeMap.progress
+export const playProgress = (C, map = {}) => {
+  map = {...defaultAttributeMap.progress, ...map}
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const name = attributes['mg-name']
@@ -352,12 +527,13 @@ export const playProgress = (C, map = null) => {
     if (current !== null && current != -1) addAttr(attributes, map.current, current)
     addAttr(attributes, map.shown, current !== null)
     addClass(attributes, map.class, current !== null ? map.shownClass : "")
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
 
-export const playPage = (C, map = null) => {
-  map = map || defaultAttributeMap.page
+export const playPage = (C, map = {}) => {
+  map = {...defaultAttributeMap.page, ...map}
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const index = attributes['mg-index']
@@ -367,12 +543,13 @@ export const playPage = (C, map = null) => {
     if (! shown && map['@nullIfHidden']) return null
     addAttr(attributes, map.shown, shown)
     addClass(attributes, map.class, shown ? map.shownClass : "")
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
 
-export const playSwitch = (C, map = null) => {
-  map = map || defaultAttributeMap.switch
+export const playSwitch = (C, map = {}) => {
+  map = {...defaultAttributeMap.switch, ...map}
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const name = attributes['mg-name']
@@ -380,12 +557,13 @@ export const playSwitch = (C, map = null) => {
     if (! shown && map['@nullIfHidden']) return null
     addAttr(attributes, map.shown, shown)
     addClass(attributes, map.class, shown ? map.shownClass : "")
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
 
-export const playReorderable = (C, map = null) => {
-  map = map || defaultAttributeMap.switch
+export const playReorderable = (C, map = {}) => {
+  map = {...defaultAttributeMap.reorderable, ...map}
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const name = attributes['mg-name']
@@ -395,6 +573,110 @@ export const playReorderable = (C, map = null) => {
     attributes[map.onend] = actions.onPromiseSettle
     addAttr(attributes, map.active, active)
     addClass(attributes, map.activeClass, active ? map.activeClass : "")
+    addClass(attributes, map.class, map.fixedClass)
+    return h(C, attributes, ...children)
+  }
+}
+
+const getSiblings = (pageNo, width, firstPageNo, lastPageNo) => {
+  const rv = []
+  for (let i = pageNo - width; i <= pageNo + width; i++) {
+    if (i < firstPageNo) continue
+    if (i > lastPageNo) continue
+    rv.push(i)
+  }
+  return rv
+}
+
+// width, pageProperty, limitProperty, listPath
+// prev:number, next:number, first:number, last:number, siblings:number[]
+export const playPagination = (C, map = {}) => {
+  map = {...defaultAttributeMap.pagination, ...map}
+  return (props, children) => (state, actions) => {
+    const {'mg-width':width = 2, 'mg-page-property':pageProperty, 'mg-limit-property':limitProperty, ...attributes} = props
+    const listPath = attributes['mg-list-path']
+    const query = API.extract(listPath + '/query', state.env)
+    const totalCount = API.extract(listPath + '/totalCount', state.env)
+    const page = query[pageProperty]
+    if (totalCount) {
+      const first = 1
+      const last = Math.ceil(totalCount / query[limitProperty])
+      const siblings = getSiblings(page, width, first, last)
+      attributes[map.current] = page
+      attributes[map.prev] = first < page ? page - 1 : null
+      attributes[map.next] = page < last ? page + 1 : null
+      attributes[map.first] = first < page - width ? first : null
+      attributes[map.last] = page + width < last ? last : null
+      attributes[map.siblings] = siblings
+    } else {
+      attributes[map.current] = null
+      attributes[map.prev] = null
+      attributes[map.next] = null
+      attributes[map.first] = null
+      attributes[map.last] = null
+      attributes[map.siblings] = []
+    }
+    addClass(attributes, map.class, map.fixedClass)
+    return h(C, attributes, ...children)
+  }
+}
+
+
+const listItemOnCreate = {
+  fade: (el) => {
+    el.animate([
+      {opacity: 0}, 
+      {opacity: 1}
+    ], 200)
+    el.scrollIntoView()
+  }, 
+  slide: (el) => {
+    const r = el.getBoundingClientRect()
+    el.animate([
+      {offset:0, maxHeight: 0}, 
+      {offset:0.999, maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
+      {offset:1, maxHeight:'none'}
+    ], 200)
+    el.scrollIntoView()
+  }
+}
+const listItemOnRemove = {
+  fade: (el, done) => {
+    const anim = el.animate([
+      {opacity: 1}, 
+      {opacity: 0}
+    ], 200)
+    prepareToDestroy(el, anim, done)
+  }, 
+  slide: (el, done) => {
+    const r = el.getBoundingClientRect()
+    const anim = el.animate([
+      {maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
+      {maxHeight: 0}
+    ], 200)
+    prepareToDestroy(el, anim, done)
+  }
+}
+export const playListItem = (C, map = {}) => {
+  map = {...defaultAttributeMap.listItem, ...map}
+  return (props, children) => (state, actions) => {
+    const {...attributes} = props
+    attributes.oncreate = listItemOnCreate[map['@transition']]
+    attributes.onremove = listItemOnRemove[map['@transition']]
+    return h(C, attributes, ...children)
+  }
+}
+
+export const playModal = (C, map = {}) => {
+  map = {...defaultAttributeMap.modal, ...map}
+  return (props, children) => (state, actions) => {
+    const {'mg-shown':shown = false, ...attributes} = props
+    if (! shown && map['@nullIfHidden']) return null
+    attributes.oncreate = dialogOnCreate[map['@transition']]
+    attributes.onremove = dialogOnRemove[map['@transition']]
+    addAttr(attributes, map.shown, shown)
+    addClass(attributes, map.class, shown ? map.shownClass : "")
+    addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
 }
