@@ -89,31 +89,18 @@ export const API = {
   }, 
 
   /**
-   * @param {string} name
    * @param {number} ms
    * @param {Env} env
    * @returns {Promise}
    */
-  startSleep: (name, ms, env) => {
+  sleep: (ms, env) => {
     const p = new Promise((fulfill, reject) => {
-      env = E.setExtra(name, {fulfill, reject}, env)
       setTimeout(() => {
-        actions.onPromiseSettle({name, result:null})
+        fulfill(null)
       }, ms)
     })
     E.doReturn(env)
     return p
-  }, 
-
-  /**
-   * @param {string} name
-   * @param {Env} env
-   * @returns {Env}
-   */
-  endSleep: (name, env) => {
-    const extra = E.getExtra(name, env)
-    if (! extra) return env
-    return E.setExtra(name, null, env)
   }, 
 
   /**
@@ -469,9 +456,8 @@ export const API = {
                     const total = +(response.headers.get(opts.totalCountHeader))
                     env = API.replace(totalCountPath, total, env)
                   }
-                  return API.startSleep('commitItemSleep', 500, env)
+                  return API.sleep(500, env)
                     .then(API.wrap((response, env) => {
-                      env = API.endSleep('commitItemSleep', env)
                       return API.openFeedback(opts.successName, {}, env)
                     }))
                 }))
