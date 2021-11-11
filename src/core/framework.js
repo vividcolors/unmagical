@@ -105,12 +105,14 @@ export const API = {
 
   /**
    * @param {string} name
+   * @param {string} itemPath
+   * @param {string} group
    * @param {Env} env
    * @returns {Promise}
    */
-  startReordering: (name, env) => {
+  startReordering: (name, itemPath, group, env) => {
     const p = new Promise((fulfill, reject) => {
-      env = E.setExtra(name, {fulfill, reject}, env)
+      env = E.setExtra(name, {itemPath, group, fulfill, reject}, env)
     })
     E.doReturn(env)
     return p
@@ -130,12 +132,12 @@ export const API = {
   /**
    * @param {string} name
    * @param {Env} env
-   * @returns {true|null}
+   * @returns {string|null}
    */
   getReordering: (name, env) => {
     const extra = E.getExtra(name, env)
     if (! extra) return null
-    return true
+    return extra.itemPath
   }, 
 
   /**
@@ -759,11 +761,12 @@ export const API = {
   /**
    * @param {string} name 
    * @param {string} fromPath 
+   * @param {string} group
    * @param {Env} env
    * @returns {Env|Promise}
    */
-  reorder: (name, fromPath, env) => {
-    return API.startReordering(name, env)
+  reorder: (name, fromPath, group, env) => {
+    return API.startReordering(name, fromPath, group, env)
       .then(API.wrap(({path}, env) => {
         env = API.endReordering(name, env)
         return API.move(fromPath, path, env)

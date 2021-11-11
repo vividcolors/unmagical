@@ -118,13 +118,6 @@ export const defaultAttributeMap = {
     shownClass: 'mg-shown', 
     fixedClass: ''
   }, 
-  reorderable: {
-    active: 'active', 
-    activeClass: 'mg-active', 
-    onstart: 'onstart', 
-    onend: 'onend', 
-    fixedClass: ''
-  }, 
   pagination: {
     current: 'current', 
     prev: 'prev', 
@@ -158,6 +151,13 @@ export const defaultAttributeMap = {
     class: 'class', 
     invalidClass: 'mg-invalid', 
     message: '', 
+    fixedClass: ''
+  }, 
+  sortable: {
+    active: 'active', 
+    activeClass: 'mg-active', 
+    itemPath: 'itemPath', 
+    group: 'group', 
     fixedClass: ''
   }
 }
@@ -360,10 +360,10 @@ export const playField = (C, map = {}) => {
     const {'mg-path':path, 'mg-fold-validity':foldValidity, ...attributes} = props
     if (! API.test(path, state.env)) return null
     const slot = API.getSlot(path, state.env)
-    const {invalid, message} = foldValidity ? API.foldValidity(path, env) : {invalid:slot.invalid && slot.touched, message:slot.message}
+    const {invalid, message} = foldValidity ? API.foldValidity(path, state.env) : {invalid:slot.invalid && slot.touched, message:slot.message}
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
-    addAttr(attributes, map.message, slot.message)
+    addAttr(attributes, map.message, message)
     addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
@@ -577,22 +577,6 @@ export const playSwitch = (C, map = {}) => {
   }
 }
 
-export const playReorderable = (C, map = {}) => {
-  map = {...defaultAttributeMap.reorderable, ...map}
-  return (props, children) => (state, actions) => {
-    const {...attributes} = props
-    const name = attributes['mg-name']
-    const extra = API.getExtra(name, state.env)
-    const active = !!extra
-    attributes[map.onstart] = actions.onUpdate
-    attributes[map.onend] = actions.onPromiseSettle
-    addAttr(attributes, map.active, active)
-    addClass(attributes, map.activeClass, active ? map.activeClass : "")
-    addClass(attributes, map.class, map.fixedClass)
-    return h(C, attributes, ...children)
-  }
-}
-
 const getSiblings = (pageNo, width, firstPageNo, lastPageNo) => {
   const rv = []
   for (let i = pageNo - width; i <= pageNo + width; i++) {
@@ -696,7 +680,7 @@ export const playModal = (C, map = {}) => {
   }
 }
 
-const createFlatpickr = (path, onchange, defaultValue, clearerId, config) => {
+const instantiateFlatpickr = (path, onchange, defaultValue, clearerId, config) => {
   let instance = null
   return {
     oncreate: (el) => {
@@ -729,7 +713,7 @@ export const playFlatpickr = (C, map = {}) => {
     const {'mg-path':path, clearerId = null, config = {}, ...attributes} = props
     const slot = API.getSlot(path, state.env)
     if (! slot) return null
-    const {oncreate, ondestroy} = createFlatpickr(path, actions.onSmartControlChange, slot.input, clearerId, config)
+    const {oncreate, ondestroy} = instantiateFlatpickr(path, actions.onSmartControlChange, slot.input, clearerId, config)
     attributes.oncreate = oncreate
     attributes.ondestroy = ondestroy
     const invalid = ((slot.touched || false) && (slot.invalid || false))
@@ -741,7 +725,7 @@ export const playFlatpickr = (C, map = {}) => {
   }
 }
 
-const createPickr = (path, onchange, defaultValue, clearerId, options) => {
+const instantiatePickr = (path, onchange, defaultValue, clearerId, options) => {
   let instance = null
   return {
     oncreate: (el) => {
@@ -782,7 +766,7 @@ export const playPickr = (C, map = {}) => {
     const {'mg-path':path, clearerId = null, options = {}, ...attributes} = props
     const slot = API.getSlot(path, state.env)
     if (! slot) return null
-    const {oncreate, ondestroy} = createPickr(path, actions.onSmartControlChange, slot.input, clearerId, options)
+    const {oncreate, ondestroy} = instantiatePickr(path, actions.onSmartControlChange, slot.input, clearerId, options)
     attributes.oncreate = oncreate
     attributes.ondestroy = ondestroy
     const invalid = ((slot.touched || false) && (slot.invalid || false))
@@ -791,6 +775,65 @@ export const playPickr = (C, map = {}) => {
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
     addAttr(attributes, map.message, slot.message)
     addClass(attributes, map.class, map.fixedClass)
+    return h(C, attributes, ...children)
+  }
+}
+
+const instantiateSortable = (name, path, onStart, onEnd, options) => {
+  var instance = null;
+  var marker = null;
+  var group = null;
+  const effectiveOptions = {
+    ...options, 
+    onStart: (ev) => {
+      marker = ev.item.nextElementSibling
+      onStart({
+        update: 'reorder', 
+        context: [name, path + '/' + ev.oldIndex, group]
+      })
+    }, 
+    onEnd: (ev) => {
+      setTimeout(function() {
+        ev.from.insertBefore(ev.item, marker)
+        marker = null
+      }, 0)
+      const toPath = ev.to.dataset.mgPath
+      onEnd({
+        name, 
+        result: {
+          path: toPath + '/' + ev.newIndex
+        }
+      })
+    }
+  }
+  return {
+    oncreate: (el) => {
+      instance = Sortable.create(el, effectiveOptions)
+      group = instance.option('group').name
+    }, 
+    ondestroy: () => {
+      if (instance) {
+        instance.destroy()
+        instance = null
+      }
+    }
+  }
+}
+export const playSortable = (C, map = {}) => {
+  map = {...defaultAttributeMap.sortable, ...map}
+  return (props, children) => (state, actions) => {
+    const {'mg-name':name, 'mg-path':path, options = {}, ...attributes} = props
+    const extra = API.getExtra(name, state.env)
+    const active = !!extra
+    const {oncreate, ondestroy} = instantiateSortable(name, path, actions.onUpdate, actions.onPromiseSettle, options)
+    attributes.oncreate = oncreate
+    attributes.ondestroy = ondestroy
+    attributes['data-mg-path'] = path
+    addAttr(attributes, map.active, active)
+    addClass(attributes, map.activeClass, active ? map.activeClass : "")
+    addClass(attributes, map.class, map.fixedClass)
+    addAttr(attributes, map.itemPath, extra ? extra.itemPath : "")
+    addAttr(attributes, map.group, extra ? extra.group : "")
     return h(C, attributes, ...children)
   }
 }

@@ -129,3 +129,15 @@ export const ColorPicker = C.playPickr(({value, iconClass = 'material-icons', ic
     </button>
   )
 }, {fixedClass:'button', invalidClass:'is-danger'})
+
+export const ReorderableMenuList = C.playSortable(({itemPath = null, group = null, showItem = null, items = null, ...props}, children) => {
+  return (
+    <ul {...props}>
+      {(showItem && items) ? (
+        items.map((item, index) => showItem(item, index, itemPath, group))
+      ) : (
+        children
+      )}
+    </ul>
+  )
+}, {})

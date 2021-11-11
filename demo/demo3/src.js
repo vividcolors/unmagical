@@ -1,70 +1,7 @@
 
-import {h, API, start, Input, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, DatePicker, ColorPicker} from '../../src/bindings/bulma'
+import {h, API, start, Input, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, DatePicker, ColorPicker, ReorderableMenuList} from '../../src/bindings/bulma'
 import {playSmartControl, playReorderable} from '../../src/core/components'
 
-
-const instantiateSortable = (name, path, onStart, onEnd, options) => {
-  var instance = null;
-  var marker = null;
-  const effectiveOptions = {
-    ...options, 
-    onStart: (ev) => {
-      marker = ev.item.nextElementSibling
-      onStart({
-        update: 'reorder', 
-        context: [name, path + '/' + ev.oldIndex]
-      })
-    }, 
-    onEnd: (ev) => {
-      setTimeout(function() {
-        ev.from.insertBefore(ev.item, marker)
-        marker = null
-      }, 0)
-      const toPath = ev.to.dataset.mgPath
-      onEnd({
-        name, 
-        result: {
-          path: toPath + '/' + ev.newIndex
-        }
-      })
-    }
-  }
-  return {
-    oncreate: (el) => {
-      instance = Sortable.create(el.firstChild, effectiveOptions)
-    }, 
-    ondestroy: () => {
-      if (instance) {
-        instance.destroy()
-        instance = null
-      }
-    }
-  }
-}
-const ReorderableMenu = playReorderable((
-  {
-    'mg-name':name, 
-    path, 
-    active, 
-    onstart, 
-    onend, 
-    options = {}, 
-    ...props
-  }, children) => {
-  const {oncreate, ondestroy} = instantiateSortable(name, path, onstart, onend, options)
-  return (
-    <div class="menu" oncreate={oncreate} ondestroy={ondestroy} {...props}>
-      <ul class="menu-list" data-mg-path={path}>
-        {children}
-      </ul>
-    </div>
-  )
-}, {
-  active: "active", 
-  activeClass: "", 
-  onstart: "onstart", 
-  onend: "onend"
-})
 
 const zipPattern = '^[0-9]{3}-?[0-9]{4}$'
 const schema = {
@@ -94,6 +31,19 @@ const schema = {
     persons: {
       type: 'array', 
       items: {type:'string'}
+    }, 
+    members: {
+      type: 'array', 
+      items: {
+        type: 'object', 
+        properties: {
+          name: {type:'string'}, 
+          things: {
+            type: 'array', 
+            items: {type:'string'}
+          }
+        }
+      }
     }
   }
 }
@@ -105,7 +55,13 @@ const data = {
   color2: '', 
   email: {firstTime:'', secondTime:''}, 
   address: {zip:'', pref:'', city:'', street:'', bld:''}, 
-  persons: ['Dad', 'Mam', 'Me', 'Doggy']
+  persons: ['Dad', 'Mam', 'Me', 'Doggy'], 
+  members: [
+    {name:'Dad', things:['Car', 'Glasses', 'Play Station']}, 
+    {name:'Mam', things:['Ring', 'Albums', 'Wear']}, 
+    {name:'Me', things:[]}, 
+    {name:'Doggy', things:['Kennel', 'Bone']}
+  ]
 }
 
 const updates = {
@@ -114,7 +70,7 @@ const updates = {
     return API.withEnv(null, 
       new Promise((fulfill, reject) => {
         new YubinBango.Core(zipSlot.input.replace('-', ''), fulfill)
-      }).then(API.wrap(([result, env]) => {
+      }).then(API.wrap((result, env) => {
         const bld = API.extract('/address/bld', env)
         const address = {zip:zipSlot.input, pref:result.region, city:result.locality, street:result.street, bld}
         return API.add('/address', address, env)
@@ -157,11 +113,14 @@ const pickrOptions = {
   }
 }
 
+const undroppableStyle = {opacity:0.26}
+
 const view = (env) => {
   console.log('view', env)
   const data = API.extract("", env)
   return (
     <div class="block">
+      <h2>UI（拡張とブラウザネイティブ）</h2>
       <Field mg-path="/date" label="カレンダー">
         <div class="field has-addons">
           <div class="control">
@@ -192,23 +151,44 @@ const view = (env) => {
         <Input class="input" type="color" mg-path="/color2" />
       </Field>
       <p>value: {data.color2}</p>
-      {/*<Field mg-path="/email" class="field" foldValidity>
-        <label class="label">メールアドレス</label>
-        <Textbox class="input" mg-path="/email/firstTime" />
-        <Textbox class="input" mg-path="/email/secondTime" />
-      </Field>
-      <Field mg0path="/address" class="field" foldValidity>
-        <label class="label">住所</label>
-        <Textbox class="input" mg-path="/address/zip" oncreate={onZipCreated} />
-        <Textbox class="input" mg-path="/address/pref" />
-        <Textbox class="input" mg-path="/address/city" />
-        <Textbox class="input" mg-path="/address/street" />
-        <Textbox class="input" mg-path="/address/bld" />
+      <hr />
+      <h2>同じアドレスを二度入力する</h2>
+      <Field mg-path="/email" mg-fold-validity label="メールアドレス">
+        <Input mg-path="/email/firstTime" />
+        <Input mg-path="/email/secondTime" placeholder="もう一度" />
       </Field>
       <hr />
-      <ReorderableMenu mg-name="persons" path="/persons">
-        {data.persons.map(p => (<li key={p}><a>{p}</a></li>))}
-  </ReorderableMenu> */}
+      <h2>住所の自動補完</h2>
+      <Field mg-path="/address" mg-fold-validity label="住所">
+        <Input mg-path="/address/zip" oncreate={onZipCreated} />
+        <Input mg-path="/address/pref" />
+        <Input mg-path="/address/city" />
+        <Input mg-path="/address/street" />
+        <Input mg-path="/address/bld" />
+      </Field>
+      <hr />
+      <h2>順序の入れ替え（基本）</h2>
+      <div class="menu">
+        <ReorderableMenuList class="menu-list" mg-name="reorder" mg-path="/persons" options={{group:'persons'}}>
+          {data.persons.map(p => (<li key={p}><a>{p}</a></li>))}
+        </ReorderableMenuList>
+      </div>
+      <hr />
+      <h2>順序の入れ替え（アドバンスト）</h2>
+      <div class="menu">
+        <ReorderableMenuList class="menu-list" mg-name="reorder" mg-path="/members" options={{group:'members'}} items={data.members} showItem={(item, index, activePath, group) => {
+          return (
+            <li key={item.name}>
+              <a style={group && group != 'members' ? undroppableStyle : {}}>{item.name}</a>
+              <ReorderableMenuList mg-name="reorder" mg-path={`/members/${index}/things`} options={{group:'things'}} items={item.things} showItem={(subitem, index, activePath, group) => {
+                return (
+                  <li key={subitem}><a style={group && group != 'things' ? undroppableStyle : {}}>{subitem}</a></li>
+                )
+              }} />
+            </li>
+          )
+        }} />
+      </div>
     </div>
   )
 }
