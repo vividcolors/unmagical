@@ -89,13 +89,30 @@ export const API = {
   }, 
 
   /**
-   * @param {string} name
+   * @param {number} ms
    * @param {Env} env
    * @returns {Promise}
    */
-  startReordering: (name, env) => {
+  sleep: (ms, env) => {
     const p = new Promise((fulfill, reject) => {
-      env = E.setExtra(name, {fulfill, reject}, env)
+      setTimeout(() => {
+        fulfill(null)
+      }, ms)
+    })
+    E.doReturn(env)
+    return p
+  }, 
+
+  /**
+   * @param {string} name
+   * @param {string} itemPath
+   * @param {string} group
+   * @param {Env} env
+   * @returns {Promise}
+   */
+  startReordering: (name, itemPath, group, env) => {
+    const p = new Promise((fulfill, reject) => {
+      env = E.setExtra(name, {itemPath, group, fulfill, reject}, env)
     })
     E.doReturn(env)
     return p
@@ -115,12 +132,12 @@ export const API = {
   /**
    * @param {string} name
    * @param {Env} env
-   * @returns {true|null}
+   * @returns {string|null}
    */
   getReordering: (name, env) => {
     const extra = E.getExtra(name, env)
     if (! extra) return null
-    return true
+    return extra.itemPath
   }, 
 
   /**
@@ -311,7 +328,7 @@ export const API = {
    * @returns {(result:any) => any}
    */
   wrap: (handler) => {  // Our customized handler :: [result, env] => ...
-    return (result) => {  // This is the actual promise handler
+    return (result) => {  // This is the actual, standard promise handler
       let result1 = null  // We will get the result in this variable.
       const ret = (res1) => {result1 = res1}
       actions.onPromiseThen({result, handler, ret})  // enter into hyperapp. Its result is undefined.
@@ -408,8 +425,7 @@ export const API = {
       return API.withEnv(env, 
         /** @ts-ignore */
         fetch(url, fetchOptions)
-        .then(API.wrap(([response, env]) => {
-          env = API.replace(formPath, null, env)
+        .then(API.wrap((response, env) => {
           if (! response.ok) {
             const error = new Error(response.statusText)
             error.name = 'HTTP Error'
@@ -427,26 +443,30 @@ export const API = {
           return API.withEnv(env, 
             /** @ts-ignore */
             fetch(url, fetchOptions2)
-            .then(API.wrap(([response, env]) => {
+            .then(API.wrap((response, env) => {
               if (! response.ok) {
                 const error = new Error(response.statusText)
                 error.name = 'HTTP Error'
                 throw API.withEnv(env, error)
               }
               return API.withEnv(env, response.json())
-                .then(API.wrap(([items, env]) => {
-                  env = API.closeProgress(opts.loadingName, env)
+                .then(API.wrap((items, env) => {
                   env = API.replace(itemsPath, items, env)
+                  env = API.replace(formPath, null, env)
+                  env = API.closeProgress(opts.loadingName, env)
                   if (opts.totalCountHeader && API.test(totalCountPath, env)) {
                     const total = +(response.headers.get(opts.totalCountHeader))
                     env = API.replace(totalCountPath, total, env)
                   }
-                  return API.openFeedback(opts.successName, {}, env)
+                  return API.sleep(500, env)
+                    .then(API.wrap((response, env) => {
+                      return API.openFeedback(opts.successName, {}, env)
+                    }))
                 }))
             }))
           )
         }))
-        .catch(API.wrap(([error, env]) => {
+        .catch(API.wrap((error, env) => {
           env = API.closeProgress(opts.loadingName, env)
           console.error('commision failed', error)
           const data = {name:error.name, message:error.message, url}
@@ -498,7 +518,7 @@ export const API = {
     const itemsPath = listPath + '/items'
     const totalCountPath = listPath + '/totalCount'
     return API.openDialog(opts.confirmName, {}, env)
-      .then(API.wrap(([ok, env]) => {
+      .then(API.wrap((ok, env) => {
         env = API.closeDialog(opts.confirmName, env)
         if (! ok) return env
         env = API.openProgress(opts.loadingName, null, env)
@@ -512,7 +532,7 @@ export const API = {
         return API.withEnv(env, 
           /** @ts-ignore */
           fetch(url, fetchOptions)
-          .then(API.wrap(([response, env]) => {
+          .then(API.wrap((response, env) => {
             if (! response.ok) {
               const error = new Error(response.statusText)
               error.name = 'HTTP Error'
@@ -530,26 +550,29 @@ export const API = {
             return API.withEnv(env, 
               /** @ts-ignore */
               fetch(url, fetchOptions2)
-              .then(API.wrap(([response, env]) => {
+              .then(API.wrap((response, env) => {
                 if (! response.ok) {
                   const error = new Error(response.statusText)
                   error.name = 'HTTP Error'
                   throw API.withEnv(env, error)
                 }
                 return API.withEnv(env, response.json())
-                  .then(API.wrap(([items, env]) => {
+                  .then(API.wrap((items, env) => {
                     env = API.closeProgress(opts.loadingName, env)
                     env = API.replace(itemsPath, items, env)
                     if (opts.totalCountHeader && API.test(totalCountPath, env)) {
                       const total = +(response.headers.get(opts.totalCountHeader))
                       env = API.replace(totalCountPath, total, env)
                     }
-                    return API.openFeedback(opts.successName, {}, env)
+                    return API.sleep(500, env)
+                      .then(API.wrap((_unused, env) => {
+                        return API.openFeedback(opts.successName, {}, env)
+                      }))
                   }))
               }))
             )
           }))
-          .catch(API.wrap(([error, env]) => {
+          .catch(API.wrap((error, env) => {
             env = API.closeProgress(opts.loadingName, env)
             console.error('deletion failed', error)
             const data = {name:error.name, message:error.message, url}
@@ -603,14 +626,14 @@ export const API = {
     return API.withEnv(env, 
       /** @ts-ignore */
       fetch(url, fetchOptions)
-      .then(API.wrap(([response, env]) => {
+      .then(API.wrap((response, env) => {
         if (! response.ok) {
           const error = new Error(response.statusText)
           error.name = 'HTTP Error'
           throw API.withEnv(env, error)
         }
         return API.withEnv(env, response.json())
-          .then(API.wrap(([items, env]) => {
+          .then(API.wrap((items, env) => {
             env = API.closeProgress(opts.loadingName, env)
             env = API.replace(itemsPath, items, env)
             if (opts.totalCountHeader && API.test(totalCountPath, env)) {
@@ -620,7 +643,7 @@ export const API = {
             return env
           }))
       }))
-      .catch(API.wrap(([error, env]) => {
+      .catch(API.wrap((error, env) => {
         env = API.closeProgress(opts.loadingName, env)
         console.error('loading failed', error)
         const data = {name:error.name, message:error.message, url}
@@ -713,16 +736,19 @@ export const API = {
       return API.withEnv(env, 
         /** @ts-ignore */
         fetch(url, fetchOptions)
-        .then(API.wrap(([response, env]) => {
+        .then(API.wrap((response, env) => {
           if (! response.ok) {
             const error = new Error(response.statusText)
             error.name = 'HTTP Error'
             throw API.withEnv(env, error)
           }
           env = API.closeProgress(opts.loadingName, env)
-          return API.openFeedback(opts.successName, {}, env)
+          return API.sleep(500, env)
+            .then(API.wrap((_unused, env) => {
+              return API.openFeedback(opts.successName, {}, env)
+            }))
         }))
-        .catch(API.wrap(([error, env]) => {
+        .catch(API.wrap((error, env) => {
           env = API.closeProgress(opts.loadingName, env)
           console.error('loading failed', error)
           const data = {name:error.name, message:error.message, url}
@@ -735,12 +761,13 @@ export const API = {
   /**
    * @param {string} name 
    * @param {string} fromPath 
+   * @param {string} group
    * @param {Env} env
    * @returns {Env|Promise}
    */
-  reorder: (name, fromPath, env) => {
-    return API.startReordering(name, env)
-      .then(API.wrap(([{path}, env]) => {
+  reorder: (name, fromPath, group, env) => {
+    return API.startReordering(name, fromPath, group, env)
+      .then(API.wrap(({path}, env) => {
         env = API.endReordering(name, env)
         return API.move(fromPath, path, env)
       }))
@@ -760,7 +787,7 @@ export const API = {
       ...options
     }
     return API.openDialog(opts.confirmName, {}, env)
-      .then(API.wrap(([ok, env]) => {
+      .then(API.wrap((ok, env) => {
         env = API.closeDialog(opts.confirmName, env)
         if (ok) {
           return API.replace("", data, env)
@@ -870,7 +897,7 @@ export const API = {
       ...options
     }
     return API.openDialog(opts.confirmName, {}, env)
-      .then(API.wrap(([ok, env]) => {
+      .then(API.wrap((ok, env) => {
         env = API.closeDialog(opts.confirmName, env)
         if (ok) {
           env = API.remove(partPath, env)
@@ -1116,13 +1143,17 @@ export const start = (
       const result = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgResult || "null") : ev.result
       const extra = E.getExtra(name, state.baseEnv)
       if (! extra || ! extra.fulfill) throw new Error('onPromiseSettle/0: no callback or unknown callback')
-      extra.fulfill(result)
+      // Calling fulfill directly will cause the process to re-enter the hyperapp, 
+      // so use a different tick.
+      window.requestAnimationFrame(() => {
+        extra.fulfill(result)
+      })
     }, 
     onPromiseThen: (context) => (state, actions) => {
       let updatePointer
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
       baseEnv = E.setRet((env0) => {baseEnv = env0}, baseEnv)
-      const res = context.handler([context.result, baseEnv])
+      const res = context.handler(context.result, baseEnv)
       baseEnv = E.setRet(null, E.isEnv(res) ? res : baseEnv)
       baseEnv = E.validate("", baseEnv);
       [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)

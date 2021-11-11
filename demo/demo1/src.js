@@ -1,5 +1,5 @@
 
-import {h, API, start, Textbox, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
+import {h, API, start, Input, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
 
 const master = {
   frame: [
@@ -111,37 +111,32 @@ const view = (env) => {
   const flags = API.extract('/flags', env)
   const quotation = API.extract('/quotation', env)
   return (
-    <div id="rootMarker">
+    <div id="rootMarker" class="container">
       <Notification mg-name="success" message="成功しました。" duration={5000} />
       <Notification mg-name="failure" title="エラー" createMessage={showError} />
-      <Field path="/detail/os" env={env} class="field">
-        <label class="label">OS</label>
+      <Field mg-path="/detail/os" label="OS">
         <div class="control">
-          {master.os.map(x => <label class="radio"><Radio type="radio" mg-path="/detail/os" name="os" value={x.name} />{`${x.name} ${x.price}円`}</label>)}
+          {master.os.map(x => <Radio mg-path="/detail/os" name="os" value={x.name}>{`${x.name} ${x.price}円`}</Radio>)}
         </div>
       </Field>
-      <Field path="/detail/cpu" env={env} class="field">
-        <label class="label">CPU</label>
+      <Field mg-path="/detail/cpu" label="CPU">
         <div class="control">
-          {master.cpu.map(x => <label class="radio"><Radio type="radio" mg-path="/detail/cpu" name="cpu" value={x.name} />{`${x.name} ${x.price}円`}</label>)}
+          {master.cpu.map(x => <Radio mg-path="/detail/cpu" name="cpu" value={x.name}>{`${x.name} ${x.price}円`}</Radio>)}
         </div>
       </Field>
-      <Field path="/detail/memory" env={env} class="field">
-        <label class="label">メモリ</label>
+      <Field mg-path="/detail/memory" label="メモリ">
         <div class="control">
-          {master.memory.map(x => <label class="radio"><Radio type="radio" mg-path="/detail/memory" name="memory" value={x.name} disabled={x.name == '32G' && !flags.isPro} />{`${x.name} ${x.price}円`}</label>)}
+          {master.memory.map(x => <Radio mg-path="/detail/memory" name="memory" value={x.name} disabled={x.name == '32G' && !flags.isPro}>{`${x.name} ${x.price}円`}</Radio>)}
         </div>
       </Field>
-      <Field path="/detail/accessories" env={env} class="field">
-        <label class="label">アクセサリー</label>
+      <Field mg-path="/detail/accessories" label="アクセサリー">
         <div class="control">
-          {master.accessory.map((x,i) => <label class="checkbox"><Checkbox type="checkbox" mg-path={`/detail/accessories/a${i}`} />{`${x.name} ${x.price}円`}</label>)}
+          {master.accessory.map((x,i) => <Checkbox mg-path={`/detail/accessories/a${i}`}>{`${x.name} ${x.price}円`}</Checkbox>)}
         </div>
       </Field>
-      <Field path="/detail/bonus" env={env} class="field">
-        <label class="label">ボーナス</label>
+      <Field mg-path="/detail/bonus" label="ボーナス">
         <div class="control">
-          {master.bonus.map(x => <label class="radio"><Radio type="radio" mg-path="/detail/bonus" name="bonus" value={x.name} />{x.name}</label>)}
+          {master.bonus.map(x => <Radio mg-path="/detail/bonus" name="bonus" value={x.name}>{x.name}</Radio>)}
         </div>
       </Field>
       <hr />
@@ -180,7 +175,7 @@ const view = (env) => {
         </tr>
       </table>
       <hr />
-      <UpdateButton type="button" class="button is-primary" mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/contacts", {path:"/detail", errorSelector:".is-danger", method:"POST"}]}>確定</UpdateButton>
+      <UpdateButton type="button" class="is-primary" mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/contacts", {path:"/detail", errorSelector:".is-danger", method:"POST"}]}>確定</UpdateButton>
     </div>
   )
 }
