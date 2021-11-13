@@ -158,8 +158,8 @@ const view = (env) => {
           const path = '/todos/' + i
           return (form && form.action == path) ? <TodoForm env={env} /> : <TodoItem path={path} editing={!!form} env={env} />
         })}
-        {(form && form.action.endsWith('-')) ? <TodoForm env={env} /> : <TodoButton />}
       </ReorderableList>
+      {(form && form.action.endsWith('-')) ? <TodoForm env={env} /> : <TodoButton />}
       <Dialog mg-name="confirm" title="確認" message="このTODOを削除します。よろしいですか？" hideCancelButton={false} />
     </div>
   )
