@@ -779,17 +779,18 @@ export const playPickr = (C, map = {}) => {
   }
 }
 
-const instantiateSortable = (name, path, onStart, onEnd, options) => {
+const instantiateSortable = (name, onStart, onEnd, options) => {
   var instance = null;
   var marker = null;
   var group = null;
   const effectiveOptions = {
     ...options, 
     onStart: (ev) => {
+      const fromPath = ev.from.dataset.mgPath
       marker = ev.item.nextElementSibling
       onStart({
         update: 'reorder', 
-        context: [name, path + '/' + ev.oldIndex, group]
+        context: [name, fromPath + '/' + ev.oldIndex, group]
       })
     }, 
     onEnd: (ev) => {
@@ -825,7 +826,7 @@ export const playSortable = (C, map = {}) => {
     const {'mg-name':name, 'mg-path':path, options = {}, ...attributes} = props
     const extra = API.getExtra(name, state.env)
     const active = !!extra
-    const {oncreate, ondestroy} = instantiateSortable(name, path, actions.onUpdate, actions.onPromiseSettle, options)
+    const {oncreate, ondestroy} = instantiateSortable(name, actions.onUpdate, actions.onPromiseSettle, options)
     attributes.oncreate = oncreate
     attributes.ondestroy = ondestroy
     attributes['data-mg-path'] = path
