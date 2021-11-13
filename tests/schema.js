@@ -234,4 +234,32 @@ export const run = (assert, assertError, assertUndefined) => {
   assert(25.1, () => v('b', {}, s, (path) => 'a').invalid, true)
   s = {same:'/first'}
   assert(25.2, () => v('a', {}, s, (path) => 'a').invalid, false)
+
+  // rule conditional
+  s = {
+    type:'object?', 
+    properties: {
+      at: {type:'string'}, 
+      to: {type:'string'}
+    }, 
+    required:['at', 'to'], 
+    if: ['/status', {enum:['shipped', 'refunded']}, {type:'object'}]
+  }
+  assert(26, () => v(null, {}, s, (path) => 'new', S.defaultRules).invalid, false)
+  assert(26.1, () => v(null, {}, s, (path) => 'shipped', S.defaultRules).invalid, true)
+  assert(26.2, () => v({at:'a',to:'b'}, {}, s, (path) => 'new', S.defaultRules).invalid, false)
+  assert(26.3, () => v({at:'a',to:'b'}, {}, s, (path) => 'shipped', S.defaultRules).invalid, false)
+
+  /*s = {
+    type:'object?', 
+    properties: {
+      at: {type:'string'}, 
+      to: {type:'string'}
+    }, 
+    required:['at', 'to'], 
+    allOf: [
+      {conditional: ['/status', {enum:['shipped', 'refunded']}, {type:'object'}]}, 
+      {conditional: ['/status', {not:{enum:['shipped', 'refunded']}}, {type:'null'}]}
+    ]
+  }*/
 }

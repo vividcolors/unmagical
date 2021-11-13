@@ -13,11 +13,10 @@ import {emptyObject, typeOf, isJsonValue, appendPath} from './utils'
  * }} Slot
  * @typedef {import("./env").Env} Env
  * @typedef {{
- *   type:string, 
  *   [rule:string]:Json
  * }} Schema
  * @typedef {(path:string) => Json} LookupFunc
- * @typedef {(param:Json, value:Json, lookup:LookupFunc) => true|string} RuleFunc
+ * @typedef {(param:Json, value:Json, lookup:LookupFunc, rules:Rules) => true|string} RuleFunc
  * @typedef {{[name:string]:RuleFunc}} Rules
  * @typedef {{[key:string]:string}} Dictionary
  * @typedef {{[path:string]:Schema}} SchemaDb
@@ -171,7 +170,7 @@ export const defaultRules = {
   }, 
   required: (param, value) => {
     if (! Array.isArray(param)) throw new Error('invalid parameter')
-    if (typeof value != 'object') return true
+    if (typeOf(value) != 'object') return true
     for (let i = 0; i < param.length; i++) {
       if (! value.hasOwnProperty(param[i])) return 'schema.ruleError.required'
     }
@@ -194,6 +193,15 @@ export const defaultRules = {
     const target = lookup(param)
     if (target !== value) return 'schema.ruleError.same'
     return true
+  }, 
+  if: (param, value, lookup, rules) => {
+    if (typeOf(param) != 'array') throw new Error('invalid parameter')
+    const [target, match, then] = /** @type {Array} */ (param)
+    if (! target || ! match || ! then) throw new Error('invalid parameter')
+    const targetValue = lookup(target)
+    const targetResult = applyRules(targetValue, match, lookup, rules)
+    if (targetResult !== true) return true
+    return applyRules(value, then, lookup, rules)
   }, 
   multipleOf: (param, value) => {
     if (typeof param != 'number') throw new Error('invalid parameter')
@@ -265,17 +273,30 @@ export const validate = (rules, dict) => (value, slot, schema, lookup) => {
   }
 
   if (schema) {
-    for (let p in schema) {
-      const f = rules[p]
-      if (! f) continue
-      const result = f(schema[p], value, lookup)
-      if (result !== true) {
-        const message = makeMessage(dict, result, schema[p])
-        return {...slot, '@value':value, invalid:true, message}
-      }
+    const result = applyRules(value, schema, lookup, rules)
+    if (result !== true) {
+      const message = makeMessage(dict, result, null)  // TODO make precise message
+      return {...slot, '@value':value, invalid:true, message}
     }
   }
   return {...slot, '@value':value, invalid:false, message:''}
+}
+
+/**
+ * 
+ * @param {Json} value 
+ * @param {Schema} schema 
+ * @param {LookupFunc} lookup 
+ * @param {Rules} rules 
+ */
+export const applyRules = (value, schema, lookup, rules) => {
+  for (let p in schema) {
+    const f = rules[p]
+    if (! f) continue
+    const result = f(schema[p], value, lookup, rules)
+    if (result !== true) return result
+  }
+  return true
 }
 
 /**
@@ -289,14 +310,15 @@ export const coerce = (rules, dict) => (input, slot, schema) => {
   if (! schema) {
     throw new Error('coerce/0: no schema')
   }
-  if (! schema.type) {
+  if (! schema.type || typeof schema.type != 'string') {
     throw new Error('coerce/1: type not specified')
   }
-  if (['null', 'boolean', 'boolean?', 'integer', 'integer?', 'number', 'number?', 'string'].indexOf(schema.type) == -1) {
-    throw new Error('coerce/2: not a coercion enabled type: ' + schema.type)
+  const type = schema.type
+  if (['null', 'boolean', 'boolean?', 'integer', 'integer?', 'number', 'number?', 'string'].indexOf(type) == -1) {
+    throw new Error('coerce/2: not a coercion enabled type: ' + type)
   }
 
-  switch (schema.type) {
+  switch (type) {
     case 'null': 
       break
     case 'number': 
@@ -322,7 +344,7 @@ export const coerce = (rules, dict) => (input, slot, schema) => {
     case 'string': 
       return {'@value':input, input, touched:slot.touched}
   }
-  if (input == "" && nullable(schema.type)) {
+  if (input == "" && nullable(type)) {
     return {'@value':null, input, touched:slot.touched}
   }
   return {input, touched:slot.touched}
