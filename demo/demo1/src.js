@@ -112,7 +112,7 @@ const view = (env) => {
   const quotation = API.extract('/quotation', env)
   return (
     <div id="rootMarker" class="container">
-      <Notification mg-name="success" message="成功しました。" duration={5000} />
+      <Notification mg-name="success" message="成功しました。" mg-duration={5000} />
       <Notification mg-name="failure" title="エラー" createMessage={showError} />
       <Field mg-path="/detail/os" label="OS">
         <div class="control">
