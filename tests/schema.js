@@ -249,6 +249,19 @@ export const run = (assert, assertError, assertUndefined) => {
   assert(26.1, () => v(null, {}, s, (path) => 'shipped', S.defaultRules).invalid, true)
   assert(26.2, () => v({at:'a',to:'b'}, {}, s, (path) => 'new', S.defaultRules).invalid, false)
   assert(26.3, () => v({at:'a',to:'b'}, {}, s, (path) => 'shipped', S.defaultRules).invalid, false)
+  s = {
+    type:'object?', 
+    properties: {
+      at: {type:'string'}, 
+      to: {type:'string'}
+    }, 
+    required:['at', 'to'], 
+    if: ['/status', {enum:['shipped', 'refunded']}, {type:'object'}, {type:'null'}]
+  }
+  assert(26.4, () => v(null, {}, s, (path) => 'new', S.defaultRules).invalid, false)
+  assert(26.5, () => v(null, {}, s, (path) => 'shipped', S.defaultRules).invalid, true)
+  assert(26.6, () => v({at:'a',to:'b'}, {}, s, (path) => 'new', S.defaultRules).invalid, true)
+  assert(26.7, () => v({at:'a',to:'b'}, {}, s, (path) => 'shipped', S.defaultRules).invalid, false)
 
   /*s = {
     type:'object?', 

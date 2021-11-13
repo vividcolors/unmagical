@@ -196,13 +196,17 @@ export const defaultRules = {
   }, 
   if: (param, value, lookup, rules) => {
     if (typeOf(param) != 'array') throw new Error('invalid parameter')
-    const [target, match, then] = /** @type {Array} */ (param)
+    const [target, match, then, el = {}] = /** @type {Array} */ (param)
     if (! target || ! match || ! then) throw new Error('invalid parameter')
     const targetValue = lookup(target)
     const targetResult = applyRules(targetValue, match, lookup, rules)
-    if (targetResult !== true) return true
-    return applyRules(value, then, lookup, rules)
+    if (targetResult === true) {
+      return applyRules(value, then, lookup, rules)
+    } else {
+      return applyRules(value, el, lookup, rules)
+    }
   }, 
+  // TODO: allOf, eitherOf, not
   multipleOf: (param, value) => {
     if (typeof param != 'number') throw new Error('invalid parameter')
     if (typeof value != 'number') return true
