@@ -1,67 +1,18 @@
 
 import {h, API, start, Input, Select, Radio, Checkbox, UpdateButton, Clickable, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
-import {playReorderable, playListItem} from '../../src/core/components'
+import {playSortable, playListItem} from '../../src/core/components'
 
-const instantiateSortable = (name, path, onStart, onEnd, options) => {
-  var instance = null;
-  var marker = null;
-  const effectiveOptions = {
-    ...options, 
-    onStart: (ev) => {
-      marker = ev.item.nextElementSibling
-      onStart({
-        update: 'reorder', 
-        context: [name, path + '/' + ev.oldIndex]
-      })
-    }, 
-    onEnd: (ev) => {
-      setTimeout(function() {
-        ev.from.insertBefore(ev.item, marker)
-        marker = null
-      }, 0)
-      const toPath = ev.to.dataset.mgPath
-      onEnd({
-        name, 
-        result: {
-          path: toPath + '/' + ev.newIndex
-        }
-      })
-    }
-  }
-  return {
-    oncreate: (el) => {
-      instance = Sortable.create(el, effectiveOptions)
-    }, 
-    ondestroy: () => {
-      if (instance) {
-        instance.destroy()
-        instance = null
-      }
-    }
-  }
-}
-const ReorderableList = playReorderable((
-  {
-    'mg-name':name, 
-    path, 
-    active, 
-    onstart, 
-    onend, 
-    options = {}, 
-    ...props
-  }, children) => {
-  const {oncreate, ondestroy} = instantiateSortable(name, path, onstart, onend, options)
+const ReorderableList = playSortable(({itemPath = null, group = null, showItem = null, items = null, ...props}, children) => {
   return (
-    <div class="reorderableList" oncreate={oncreate} ondestroy={ondestroy} {...props} data-mg-path={path}>
-      {children}
+    <div class="reorderableList" {...props}>
+      {(showItem && items) ? (
+        items.map((item, index) => showItem(item, index, itemPath, group))
+      ) : (
+        children
+      )}
     </div>
   )
-}, {
-  active: "active", 
-  activeClass: "", 
-  onstart: "onstart", 
-  onend: "onend"
-})
+}, {})
 
 const todoSchema = {
   type: 'object', 
@@ -202,7 +153,7 @@ const view = (env) => {
   const form = API.extract('/form', env)
   return (
     <div class="container my-3">
-      <ReorderableList mg-name="todos" path="/todos" options={{group:'todos', handle:'.handle'}}>
+      <ReorderableList mg-name="todos" mg-path="/todos" options={{group:'todos', handle:'.handle'}}>
         {API.extract('/todos', env).map((item, i) => {
           const path = '/todos/' + i
           return (form && form.action == path) ? <TodoForm env={env} /> : <TodoItem path={path} editing={!!form} env={env} />

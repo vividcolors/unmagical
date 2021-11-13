@@ -18,6 +18,7 @@ import {hasPath as rhasPath, init, path as rpath, assocPath, insert, last, disso
  *   validate: (value:any, slot:Slot, schema:Schema, lookup:LookupFunc) => Slot
  *   extra: {[name:string]:any}
  *   ret?: (env:Env) => void
+ *   onPromiseThen?: any
  * }} Env
  */
 
@@ -675,12 +676,13 @@ export const getExtra = (name, env) => {
 /**
  * 
  * @param {((env:Env) => void)|null} ret 
+ * @param {any} onPromiseThen
  * @param {Env} env 
  * @returns {Env}
  */
-export const setRet = (ret, env) => {
-  if (ret) return {...env, ret}
-  const {ret:_unused, ...env2} = env
+export const setPortal = (ret, onPromiseThen, env) => {
+  if (ret) return {...env, ret, onPromiseThen}
+  const {ret:_unused, onPromiseThen:_unused2, ...env2} = env
   return env2
 }
 

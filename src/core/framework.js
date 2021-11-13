@@ -91,7 +91,7 @@ export const API = {
   /**
    * @param {number} ms
    * @param {Env} env
-   * @returns {Promise}
+   * @returns {[Promise, Env]}
    */
   sleep: (ms, env) => {
     const p = new Promise((fulfill, reject) => {
@@ -99,8 +99,7 @@ export const API = {
         fulfill(null)
       }, ms)
     })
-    E.doReturn(env)
-    return p
+    return [p, env]
   }, 
 
   /**
@@ -108,14 +107,13 @@ export const API = {
    * @param {string} itemPath
    * @param {string} group
    * @param {Env} env
-   * @returns {Promise}
+   * @returns {[Promise, Env]}
    */
   startReordering: (name, itemPath, group, env) => {
     const p = new Promise((fulfill, reject) => {
       env = E.setExtra(name, {itemPath, group, fulfill, reject}, env)
     })
-    E.doReturn(env)
-    return p
+    return [p, env]
   }, 
 
   /**
@@ -144,14 +142,13 @@ export const API = {
    * @param {string} name
    * @param {any} data
    * @param {Env} env
-   * @returns {Promise}
+   * @returns {[Promise, Env]}
    */
   openDialog: (name, data, env) => {
     const p = new Promise((fulfill, reject) => {
       env = E.setExtra(name, {data, fulfill, reject}, env)
     })
-    E.doReturn(env)
-    return p
+    return [p, env]
   }, 
 
   /**
@@ -312,27 +309,32 @@ export const API = {
     return extra.current
   }, 
 
-  /**
-   * @template P
-   * @param {Env} env
-   * @param {P} p
-   * @returns {P}
-   */
-  withEnv: (env, p) => {
-    if (env) E.doReturn(env)
-    return p
-  }, 
-
-  /**
-   * @param {(result:any, env:Env) => any} handler
-   * @returns {(result:any) => any}
-   */
-  wrap: (handler) => {  // Our customized handler :: [result, env] => ...
-    return (result) => {  // This is the actual, standard promise handler
-      let result1 = null  // We will get the result in this variable.
-      const ret = (res1) => {result1 = res1}
-      actions.onPromiseThen({result, handler, ret})  // enter into hyperapp. Its result is undefined.
-      return result1
+  makePortal: (env) => {
+    return {
+      /**
+       * @param {(result:any, env:Env) => any} handler
+       * @returns {(result:any) => any}
+       */
+      enter: (handler) => {  // Our customized handler :: [result, env] => ...
+        return (result) => {  // This is the actual, standard promise handler
+          let result1 = null  // We will get the result in this variable.
+          const ret = (res1) => {result1 = res1}
+          env.onPromiseThen({result, handler, ret})  // enter into hyperapp. Its result is undefined.
+          return result1
+        }
+      }, 
+      /**
+       * @param {[any, Env] | any} x
+       * @param {Env} [y]
+       * @returns {any}
+       */
+      leave: (x, y) => {
+        const p = Array.isArray(x) ? x[0] : x
+        const env = Array.isArray(x) ? x[1] : y
+        if (! E.isEnv(env)) throw new Error('exit/1: env required')
+        E.doReturn(env)
+        return p
+      }
     }
   }, 
 
@@ -382,6 +384,7 @@ export const API = {
    * @returns {Env|Promise}
    */
   commitItem: (formPath, listPath, options, env) => {
+    const {enter, leave} = API.makePortal(env)
     const opts = {
       errorSelector: null, 
       commitMethod: 'POST', 
@@ -422,57 +425,53 @@ export const API = {
         }
       }
       env = API.openProgress(opts.loadingName, null, env)
-      return API.withEnv(env, 
+      /** @ts-ignore */
+      return leave(fetch(url, fetchOptions), env)
+      .then(enter((response, env) => {
+        if (! response.ok) {
+          const error = new Error(response.statusText)
+          error.name = 'HTTP Error'
+          throw leave(error, env)
+        }
+        const fetchOptions2 = {
+          method: opts.loadMethod, 
+          mode: 'cors', 
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+        const qs = new URLSearchParams(normalizeQuery(API.extract(queryPath, env), opts.omitEmptyString))
+        const url = loadUrl + '?' + qs.toString()
         /** @ts-ignore */
-        fetch(url, fetchOptions)
-        .then(API.wrap((response, env) => {
-          if (! response.ok) {
-            const error = new Error(response.statusText)
-            error.name = 'HTTP Error'
-            throw API.withEnv(env, error)
-          }
-          const fetchOptions2 = {
-            method: opts.loadMethod, 
-            mode: 'cors', 
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-          const qs = new URLSearchParams(normalizeQuery(API.extract(queryPath, env), opts.omitEmptyString))
-          const url = loadUrl + '?' + qs.toString()
-          return API.withEnv(env, 
-            /** @ts-ignore */
-            fetch(url, fetchOptions2)
-            .then(API.wrap((response, env) => {
-              if (! response.ok) {
-                const error = new Error(response.statusText)
-                error.name = 'HTTP Error'
-                throw API.withEnv(env, error)
-              }
-              return API.withEnv(env, response.json())
-                .then(API.wrap((items, env) => {
-                  env = API.replace(itemsPath, items, env)
-                  env = API.replace(formPath, null, env)
-                  env = API.closeProgress(opts.loadingName, env)
-                  if (opts.totalCountHeader && API.test(totalCountPath, env)) {
-                    const total = +(response.headers.get(opts.totalCountHeader))
-                    env = API.replace(totalCountPath, total, env)
-                  }
-                  return API.sleep(500, env)
-                    .then(API.wrap((response, env) => {
-                      return API.openFeedback(opts.successName, {}, env)
-                    }))
-                }))
-            }))
-          )
-        }))
-        .catch(API.wrap((error, env) => {
+        return leave(fetch(url, fetchOptions2), env)
+      }))
+      .then(enter((response, env) => {
+        if (! response.ok) {
+          const error = new Error(response.statusText)
+          error.name = 'HTTP Error'
+          throw leave(error, env)
+        }
+        return leave(response.json(), env)
+        .then(enter((items, env) => {
+          env = API.replace(itemsPath, items, env)
+          env = API.replace(formPath, null, env)
           env = API.closeProgress(opts.loadingName, env)
-          console.error('commision failed', error)
-          const data = {name:error.name, message:error.message, url}
-          return API.openFeedback(opts.failureName, data, env)
+          if (opts.totalCountHeader && API.test(totalCountPath, env)) {
+            const total = +(response.headers.get(opts.totalCountHeader))
+            env = API.replace(totalCountPath, total, env)
+          }
+          return leave(API.sleep(500, env))
         }))
-      )
+        .then(enter((_unused, env) => {
+          return API.openFeedback(opts.successName, {}, env)
+        }))
+      }))
+      .catch(enter((error, env) => {
+        env = API.closeProgress(opts.loadingName, env)
+        console.error('commision failed', error)
+        const data = {name:error.name, message:error.message, url}
+        return API.openFeedback(opts.failureName, data, env)
+      }))
     }
   }, 
 
@@ -502,6 +501,7 @@ export const API = {
    * @returns {Env|Promise}
    */
   deleteItem: (url, listPath, options, env) => {
+    const {enter, leave} = API.makePortal(env)
     const opts = {
       deleteMethod: 'DELETE', 
       loadMethod: 'GET', 
@@ -517,69 +517,65 @@ export const API = {
     const queryPath = listPath + '/query'
     const itemsPath = listPath + '/items'
     const totalCountPath = listPath + '/totalCount'
-    return API.openDialog(opts.confirmName, {}, env)
-      .then(API.wrap((ok, env) => {
-        env = API.closeDialog(opts.confirmName, env)
-        if (! ok) return env
-        env = API.openProgress(opts.loadingName, null, env)
-        const fetchOptions = {
-          method: opts.deleteMethod, 
+    return leave(API.openDialog(opts.confirmName, {}, env))
+    .then(enter((ok, env) => {
+      env = API.closeDialog(opts.confirmName, env)
+      if (! ok) return env
+      env = API.openProgress(opts.loadingName, null, env)
+      const fetchOptions = {
+        method: opts.deleteMethod, 
+        mode: 'cors', 
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+      /** @ts-ignore */
+      return leave(fetch(url, fetchOptions), env) 
+      .then(enter((response, env) => {
+        if (! response.ok) {
+          const error = new Error(response.statusText)
+          error.name = 'HTTP Error'
+          throw leave(error, env)
+        }
+        const fetchOptions2 = {
+          method: opts.loadMethod, 
           mode: 'cors', 
           headers: {
             'Content-Type': 'application/json'
           }
         }
-        return API.withEnv(env, 
-          /** @ts-ignore */
-          fetch(url, fetchOptions)
-          .then(API.wrap((response, env) => {
-            if (! response.ok) {
-              const error = new Error(response.statusText)
-              error.name = 'HTTP Error'
-              throw API.withEnv(env, error)
-            }
-            const fetchOptions2 = {
-              method: opts.loadMethod, 
-              mode: 'cors', 
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            }
-            const qs = new URLSearchParams(normalizeQuery(API.extract(queryPath, env), opts.omitEmptyString))
-            const url = loadUrl + '?' + qs.toString()
-            return API.withEnv(env, 
-              /** @ts-ignore */
-              fetch(url, fetchOptions2)
-              .then(API.wrap((response, env) => {
-                if (! response.ok) {
-                  const error = new Error(response.statusText)
-                  error.name = 'HTTP Error'
-                  throw API.withEnv(env, error)
-                }
-                return API.withEnv(env, response.json())
-                  .then(API.wrap((items, env) => {
-                    env = API.closeProgress(opts.loadingName, env)
-                    env = API.replace(itemsPath, items, env)
-                    if (opts.totalCountHeader && API.test(totalCountPath, env)) {
-                      const total = +(response.headers.get(opts.totalCountHeader))
-                      env = API.replace(totalCountPath, total, env)
-                    }
-                    return API.sleep(500, env)
-                      .then(API.wrap((_unused, env) => {
-                        return API.openFeedback(opts.successName, {}, env)
-                      }))
-                  }))
-              }))
-            )
-          }))
-          .catch(API.wrap((error, env) => {
-            env = API.closeProgress(opts.loadingName, env)
-            console.error('deletion failed', error)
-            const data = {name:error.name, message:error.message, url}
-            return API.openFeedback(opts.failureName, data, env)
-          }))
-        )
+        const qs = new URLSearchParams(normalizeQuery(API.extract(queryPath, env), opts.omitEmptyString))
+        const url = loadUrl + '?' + qs.toString()
+        /** @ts-ignore */
+        return leave(fetch(url, fetchOptions2), env)
       }))
+      .then(enter((response, env) => {
+        if (! response.ok) {
+          const error = new Error(response.statusText)
+          error.name = 'HTTP Error'
+          throw leave(error, env)
+        }
+        return leave(response.json(), env)
+          .then(enter((items, env) => {
+            env = API.closeProgress(opts.loadingName, env)
+            env = API.replace(itemsPath, items, env)
+            if (opts.totalCountHeader && API.test(totalCountPath, env)) {
+              const total = +(response.headers.get(opts.totalCountHeader))
+              env = API.replace(totalCountPath, total, env)
+            }
+            return leave(API.sleep(500, env))
+          }))
+          .then(enter((_unused, env) => {
+            return API.openFeedback(opts.successName, {}, env)
+          }))
+      }))
+      .catch(enter((error, env) => {
+        env = API.closeProgress(opts.loadingName, env)
+        console.error('deletion failed', error)
+        const data = {name:error.name, message:error.message, url}
+        return API.openFeedback(opts.failureName, data, env)
+      }))
+    }))
   }, 
 
   /**
@@ -596,6 +592,7 @@ export const API = {
    * @returns {Env|Promise}
    */
   loadItems: (listPath, options, env) => {
+    const {enter, leave} = API.makePortal(env)
     const opts = {
       totalCountHeader: '', 
       method: 'GET', 
@@ -623,33 +620,31 @@ export const API = {
     env = API.openProgress(opts.loadingName, null, env)
     const qs = new URLSearchParams(normalizeQuery(API.extract(queryPath, env), opts.omitEmptyString))
     const url = loadUrl + '?' + qs.toString()
-    return API.withEnv(env, 
-      /** @ts-ignore */
-      fetch(url, fetchOptions)
-      .then(API.wrap((response, env) => {
-        if (! response.ok) {
-          const error = new Error(response.statusText)
-          error.name = 'HTTP Error'
-          throw API.withEnv(env, error)
-        }
-        return API.withEnv(env, response.json())
-          .then(API.wrap((items, env) => {
-            env = API.closeProgress(opts.loadingName, env)
-            env = API.replace(itemsPath, items, env)
-            if (opts.totalCountHeader && API.test(totalCountPath, env)) {
-              const total = +(response.headers.get(opts.totalCountHeader))
-              env = API.replace(totalCountPath, total, env)
-            }
-            return env
-          }))
-      }))
-      .catch(API.wrap((error, env) => {
+    /** @ts-ignore */
+    return leave(fetch(url, fetchOptions), env)
+    .then(enter((response, env) => {
+      if (! response.ok) {
+        const error = new Error(response.statusText)
+        error.name = 'HTTP Error'
+        throw leave(error, env)
+      }
+      return leave(response.json(), env)
+      .then(enter((items, env) => {
         env = API.closeProgress(opts.loadingName, env)
-        console.error('loading failed', error)
-        const data = {name:error.name, message:error.message, url}
-        return API.openFeedback(opts.failureName, data, env)
+        env = API.replace(itemsPath, items, env)
+        if (opts.totalCountHeader && API.test(totalCountPath, env)) {
+          const total = +(response.headers.get(opts.totalCountHeader))
+          env = API.replace(totalCountPath, total, env)
+        }
+        return env
       }))
-    )
+    }))
+    .catch(enter((error, env) => {
+      env = API.closeProgress(opts.loadingName, env)
+      console.error('loading failed', error)
+      const data = {name:error.name, message:error.message, url}
+      return API.openFeedback(opts.failureName, data, env)
+    }))
   }, 
 
   /**
@@ -703,6 +698,7 @@ export const API = {
    * @returns {Env|Promise}
    */
   submit: (url, options, env) => {
+    const {enter, leave} = API.makePortal(env)
     const opts = {
       path: '', 
       errorSelector: null, 
@@ -733,28 +729,26 @@ export const API = {
         }
       }
       env = API.openProgress(opts.loadingName, null, env)
-      return API.withEnv(env, 
-        /** @ts-ignore */
-        fetch(url, fetchOptions)
-        .then(API.wrap((response, env) => {
+      /** @ts-ignore */
+      return leave(fetch(url, fetchOptions), env)
+        .then(enter((response, env) => {
           if (! response.ok) {
             const error = new Error(response.statusText)
             error.name = 'HTTP Error'
-            throw API.withEnv(env, error)
+            throw leave(error, env)
           }
           env = API.closeProgress(opts.loadingName, env)
-          return API.sleep(500, env)
-            .then(API.wrap((_unused, env) => {
-              return API.openFeedback(opts.successName, {}, env)
-            }))
+          return leave(API.sleep(500, env))
         }))
-        .catch(API.wrap((error, env) => {
+        .then(enter((_unused, env) => {
+          return API.openFeedback(opts.successName, {}, env)
+        }))
+        .catch(enter((error, env) => {
           env = API.closeProgress(opts.loadingName, env)
           console.error('loading failed', error)
           const data = {name:error.name, message:error.message, url}
           return API.openFeedback(opts.failureName, data, env)
         }))
-      )
     }
   }, 
 
@@ -766,8 +760,9 @@ export const API = {
    * @returns {Env|Promise}
    */
   reorder: (name, fromPath, group, env) => {
-    return API.startReordering(name, fromPath, group, env)
-      .then(API.wrap(({path}, env) => {
+    const {enter, leave} = API.makePortal(env)
+    return leave(API.startReordering(name, fromPath, group, env))
+      .then(enter(({path}, env) => {
         env = API.endReordering(name, env)
         return API.move(fromPath, path, env)
       }))
@@ -782,19 +777,20 @@ export const API = {
    * @returns {Env|Promise}
    */
   reset: (data, options, env) => {
+    const {enter, leave} = API.makePortal(env)
     const opts = {
       confirmName: 'confirm', 
       ...options
     }
-    return API.openDialog(opts.confirmName, {}, env)
-      .then(API.wrap((ok, env) => {
-        env = API.closeDialog(opts.confirmName, env)
-        if (ok) {
-          return API.replace("", data, env)
-        } else {
-          return env
-        }
-      }))
+    return leave(API.openDialog(opts.confirmName, {}, env))
+    .then(enter((ok, env) => {
+      env = API.closeDialog(opts.confirmName, env)
+      if (ok) {
+        return API.replace("", data, env)
+      } else {
+        return env
+      }
+    }))
   }, 
 
   /**
@@ -892,20 +888,21 @@ export const API = {
    * @returns {Promise}
    */
   removePart: (partPath, options, env) => {
+    const {enter, leave} = API.makePortal(env)
     const opts = {
       confirmName: 'confirm', 
       ...options
     }
-    return API.openDialog(opts.confirmName, {}, env)
-      .then(API.wrap((ok, env) => {
-        env = API.closeDialog(opts.confirmName, env)
-        if (ok) {
-          env = API.remove(partPath, env)
-          return env
-        } else {
-          return env
-        }
-      }))
+    return leave(API.openDialog(opts.confirmName, {}, env))
+    .then(enter((ok, env) => {
+      env = API.closeDialog(opts.confirmName, env)
+      if (ok) {
+        env = API.remove(partPath, env)
+        return env
+      } else {
+        return env
+      }
+    }))
   }, 
 
   /**
@@ -1122,13 +1119,13 @@ export const start = (
       const context = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgContext || "null") : ev.context
       let updatePointer
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setRet((env0) => {baseEnv = env0}, baseEnv)
+      baseEnv = E.setPortal((env0) => {baseEnv = env0}, actions.onPromiseThen, baseEnv)
       const func = updates[update] || updateEnabledApis[update]
       if (! func) throw new Error('onUpdate/0: no update or unknown update')
       if (! Array.isArray(context)) throw new Error('onUpdate/1: parameter must be an array')
       if (context.length + 1 != func.length) throw new Error('onUpdate/2: bad number of parameters')
       const res = func.apply(null, [...context, baseEnv])
-      baseEnv = E.setRet(null, E.isEnv(res) ? res : baseEnv)
+      baseEnv = E.setPortal(null, null, E.isEnv(res) ? res : baseEnv)
       baseEnv = E.validate("", baseEnv);
       [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
       let env = state.env
@@ -1152,9 +1149,9 @@ export const start = (
     onPromiseThen: (context) => (state, actions) => {
       let updatePointer
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setRet((env0) => {baseEnv = env0}, baseEnv)
+      baseEnv = E.setPortal((env0) => {baseEnv = env0}, actions.onPromiseThen, baseEnv)
       const res = context.handler(context.result, baseEnv)
-      baseEnv = E.setRet(null, E.isEnv(res) ? res : baseEnv)
+      baseEnv = E.setPortal(null, null, E.isEnv(res) ? res : baseEnv)
       baseEnv = E.validate("", baseEnv);
       [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
       let env = state.env
