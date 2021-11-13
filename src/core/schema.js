@@ -152,6 +152,12 @@ const testType = (value, type) => {
  * @type {Rules}
  */
 export const defaultRules = {
+  type: (param, value) => {
+    if (typeof param != 'string') throw new Error('invalid type')
+    const result = testType(value, param)
+    if (! result) return 'schema.typeError.' + param
+    return true
+  }, 
   'enum': (param, value) => {
     if (! Array.isArray(param)) throw new Error('invalid parameter')
     for (let i = 0; i < param.length; i++) {
@@ -257,19 +263,16 @@ export const validate = (rules, dict) => (value, slot, schema, lookup) => {
     const code = (schema && schema.type) ? 'schema.valueError.' + schema.type : 'schema.valueError.generic'
     return {...slot, '@value':value, invalid:true, message:makeMessage(dict, code, null)}
   }
-  if (schema && schema.type) {
-    if (! testType(value, schema.type)) {
-      return {...slot, '@value':value, invalid:true, message:makeMessage(dict, 'schema.typeError.' + schema.type, null)}
-    }
-  }
 
-  for (let p in schema) {
-    const f = rules[p]
-    if (! f) continue
-    const result = f(schema[p], value, lookup)
-    if (result !== true) {
-      const message = makeMessage(dict, result, schema[p])
-      return {...slot, '@value':value, invalid:true, message}
+  if (schema) {
+    for (let p in schema) {
+      const f = rules[p]
+      if (! f) continue
+      const result = f(schema[p], value, lookup)
+      if (result !== true) {
+        const message = makeMessage(dict, result, schema[p])
+        return {...slot, '@value':value, invalid:true, message}
+      }
     }
   }
   return {...slot, '@value':value, invalid:false, message:''}
