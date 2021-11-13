@@ -1140,11 +1140,12 @@ export const start = (
       const result = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgResult || "null") : ev.result
       const extra = E.getExtra(name, state.baseEnv)
       if (! extra || ! extra.fulfill) throw new Error('onPromiseSettle/0: no callback or unknown callback')
-      // Calling fulfill directly will cause the process to re-enter the hyperapp, 
-      // so use a different tick.
+      // Calling fulfill() will cause the process to re-enter the hyperapp, 
+      // so we call fulfill() not now but in a different tick.
       window.requestAnimationFrame(() => {
         extra.fulfill(result)
       })
+      return null  // indicating no update.
     }, 
     onPromiseThen: (context) => (state, actions) => {
       let updatePointer
