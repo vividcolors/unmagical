@@ -33,6 +33,7 @@ const data = {
 
 const messageProps = {style:{color:"#FF0000"}}
 const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
+const callOnUpdate = (x) => onUpdate(x)
 const view = (env) => {
   console.log('view', env)
   return (
@@ -71,8 +72,8 @@ const view = (env) => {
         <UpdateButton mg-update="closeProgress" mg-context={['spinner']}>Hide Progress</UpdateButton>
       </div>
       <Dialog key="confirm" mg-name="confirm" label="確認" message="リセットします。いいですか？" />
-      <Alert key="success" mg-name="success" type="success" message="やりました！" closable duration="5000" />
-      <Alert key="failure" mg-name="failure" type="danger" createMessage={showError} closable />
+      <Alert key="success" mg-name="success" type="success" message="やりました！" closable duration="5000" onUpdate={callOnUpdate} />
+      <Alert key="failure" mg-name="failure" type="danger" createMessage={showError} closable onUpdate={callOnUpdate} />
       <Drawer key="drawer" mg-name="drawer" onUpdate={onUpdate}>
         ドロワーです。
       </Drawer>
