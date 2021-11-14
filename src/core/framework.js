@@ -1,6 +1,6 @@
 //@ts-check
 
-import { normalizePath, normalizeQuery } from './utils'
+import { normalizePath } from './utils'
 import * as E from './env'
 import * as S from './schema'
 import { app, h as h0 } from 'hyperapp'

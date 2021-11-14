@@ -196,14 +196,14 @@ const onDialogCreate = (el) => {
   el.addEventListener('sl-request-close', event => event.preventDefault());
 }
 
-export const Dialog = C.playDialog(({'mg-name':name, createMessage = null, message = null, data, hideCancelButton = false, ...props}) => {
+export const Dialog = C.playDialog(({'mg-name':name, createMessage = null, message = null, data, hideCancelButton = false, okLabel = 'OK', cancelLabel = 'Cancel', ...props}) => {
   delete props.oncreate
   message = (data && createMessage) ? createMessage(data) : message
   return (
     <sl-dialog oncreate={onDialogCreate} {...props}>
       {message}
-      <SettleButton mg-name={name} mg-result={true} slot="footer">OK</SettleButton>
-      {!hideCancelButton ? (<SettleButton mg-name={name} mg-result={false} slot="footer">キャンセル</SettleButton>) : null}
+      <SettleButton mg-name={name} mg-result={true} slot="footer">{okLabel}</SettleButton>
+      {!hideCancelButton ? (<SettleButton mg-name={name} mg-result={false} slot="footer">{cancelLabel}</SettleButton>) : null}
     </sl-dialog>
   )
 }, attributeMap.dialog)
