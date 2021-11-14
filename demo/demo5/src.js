@@ -1,5 +1,7 @@
 
 import {h, API, start, Input, Textarea, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, Pagination, Clickable, Modal} from '../../src/bindings/bulma'
+import {createRestRepository} from '../../src/core/repository'
+import {makeEntityListUpdates} from '../../src/core/updates'
 
 const contactSchema = {
   type: 'object', 
@@ -29,7 +31,6 @@ const schema = {
     contacts: {
       type: 'object', 
       properties: {
-        baseUrl: {}, 
         query: searchSchema, 
         totalCount: {type:'integer'}, 
         items: {type: 'array', items: contactSchema}
@@ -38,7 +39,7 @@ const schema = {
     form: {
       type: 'object?', 
       properties: {
-        action: {type:'string'}, 
+        method: {type:'string'}, 
         data: contactSchema
       }
     }, 
@@ -48,7 +49,6 @@ const schema = {
 
 const data = {
   contacts: {
-    baseUrl: 'http://localhost:3000/contacts', 
     query: {
       name_like: '', 
       created_gte: '', 
@@ -67,6 +67,10 @@ const data = {
     _page: 1, 
     _limit: 6
   }
+}
+
+const updates = {
+  ...makeEntityListUpdates(createRestRepository('http://localhost:3000/contacts'))
 }
 
 const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
@@ -101,7 +105,7 @@ const ContactModal = ({env}) => {
           </Field>
         </div>
         <div class="modal-card-foot">
-          <UpdateButton mg-name="loading2" class="button is-primary" mg-update="commitItem" mg-context={['/form', '/contacts', {commitMethod:form.data.id > 0 ? 'PUT' : 'POST', totalCountHeader:'X-Total-Count', failureName:'failure2', loadingName:'loading2'}]}>確定</UpdateButton>
+          <UpdateButton mg-name="loading2" class="button is-primary" mg-update="commitItem" mg-context={['/form', '/contacts', {failureName:'failure2', loadingName:'loading2'}]}>確定</UpdateButton>
           <UpdateButton class="button" mg-update="discardItem" mg-context={['/form']}>キャンセル</UpdateButton>
         </div>
       </div>
@@ -118,7 +122,7 @@ const view = (env) => {
     <div class="container my-3">
       <Notification mg-name="success" message="成功しました。" mg-duration={5000} />
       <Notification mg-name="failure" title="エラー" createMessage={showError} />
-      <UpdateButton key="updateButton" class="button is-primary" mg-update="createItem" mg-context={[{id:0, created:'', name:'', email:'', content:''}, 'http://localhost:3000/contacts', '/form']}>新規追加</UpdateButton>
+      <UpdateButton key="updateButton" class="button is-primary" mg-update="createItem" mg-context={[{id:0, created:'', name:'', email:'', content:''}, '/form']}>新規追加</UpdateButton>
       <nav class="level" key="search">
         <div class="level-left">
           <div class="level-item">{contacts.totalCount ? `${contacts.totalCount}件中 ${from}～${to}` : 'コンタクトはありません'}</div>
@@ -131,7 +135,7 @@ const view = (env) => {
             <Input mg-path="/search/created_gte" type="date" />～<Input mg-path="/search/created_lte" type="date" />
           </div>
           <div class="level-item">
-            <UpdateButton mg-update="searchItems" mg-context={["/search", "/contacts", {totalCountHeader:'X-Total-Count'}]}>検索</UpdateButton>
+            <UpdateButton mg-update="searchItems" mg-context={["/search", "/contacts", {}]}>検索</UpdateButton>
           </div>
         </div>
       </nav>
@@ -147,7 +151,6 @@ const view = (env) => {
         </thead>
         <tbody>
           {contacts.items.map((c, i) => {
-            const url = 'http://localhost:3000/contacts/' + c.id
             return (
               <tr key={c.id}>
                 <td>{c.id}</td>
@@ -156,8 +159,8 @@ const view = (env) => {
                 <td>{c.email}</td>
                 <td>{c.content.replace('\n', '').slice(0, 10)}</td>
                 <td>
-                  <UpdateButton class="is-info is-inverted mx-1" mg-update="editItem" mg-context={['/contacts/items/' + i, url, '/form']}><span class="icon"><span class="material-icons">edit</span></span></UpdateButton>
-                  <UpdateButton class="is-danger is-inverted mx-1" mg-update="deleteItem" mg-context={[url, '/contacts', {totalCountHeader:'X-Total-Count'}]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
+                  <UpdateButton class="is-info is-inverted mx-1" mg-update="editItem" mg-context={['/contacts/items/' + i, '/form']}><span class="icon"><span class="material-icons">edit</span></span></UpdateButton>
+                  <UpdateButton class="is-danger is-inverted mx-1" mg-update="deleteItem" mg-context={['/contacts/items/' + i, '/contacts', {}]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
                 </td>
               </tr>
             )
@@ -184,6 +187,6 @@ const view = (env) => {
 }
 
 const containerEl = document.getElementById('app')
-const {onUpdate} = start({data, schema, view, containerEl})
+const {onUpdate} = start({data, schema, view, containerEl, updates})
 
-onUpdate({update:'loadItems', context:['/contacts', {totalCountHeader:'X-Total-Count'}]})
+onUpdate({update:'loadItems', context:['/contacts', {}]})

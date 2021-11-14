@@ -1,6 +1,8 @@
 
 import {h, API, start, Input, Select, Radio, Checkbox, UpdateButton, Clickable, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
 import {playSortable, playListItem} from '../../src/core/components'
+import {createRestRepository} from '../../src/core/repository'
+import {makeEntityUpdates} from '../../src/core/updates'
 
 const ReorderableList = playSortable(({itemPath = null, group = null, showItem = null, items = null, ...props}, children) => {
   return (
@@ -34,6 +36,7 @@ const schema = {
     form: {
       type: 'object?', 
       properties: {
+        method: {type: 'string'}, 
         action: {type: 'string'}, 
         data: todoSchema
       }
@@ -51,25 +54,9 @@ const data = {
   nextId: 3
 }
 
-const onTodoItemCreate = (el) => {
-  const r = el.getBoundingClientRect()
-  el.animate([
-    {offset:0, maxHeight: 0}, 
-    {offset:0.999, maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
-    {offset:1, maxHeight:'none'}
-  ], 150)
+const updates = {
+  ...makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs'))
 }
-
-const onTodoItemRemove = (el, done) => {
-  const r = el.getBoundingClientRect()
-  const anim = el.animate([
-    {maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
-    {maxHeight: 0}
-  ], 150)
-  prepareToDestroy(el, anim, done)
-}
-
-const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
 
 const TodoItem = playListItem(({path, editing, env, ...props}) => {
   const id = API.extract(path + '/id', env)
@@ -166,4 +153,4 @@ const view = (env) => {
 }
 
 const containerEl = document.getElementById('app')
-const {onUpdate} = start({data, schema, view, containerEl})
+const {onUpdate} = start({data, schema, view, containerEl, updates})

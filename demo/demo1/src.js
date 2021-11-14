@@ -1,5 +1,7 @@
 
 import {h, API, start, Input, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
+import {createRestRepository} from '../../src/core/repository'
+import {makeEntityUpdates} from '../../src/core/updates'
 
 const master = {
   frame: [
@@ -105,6 +107,10 @@ const data = {
   }
 }
 
+const updates = {
+  ...makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs'))
+}
+
 const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
 
 const view = (env) => {
@@ -175,7 +181,7 @@ const view = (env) => {
         </tr>
       </table>
       <hr />
-      <UpdateButton type="button" class="is-primary" mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/contacts", {path:"/detail", errorSelector:".is-danger", method:"POST"}]}>確定</UpdateButton>
+      <UpdateButton type="button" class="is-primary" mg-name="loading" mg-update="submit" mg-context={["add", {path:"/detail", errorSelector:".is-danger", method:"POST"}]}>確定</UpdateButton>
     </div>
   )
 }
@@ -245,5 +251,5 @@ const evolve = (env, path, prevEnv) => {
 
 const containerEl = document.getElementById('app')
 
-start({data, schema, view, containerEl, evolve})
+start({data, schema, view, containerEl, updates, evolve})
 

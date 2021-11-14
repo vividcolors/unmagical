@@ -142,15 +142,15 @@ export const commonPath = (path1, path2) => {
 /**
  * 
  * @param {Object} obj 
- * @param {boolean} omitEmptyString 
+ * @param {boolean} omitEmptyParam 
  * @returns {Record<string, string>}
  */
-export const normalizeQuery = (obj, omitEmptyString) => {
+export const normalizeQuery = (obj, omitEmptyParam) => {
   const rv = /** @type {Record<string, string>} */ ({})
   for (let p in obj) {
     switch (typeOf(p)) {
       case 'null': 
-        if (!omitEmptyString) rv[p] = ''
+        if (!omitEmptyParam) rv[p] = ''
         break
       case 'boolean': 
         rv[p] = obj[p] ? 'true' : 'false'
@@ -159,7 +159,7 @@ export const normalizeQuery = (obj, omitEmptyString) => {
         rv[p] = "" + obj[p]
         break
       case 'string': 
-        if (omitEmptyString && obj[p] === "") break
+        if (omitEmptyParam && obj[p] === "") break
         rv[p] = obj[p]
         break
     }

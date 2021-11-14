@@ -1,4 +1,6 @@
 import {h, API, start, Input, Textarea, Range, Rating, Select, Radio, Checkbox, Switch, ColorPicker, UpdateButton, UpdateIconButton, SettleButton, Dialog, Alert, Drawer, Spinner} from '../../src/bindings/shoelace'
+import {createRestRepository} from '../../src/core/repository'
+import {makeEntityUpdates} from '../../src/core/updates'
 
 const schema = {
   type: 'object', 
@@ -27,6 +29,11 @@ const data = {
   home: false, 
   bgcolor: '', 
   dummy: {i:1}
+}
+
+const updates = {
+  ...makeEntityUpdates(createRestRepository('http://localhost:3000/things'), 'success'), 
+  ...makeEntityUpdates(createRestRepository('http://localhost:3000/false'), 'failure'),
 }
 
 // TODO: Menu
@@ -64,8 +71,8 @@ const view = (env) => {
       <div><Switch mg-path="/home">ホームボタンを表示する</Switch></div>
       <div><ColorPicker mg-path="/bgcolor" /></div>
       <div>
-        <UpdateButton mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/contacts", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信(成功)</UpdateButton>
-        <UpdateButton mg-name="loading" mg-update="submit" mg-context={["http://localhost:3000/abc", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信(失敗)</UpdateButton>
+        <UpdateButton mg-name="loading" mg-update="successSubmit" mg-context={["add", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信(成功)</UpdateButton>
+        <UpdateButton mg-name="loading" mg-update="failureSubmit" mg-context={["add", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信(失敗)</UpdateButton>
         <UpdateIconButton name="x-circle" mg-update="reset" mg-context={[data]} />
         <UpdateButton mg-update="toggleSwitch" mg-context={["drawer"]}>Open Drawer</UpdateButton>
         <UpdateButton mg-update="openProgress" mg-context={['spinner', null]}>Show Progress</UpdateButton>
@@ -74,7 +81,7 @@ const view = (env) => {
       <Dialog key="confirm" mg-name="confirm" label="確認" message="リセットします。いいですか？" />
       <Alert key="success" mg-name="success" type="success" message="やりました！" closable duration="5000" onUpdate={callOnUpdate} />
       <Alert key="failure" mg-name="failure" type="danger" createMessage={showError} closable onUpdate={callOnUpdate} />
-      <Drawer key="drawer" mg-name="drawer" onUpdate={onUpdate}>
+      <Drawer key="drawer" mg-name="drawer" onUpdate={callOnUpdate}>
         ドロワーです。
       </Drawer>
       <Spinner key="spinner" mg-name="spinner" />
@@ -82,5 +89,6 @@ const view = (env) => {
   )
 }
 
+console.log(updates)
 const containerEl = document.getElementById('app')
-const {onUpdate} = start({schema, data, view, containerEl})
+const {onUpdate} = start({schema, data, view, containerEl, updates})
