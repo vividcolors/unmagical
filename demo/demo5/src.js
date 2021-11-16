@@ -73,8 +73,6 @@ const updates = {
   ...makeEntityListUpdates(createRestRepository('http://localhost:3000/contacts'))
 }
 
-const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
-
 const ContactModal = ({env}) => {
   const form = API.extract('/form', env)
   if (! form) return null
@@ -87,7 +85,7 @@ const ContactModal = ({env}) => {
           </p>
         </div>
         <div class="modal-card-body">
-          <Notification mg-name="failure2" title="エラー" createMessage={showError} />
+          <Notification mg-name="failure2" title="エラー" message="エラーが発生しました（{message}）" />
           <Field mg-path="/form/data/id" env={env} label="ID">
             <div class="control">{form.data.id > 0 ? form.data.id : '（新規追加）'}</div>
           </Field>
@@ -121,7 +119,7 @@ const view = (env) => {
   return (
     <div class="container my-3">
       <Notification mg-name="success" message="成功しました。" mg-duration={5000} />
-      <Notification mg-name="failure" title="エラー" createMessage={showError} />
+      <Notification mg-name="failure" title="エラー" message="エラーが発生しました（{message}）" />
       <UpdateButton key="updateButton" class="button is-primary" mg-update="createItem" mg-context={[{id:0, created:'', name:'', email:'', content:''}, '/form']}>新規追加</UpdateButton>
       <nav class="level" key="search">
         <div class="level-left">

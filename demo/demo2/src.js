@@ -39,7 +39,7 @@ const updates = {
 // TODO: Menu
 
 const messageProps = {style:{color:"#FF0000"}}
-const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
+const showError = ({message}) => `エラーが発生しました（${message}）`
 const callOnUpdate = (x) => onUpdate(x)
 const view = (env) => {
   console.log('view', env)

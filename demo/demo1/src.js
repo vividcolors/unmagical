@@ -111,15 +111,15 @@ const updates = {
   ...makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs'))
 }
 
-const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
+const showError = ({message}) => `エラーが発生しました（${message}）`
 
 const view = (env) => {
   const flags = API.extract('/flags', env)
   const quotation = API.extract('/quotation', env)
   return (
     <div id="rootMarker" class="container">
-      <Notification mg-name="success" message="成功しました。" mg-duration={5000} />
-      <Notification mg-name="failure" title="エラー" createMessage={showError} />
+      <Notification mg-name="success" message="送信に成功しました（{total}円）。" mg-duration={5000} />
+      <Notification mg-name="failure" title="エラー" message="エラーが発生しました（{message}）" />
       <Field mg-path="/detail/os" label="OS">
         <div class="control">
           {master.os.map(x => <Radio mg-path="/detail/os" name="os" value={x.name}>{`${x.name} ${x.price}円`}</Radio>)}

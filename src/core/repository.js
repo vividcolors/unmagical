@@ -5,6 +5,7 @@ import {normalizeQuery} from './utils'
 /**
  * 
  * @typedef {import("./schema").Json} Json
+ * @typedef {import("./errors").MgError} MgError
  * 
  * @typedef {{
  *   search: (query:Record<string,any>) => Promise<{entities:Json[], totalCount:number}>
@@ -20,9 +21,10 @@ import {normalizeQuery} from './utils'
  * @param {Response} response 
  * @returns {Error}
  */
-const toError = (response) => {
-  const error = new Error(response.statusText)
-  error.name = 'HTTP Error'
+const responseToError = (response) => {
+  const message = response.status + ' ' + response.statusText
+  const error = new Error(message)
+  error.name = 'http.' + response.status
   return error
 }
 
@@ -64,7 +66,7 @@ export const createRestRepository = (baseUrl, options) => {
       const url = baseUrl + '?' + qs.toString()
       return fetch(url, fetchOptions)
       .then(( /** @type {Response} */ response) => {
-        if (! response.ok) throw toError(response)
+        if (! response.ok) throw responseToError(response)
         return response.json()
         .then((entities) => {
           const totalCount = +(response.headers.get(opts.totalCountHeader))
@@ -86,7 +88,7 @@ export const createRestRepository = (baseUrl, options) => {
       const url = baseUrl
       return fetch(url, fetchOptions)
       .then((/** @type {Response} */ response) => {
-        if (! response.ok) throw toError(response)
+        if (! response.ok) throw responseToError(response)
         return response.json()
       })
     }, 
@@ -104,7 +106,7 @@ export const createRestRepository = (baseUrl, options) => {
       const url = baseUrl + '/' + entity[opts.idProperty]
       return fetch(url, fetchOptions)
       .then((/** @type {Response} */ response) => {
-        if (! response.ok) throw toError(response)
+        if (! response.ok) throw responseToError(response)
         return response.json()
       })
     }, 
@@ -121,7 +123,7 @@ export const createRestRepository = (baseUrl, options) => {
       const url = baseUrl + '/' + entity[opts.idProperty]
       return fetch(url, fetchOptions)
       .then((/** @type {Response} */ response) => {
-        if (! response.ok) throw toError(response)
+        if (! response.ok) throw responseToError(response)
       })
     }
   }
