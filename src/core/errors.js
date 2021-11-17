@@ -54,6 +54,7 @@ export const defaultErrorMessages = {
   'rule.enum': 'Invalid input', 
   'rule.const': 'Input {hint}',  // param
   'rule.const.nohint': 'Invalid input', 
+  'rule.notEmpty': 'Please input', 
   'rule.required': 'Missing property "{hint}"',  // param[i]
   'rule.switchRequired': 'Missing property "{hint}"',  // required[i]
   'rule.switchRequired.nohint': 'Properties are missing', 

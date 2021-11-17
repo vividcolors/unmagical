@@ -128,6 +128,11 @@ export const defaultRules = {
         return {code:'rule.const.nohint'}
     }
   }, 
+  notEmpty: (_param, value) => {
+    if (typeOf(value) != 'string') return true
+    if (value !== '') return true
+    return {code:'rule.notEmpty'}
+  }, 
   required: (param, value) => {
     if (! Array.isArray(param)) throw new Error('invalid parameter')
     if (typeOf(value) != 'object') return true
@@ -242,8 +247,13 @@ export const defaultRules = {
  */
 export const validate = (rules) => (value, slot, schema, lookup) => {
   if (! isJsonValue(value)) {
-    const error = {code:'value', detail:'given value: '+value}
-    return {...slot, '@value':value, invalid:true, error}
+    if (schema && schema.type) {
+      const error = {code:'type.'+schema.type, detail:'given value: '+value}
+      return {...slot, '@value':value, invalid:true, error}
+    } else {
+      const error = {code:'value', detail:'given value: '+value}
+      return {...slot, '@value':value, invalid:true, error}
+    }
   }
 
   if (schema) {

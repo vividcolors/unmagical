@@ -8,8 +8,8 @@ const contactSchema = {
   properties: {
     id: {type:'integer'}, 
     created: {type:'string'}, 
-    name: {type:'string', minLength:1}, 
-    email: {type:'string', minLength:1}, 
+    name: {type:'string', notEmpty:true}, 
+    email: {type:'string', notEmpty:true}, 
     content: {type:'string'}
   }
 }

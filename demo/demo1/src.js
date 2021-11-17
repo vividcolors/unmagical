@@ -40,17 +40,17 @@ const schema = {
     detail: {
       type: 'object', 
       properties: {
-        frame: {type:'string', minLength:1}, 
-        os: {type:'string', minLength:1}, 
-        cpu: {type:'string', minLength:1}, 
-        memory: {type:'string', minLength:1}, 
+        frame: {type:'string', notEmpty:true}, 
+        os: {type:'string', notEmpty:true}, 
+        cpu: {type:'string', notEmpty:true}, 
+        memory: {type:'string', notEmpty:true}, 
         accessories: {
           type: 'object', 
           properties: master.accessory.reduce((cur, a, i) => {
             return {...cur, [`a${i}`]:{type:'boolean'}}
           }, {})
         }, 
-        bonus: {type:'string', minLength:1}
+        bonus: {type:'string', notEmpty:true}
       }
     }, 
     flags: {
@@ -111,14 +111,12 @@ const updates = {
   ...makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs'))
 }
 
-const showError = ({message}) => `エラーが発生しました（${message}）`
-
 const view = (env) => {
   const flags = API.extract('/flags', env)
   const quotation = API.extract('/quotation', env)
   return (
     <div id="rootMarker" class="container">
-      <Notification mg-name="success" message="送信に成功しました（{total}円）。" mg-duration={5000} />
+      <Notification mg-name="success" message="送信に成功しました。" mg-duration={5000} />
       <Notification mg-name="failure" title="エラー" message="エラーが発生しました（{message}）" />
       <Field mg-path="/detail/os" label="OS">
         <div class="control">

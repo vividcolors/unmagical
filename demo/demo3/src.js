@@ -7,24 +7,25 @@ const zipPattern = '^[0-9]{3}-?[0-9]{4}$'
 const schema = {
   type: 'object', 
   properties: {
-    date: {type:'string', minLength:1}, 
-    date2: {type:'string', minLength:1}, 
-    color: {type:'string', minLength:1}, 
-    color2: {type:'string', minLength:1}, 
+    date: {type:'string', notEmpty:true}, 
+    date2: {type:'string', notEmpty:true}, 
+    color: {type:'string', notEmpty:true}, 
+    color2: {type:'string', notEmpty:true}, 
+    int: {type:'integer'}, 
     email: {
       type: 'object', 
       properties: {
-        firstTime: {type:'string', pattern:'^([a-zA-Z0-9])+([a-zA-Z0-9\._-])*@([a-zA-Z0-9_-])+([a-zA-Z0-9\._-]+)+$'}, 
-        secondTime: {type:'string', same:'1/firstTime'}
+        firstTime: {type:'string', notEmpty:true, pattern:'^([a-zA-Z0-9])+([a-zA-Z0-9\._-])*@([a-zA-Z0-9_-])+([a-zA-Z0-9\._-]+)+$'}, 
+        secondTime: {type:'string', notEmpty:true, same:'1/firstTime'}
       }
     }, 
     address: {
       type: 'object', 
       properties: {
-        zip: {type:'string', pattern:zipPattern}, 
-        pref: {type:'string', minLength:1}, 
-        city: {type:'string', minLength:1}, 
-        street: {type:'string', minLength:1}, 
+        zip: {type:'string', notEmpty:true, pattern:zipPattern}, 
+        pref: {type:'string', notEmpty:true}, 
+        city: {type:'string', notEmpty:true}, 
+        street: {type:'string', notEmpty:true}, 
         bld: {type:'string'}
       }
     }, 
@@ -53,6 +54,7 @@ const data = {
   date2: '', 
   color: '', 
   color2: '', 
+  int: null, 
   email: {firstTime:'', secondTime:''}, 
   address: {zip:'', pref:'', city:'', street:'', bld:''}, 
   persons: ['Dad', 'Mam', 'Me', 'Doggy'], 
@@ -154,6 +156,11 @@ const view = (env) => {
         <Input class="input" type="color" mg-path="/color2" />
       </Field>
       <p>value: {data.color2}</p>
+      <hr />
+      <h2>数値入力とバリデーション</h2>
+      <Field mg-path="/int" label="整数">
+        <Input mg-path="/int" type="number" />
+      </Field>
       <hr />
       <h2>同じアドレスを二度入力する</h2>
       <Field mg-path="/email" mg-fold-validity label="メールアドレス">
