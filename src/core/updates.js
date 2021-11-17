@@ -222,14 +222,17 @@ export const makeEntityListUpdates = (repository, prefix = '') => {
       const queryPath = listPath + '/query'
       const itemsPath = listPath + '/items'
       const totalCountPath = listPath + '/totalCount'
-      if (opts.page !== null && opts.pageProperty) {
-        env = API.replace(queryPath + '/' + opts.pageProperty, opts.page, env)
-      }
       env = API.openProgress(opts.loadingName, null, env)
       const query = /** @type {Record<String,any>} */ (API.extract(queryPath, env))
+      if (opts.page !== null && opts.pageProperty) {
+        query[opts.pageProperty] = opts.page
+      }
       return /** @type {Promise} */ (leave(repository.search(query), env))
       .then(enter(({entities, totalCount}, env) => {
         env = API.closeProgress(opts.loadingName, env)
+        if (opts.page !== null && opts.pageProperty) {
+          env = API.replace(queryPath + '/' + opts.pageProperty, opts.page, env)
+        }
         env = API.replace(itemsPath, entities, env)
         env = API.replace(totalCountPath, totalCount, env)
         return env
@@ -249,8 +252,6 @@ export const makeEntityListUpdates = (repository, prefix = '') => {
      * @param {string} options.errorSelector
      * @param {string} options.loadingName
      * @param {string} options.failureName
-     * @param {number} options.page
-     * @param {string} options.pageProperty
      * @param {Env} env
      * @returns {Env|Promise}
      */
@@ -272,8 +273,32 @@ export const makeEntityListUpdates = (repository, prefix = '') => {
         }
         return env
       }
-      env = API.copy(formPath, listPath + '/query', env)
-      return rv.loadItems(listPath, options, env)
+
+      const {enter, leave} = API.makePortal(env)
+      const opts = {
+        loadingName: 'loading', 
+        failureName: 'failure', 
+        ...options
+      }
+      const queryPath = listPath + '/query'
+      const itemsPath = listPath + '/items'
+      const totalCountPath = listPath + '/totalCount'
+      env = API.openProgress(opts.loadingName, null, env)
+      const query = /** @type {Record<String,any>} */ (API.extract(formPath, env))
+      return /** @type {Promise} */ (leave(repository.search(query), env))
+      .then(enter(({entities, totalCount}, env) => {
+        env = API.closeProgress(opts.loadingName, env)
+        env = API.replace(queryPath, query, env)
+        env = API.replace(itemsPath, entities, env)
+        env = API.replace(totalCountPath, totalCount, env)
+        return env
+      }))
+      .catch(enter((error, env) => {
+        env = API.closeProgress(opts.loadingName, env)
+        console.error('search failed', error)
+        const mgerror = /** @type {MgError} */ ({code:error.name, detail:error.message})
+        return API.openFeedback(opts.failureName, mgerror, env)
+      }))
     }
   }
 
