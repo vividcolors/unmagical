@@ -3,6 +3,7 @@
 import { normalizePath } from './utils'
 import * as E from './env'
 import * as S from './schema'
+import * as X from './errors'
 import { app, h as h0 } from 'hyperapp'
 
 /**
@@ -12,7 +13,10 @@ import { app, h as h0 } from 'hyperapp'
  * @typedef {import("./schema").Slot} Slot
  * @typedef {import("./schema").SchemaDb} SchemaDb
  * @typedef {import("./schema").LookupFunc} LookupFunc
+ * @typedef {import("./schema").Rules} Rules
  * @typedef {import("./env").Env} Env
+ * @typedef {import("./errors").MgError} MgError
+ * @typedef {import("./errors").Catalog} Catalog
  * 
  */
 
@@ -79,14 +83,14 @@ export const API = {
   /**
    * @param {string} path
    * @param {Env} env
-   * @returns {{invalid:boolean, message:string}}
+   * @returns {{invalid:boolean, error:MgError}}
    */
   foldValidity: (path, env) => {
     return API.reduceDeep((cur, slot, _path) => {
       if (cur.invalid) return cur
-      if (slot.touched && slot.invalid) return {invalid:true, message:slot.message}
+      if (slot.touched && slot.invalid) return {invalid:true, error:slot.error}
       return cur
-    }, /** @type {{invalid:boolean,message:string}} */({invalid:false, message:''}), path, env)
+    }, /** @type {{invalid:boolean,error:MgError}} */({invalid:false, error:null}), path, env)
   }, 
 
   /**
@@ -378,12 +382,12 @@ const updateEnabledApis = {
  * @param {Object} params
  * @param {Json} params.data
  * @param {Schema} params.schema
- * @param {(Env) => import('hyperapp').VNode} params.view
+ * @param {(env:Env) => import('hyperapp').VNode} params.view
  * @param {Element} params.containerEl
  * @param {((env:Env, updatePointer:string, prevEnv:Env|null) => Env) | null} params.evolve
  * @param {{[name:string]:(any)}} params.updates
- * @param {((value:any, slot:Slot, schema:Schema, lookup:LookupFunc) => Slot) | null} params.validate
- * @param {((input:string, slot:Slot, schema:Schema) => Slot) | null} params.coerce
+ * @param {Rules} params.rules
+ * @param {Catalog} params.catalog
  */
 export const start = (
     {
@@ -393,13 +397,14 @@ export const start = (
       containerEl, 
       evolve = null, 
       updates = {}, 
-      validate = null, 
-      coerce = null
+      rules = null, 
+      catalog = null
     }) => {
   // complements reasonable defaults
   if (! evolve) evolve = (env, _pointer, _prevEnv) => env
-  if (! validate) validate = S.validate(S.defaultRules, S.defaultMessages)
-  if (! coerce) coerce = S.coerce(S.defaultRules, S.defaultMessages)
+  const validate = S.validate(rules || S.defaultRules)
+  const coerce = S.coerce
+  const normalizeError = X.normalizeError(catalog || X.defaultErrorMessages)
 
   const schemaDb = S.buildDb(schema)
 
@@ -549,10 +554,10 @@ export const start = (
       const extra = E.getExtra(name, state.baseEnv)
       if (! extra || ! extra.fulfill) throw new Error('onPromiseSettle/0: no callback or unknown callback')
       // Calling fulfill() will cause the process to re-enter the hyperapp, 
-      // so we call fulfill() not now but in a different tick.
-      window.requestAnimationFrame(() => {
+      // so we call fulfill() not now but in a different opportunity.
+      setTimeout(() => {
         extra.fulfill(result)
-      })
+      }, 0)
       return null  // indicating no update.
     }, 
     onPromiseThen: (context) => (state, actions) => {
@@ -583,7 +588,8 @@ export const start = (
   env = E.validate("", env)
   const state = {
     baseEnv, 
-    env
+    env, 
+    normalizeError
   }
   const view1 = (state, actions) => view(state.env)
   const actions = app(state, actions0, view1, containerEl)
@@ -592,6 +598,33 @@ export const start = (
   }
 }
 
+/**
+ * @param {Object} params
+ * @param {Json} params.data
+ * @param {Schema} params.schema
+ * @param {((env:Env, updatePointer:string, prevEnv:Env|null) => Env) | null} params.evolve
+ * @param {Rules} params.rules
+ */
+export const once = (
+    {
+      data, 
+      schema, 
+      evolve = null, 
+      rules = null
+    }) => {
+  // complements reasonable defaults
+  if (! evolve) evolve = (env, _pointer, _prevEnv) => env
+  const validate = S.validate(rules || S.defaultRules)
 
+  const schemaDb = S.buildDb(schema)
+  
+  let updatePointer
+  let baseEnv = E.makeEnv(data, schemaDb, validate, true)
+  baseEnv = E.validate("", baseEnv);
+  [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
+  let env = evolve(baseEnv, updatePointer, null)
+  env = E.validate("", env)
+  return env
+}
 
 export const h = h0

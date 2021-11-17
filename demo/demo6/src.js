@@ -1,7 +1,4 @@
-
-import {h, API, start, Input, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
-import {createRestRepository} from '../../src/core/repository'
-import {makeEntityUpdates} from '../../src/core/updates'
+import {once, API} from '../../src/core/framework'
 
 const master = {
   frame: [
@@ -86,14 +83,17 @@ const schema = {
 
 const data = {
   detail: {
-    frame: master.frame[0].name, 
-    os: '', 
-    cpu: '', 
-    memory: '', 
-    accessories: master.accessory.reduce((cur, a, i) => {
-      return {...cur, [`a${i}`]:false}
-    }, {}), 
-    bonus: ''
+    "frame": "SC130-T",
+    "os": "Pro",
+    "cpu": "i5",
+    "memory": "16G",
+    "accessories": {
+      "a0": false,
+      "a1": false,
+      "a2": true,
+      "a3": false
+    },
+    "bonus": "Touchauth Component"
   }, 
   flags: {
     isPro: false, 
@@ -105,83 +105,6 @@ const data = {
     tax: 0, 
     total: 0
   }
-}
-
-const updates = {
-  ...makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs'))
-}
-
-const view = (env) => {
-  const flags = API.extract('/flags', env)
-  const quotation = API.extract('/quotation', env)
-  return (
-    <div id="rootMarker" class="container">
-      <Notification mg-name="success" message="送信に成功しました。" mg-duration={5000} />
-      <Notification mg-name="failure" title="エラー" message="エラーが発生しました（{message}）" />
-      <Field mg-path="/detail/os" label="OS">
-        <div class="control">
-          {master.os.map(x => <Radio mg-path="/detail/os" name="os" value={x.name}>{`${x.name} ${x.price}円`}</Radio>)}
-        </div>
-      </Field>
-      <Field mg-path="/detail/cpu" label="CPU">
-        <div class="control">
-          {master.cpu.map(x => <Radio mg-path="/detail/cpu" name="cpu" value={x.name}>{`${x.name} ${x.price}円`}</Radio>)}
-        </div>
-      </Field>
-      <Field mg-path="/detail/memory" label="メモリ">
-        <div class="control">
-          {master.memory.map(x => <Radio mg-path="/detail/memory" name="memory" value={x.name} disabled={x.name == '32G' && !flags.isPro}>{`${x.name} ${x.price}円`}</Radio>)}
-        </div>
-      </Field>
-      <Field mg-path="/detail/accessories" label="アクセサリー">
-        <div class="control">
-          {master.accessory.map((x,i) => <Checkbox mg-path={`/detail/accessories/a${i}`}>{`${x.name} ${x.price}円`}</Checkbox>)}
-        </div>
-      </Field>
-      <Field mg-path="/detail/bonus" label="ボーナス">
-        <div class="control">
-          {master.bonus.map(x => <Radio mg-path="/detail/bonus" name="bonus" value={x.name}>{x.name}</Radio>)}
-        </div>
-      </Field>
-      <hr />
-      <table class="table is-striped">
-        <thead>
-          <th>カテゴリー</th>
-          <th>名前</th>
-          <th>単価</th>
-          <th>数量</th>
-          <th>金額</th>
-        </thead>
-        <tbody>
-          {quotation.lines.map(line => (
-            <tr key={`${line.category}-${line.description}-${line.unitPrice}-${line.quantity}`}>
-              <td>{line.category}</td>
-              <td>{line.description}</td>
-              <td>{line.unitPrice}</td>
-              <td>{line.quantity}</td>
-              <td>{line.amount}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <table class="table">
-        <tr>
-          <th>小計</th>
-          <td>{quotation.subtotal}</td>
-        </tr>
-        <tr>
-          <th>税</th>
-          <td>{quotation.tax}</td>
-        </tr>
-        <tr>
-          <th>合計</th>
-          <td>{quotation.total}</td>
-        </tr>
-      </table>
-      <hr />
-      <UpdateButton type="button" class="is-primary" mg-name="loading" mg-update="submit" mg-context={["add", {path:"/detail", errorSelector:".is-danger", method:"POST"}]}>確定</UpdateButton>
-    </div>
-  )
 }
 
 const findByProp = (name, value, lis) => {
@@ -247,7 +170,13 @@ const evolve = (env, path, prevEnv) => {
   return env
 }
 
-const containerEl = document.getElementById('app')
-
-start({data, schema, view, containerEl, updates, evolve})
-
+let env = once({schema, data, evolve})
+env = API.touchAll("", env)
+env = API.validate("", env)
+const numErrors = API.countValidationErrors("", env)
+if (numErrors) {
+  console.error('ERROR: some validation errors occurred', env.tree)
+} else {
+  const result = API.extract("", env)
+  console.log("SUCCESS", result)
+}

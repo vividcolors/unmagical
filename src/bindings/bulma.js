@@ -1,5 +1,6 @@
 
 import * as C from '../core/components'
+import template from 'string-template'
 import {API, start, h} from '../core/framework'
 export {API, start, h} from '../core/framework'
 
@@ -57,8 +58,8 @@ export const DeleteButton = C.playUpdateButton("button", {fixedClass:"delete"})
 
 export const Clickable = C.playUpdateButton("a")
 
-export const Dialog = C.playDialog(({'mg-name':name, title, createMessage = null, message = null, hideCancelButton = false, okLabel = 'OK', cancelLabel = 'Cancel', data, ...props}) => {
-  message = createMessage ? createMessage(data) : message
+export const Dialog = C.playDialog(({'mg-name':name, title, message, hideCancelButton = false, okLabel = 'OK', cancelLabel = 'Cancel', data, ...props}) => {
+  const effectiveMessage = template(message, data)
   return (
     <div key={name} {...props}>
       <div class="modal-background"></div>
@@ -67,7 +68,7 @@ export const Dialog = C.playDialog(({'mg-name':name, title, createMessage = null
           <p class="modal-card-title">{title}</p>
         </header>
         <section class="modal-card-body">
-          <p>{message}</p>
+          <p>{effectiveMessage}</p>
         </section>
         <footer class="modal-card-foot">
           <SettleButton class="button is-success" mg-name={name} mg-result={true}>{okLabel}</SettleButton>
@@ -78,12 +79,12 @@ export const Dialog = C.playDialog(({'mg-name':name, title, createMessage = null
   )
 }, {fixedClass:'modal is-active', '@nullIfHidden':true, '@transition':'fade'})
 
-export const Notification = C.playFeedback(({'mg-name':name, data, createMessage = null, message = null, ...props}) => {
-  message = createMessage ? createMessage(data) : message
+export const Notification = C.playFeedback(({'mg-name':name, data, message, ...props}) => {
+  const effectiveMessage = template(message, data)
   return (
     <div key={name} {...props}>
       <DeleteButton mg-update="closeFeedback" mg-context={[name]}></DeleteButton>
-      <p>{message}</p>
+      <p>{effectiveMessage}</p>
     </div>
   )
 }, {fixedClass:'notification', '@nullIfHidden': true, '@transition':'slide'})

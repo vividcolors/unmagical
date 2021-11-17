@@ -21,8 +21,8 @@ const todoSchema = {
   properties: {
     id: {type:'integer'}, 
     done: {type:'boolean'}, 
-    subject: {type:'string', minLength:1}, 
-    context: {type:'string', enum:['home', 'work']}
+    subject: {type:'string', notEmpty:true}, 
+    context: {type:'string', notEmpty:true, enum:['home', 'work']}
   }
 }
 

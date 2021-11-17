@@ -1,5 +1,6 @@
 
 import { API, h } from './framework'
+import * as X from './errors'
 
 export const defaultAttributeMap = {
   textbox: {
@@ -216,6 +217,12 @@ const addAttr = (attributes, attr, value) => {
   attributes[attr] = value
 }
 
+const addMessageAttr = (attributes, attr, error, normalize) => {
+  if (! attr) return
+  if (! error) return
+  attributes[attr] = normalize(error).message
+}
+
 export const playTextbox = (C, map = {}) => {
   map = {...defaultAttributeMap.textbox, ...map}
   return (props, children) => (state, actions) => {
@@ -230,7 +237,7 @@ export const playTextbox = (C, map = {}) => {
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
-    addAttr(attributes, map.message, slot.message)
+    addMessageAttr(attributes, map.message, slot.error, state.normalizeError)
     addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
@@ -252,7 +259,7 @@ export const playSlider = (C, map = {}) => {
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
-    addAttr(attributes, map.message, slot.message)
+    addMessageAttr(attributes, map.message, slot.error, state.normalizeError)
     addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
@@ -288,7 +295,7 @@ export const playListbox = (C, map = {}) => {
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
     convertChildren(slot.input, map.option.selected, map.option.value, children)
-    addAttr(attributes, map.message, slot.message)
+    addMessageAttr(attributes, map.message, slot.error, state.normalizeError)
     addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
@@ -309,7 +316,7 @@ export const playRadio = (C, map = {}) => {
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
-    addAttr(attributes, map.message, slot.message)
+    addMessageAttr(attributes, map.message, slot.error, state.normalizeError)
     addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
@@ -330,7 +337,7 @@ export const playCheckbox = (C, map = {}) => {
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
-    addAttr(attributes, map.message, slot.message)
+    addMessageAttr(attributes, map.message, slot.error, state.normalizeError)
     addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
@@ -360,10 +367,10 @@ export const playField = (C, map = {}) => {
     const {'mg-path':path, 'mg-fold-validity':foldValidity, ...attributes} = props
     if (! API.test(path, state.env)) return null
     const slot = API.getSlot(path, state.env)
-    const {invalid, message} = foldValidity ? API.foldValidity(path, state.env) : {invalid:slot.invalid && slot.touched, message:slot.message}
+    const {invalid, error} = foldValidity ? API.foldValidity(path, state.env) : {invalid:slot.invalid && slot.touched, error:slot.error}
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
-    addAttr(attributes, map.message, message)
+    addMessageAttr(attributes, map.message, error, state.normalizeError)
     addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
@@ -507,7 +514,7 @@ export const playFeedback = (C, map = {}) => {
     const duration = attributes['mg-duration']
     const data = API.getFeedback(name, state.env)
     if (data === null && map['@nullIfHidden']) return null
-    attributes[map.data] = data
+    attributes[map.data] = X.isError(data) ? state.normalizeError(data) : data
     attributes.oncreate = feedbackOnCreate[map['@transition']]
     attributes.onremove = feedbackOnRemove[map['@transition']]
     addAttr(attributes, map.shown, (data !== null))
@@ -719,7 +726,7 @@ export const playFlatpickr = (C, map = {}) => {
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
-    addAttr(attributes, map.message, slot.message)
+    addMessageAttr(attributes, map.message, slot.error, state.normalizeError)
     addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
@@ -773,7 +780,7 @@ export const playPickr = (C, map = {}) => {
     addAttr(attributes, map.value, slot.input)
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
-    addAttr(attributes, map.message, slot.message)
+    addMessageAttr(attributes, map.message, slot.error, state.normalizeError)
     addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }

@@ -5,15 +5,15 @@ import {makeEntityUpdates} from '../../src/core/updates'
 const schema = {
   type: 'object', 
   properties: {
-    name: {type: 'string', minLength:1}, 
-    content: {type: 'string', minLength:1}, 
+    name: {type: 'string', notEmpty:true}, 
+    content: {type: 'string', notEmpty:true}, 
     hours: {type: 'integer'}, 
     rating: {type: 'number'}, 
-    position: {type: 'string', enum:['option-1', 'option-2']}, 
-    sex: {type: 'string', enum:['male', 'female']}, 
+    position: {type: 'string', notEmpty:true, enum:['option-1', 'option-2']}, 
+    sex: {type: 'string', notEmpty:true, enum:['male', 'female']}, 
     agree: {type: 'boolean'}, 
     home: {type: 'boolean'}, 
-    bgcolor: {type: 'string', minLength:1}, 
+    bgcolor: {type: 'string', notEmpty:true}, 
     dummy: {type:'object', properties:{i:{type:'integer'} }} 
   }
 }
@@ -39,7 +39,7 @@ const updates = {
 // TODO: Menu
 
 const messageProps = {style:{color:"#FF0000"}}
-const showError = ({name, message}) => `エラーが発生しました（${name}: ${message}）`
+const showError = ({message}) => `エラーが発生しました（${message}）`
 const callOnUpdate = (x) => onUpdate(x)
 const view = (env) => {
   console.log('view', env)

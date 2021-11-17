@@ -2,8 +2,8 @@
 import * as S from '../src/core/schema'
 
 export const run = (assert, assertError, assertUndefined) => {
-  const v = S.validate(S.defaultRules, {})
-  const c = S.coerce(S.defaultRules, {})
+  const v = S.validate(S.defaultRules)
+  const c = S.coerce
 
   let s = null
   let env = null

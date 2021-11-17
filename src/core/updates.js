@@ -7,6 +7,7 @@ import { API } from './framework'
  * @typedef {import("./schema").Json} Json
  * @typedef {import("./env").Env} Env
  * @typedef {import("./repository").Repository} Repository
+ * @typedef {import("./errors").MgError} MgError
  */
 
 
@@ -131,8 +132,8 @@ export const makeEntityListUpdates = (repository, prefix = '') => {
         .catch(enter((error, env) => {
           env = API.closeProgress(opts.loadingName, env)
           console.error('commision failed', error)
-          const fbdata = {name:error.name, message:error.message, data}
-          return API.openFeedback(opts.failureName, fbdata, env)
+          const mgerror = /** @type {MgError} */ ({code:error.name, detail:error.message})
+          return API.openFeedback(opts.failureName, mgerror, env)
         }))
       }
     }, 
@@ -193,8 +194,8 @@ export const makeEntityListUpdates = (repository, prefix = '') => {
         .catch(enter((error, env) => {
           env = API.closeProgress(opts.loadingName, env)
           console.error('deletion failed', error)
-          const fbdata = {name:error.name, message:error.message, data}
-          return API.openFeedback(opts.failureName, fbdata, env)
+          const mgerror = /** @type {MgError} */ ({code:error.name, detail:error.message})
+          return API.openFeedback(opts.failureName, mgerror, env)
         }))
       }))
     }, 
@@ -236,8 +237,8 @@ export const makeEntityListUpdates = (repository, prefix = '') => {
       .catch(enter((error, env) => {
         env = API.closeProgress(opts.loadingName, env)
         console.error('loading failed', error)
-        const fbdata = {name:error.name, message:error.message, data:null}
-        return API.openFeedback(opts.failureName, fbdata, env)
+        const mgerror = /** @type {MgError} */ ({code:error.name, detail:error.message})
+        return API.openFeedback(opts.failureName, mgerror, env)
       }))
     }, 
   
@@ -335,8 +336,8 @@ export const makeEntityUpdates = (repository, prefix = '') => {
         .catch(enter((error, env) => {
           env = API.closeProgress(opts.loadingName, env)
           console.error('loading failed', error)
-          const fbdata = {name:error.name, message:error.message, data}
-          return API.openFeedback(opts.failureName, fbdata, env)
+          const mgerror = /** @type {MgError} */ ({code:error.name, detail:error.message})
+          return API.openFeedback(opts.failureName, mgerror, env)
         }))
       }
     }, 

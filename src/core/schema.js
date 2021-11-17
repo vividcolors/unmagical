@@ -4,9 +4,10 @@ import {emptyObject, typeOf, isJsonValue, appendPath} from './utils'
 
 /**
  * @typedef {null|number|string|boolean|any[]|{[name:string]:any}} Json 
+ * @typedef {import("./errors").MgError} MgError
  * @typedef {{
  *   invalid?:boolean, 
- *   message?:string, 
+ *   error?:MgError, 
  *   touched?:boolean, 
  *   input?:string, 
  *   ['@value']?:Json
@@ -16,9 +17,8 @@ import {emptyObject, typeOf, isJsonValue, appendPath} from './utils'
  *   [rule:string]:Json
  * }} Schema
  * @typedef {(path:string) => Json} LookupFunc
- * @typedef {(param:Json, value:Json, lookup:LookupFunc, rules:Rules) => true|string} RuleFunc
+ * @typedef {(param:Json, value:Json, lookup:LookupFunc, rules:Rules) => true|MgError} RuleFunc
  * @typedef {{[name:string]:RuleFunc}} Rules
- * @typedef {{[key:string]:string}} Dictionary
  * @typedef {{[path:string]:Schema}} SchemaDb
  * 
  */
@@ -31,42 +31,6 @@ const nullable = (type) => {
   if (! type) return true
   const lastChar = type.charAt(type.length - 1)
   return type == 'null' || lastChar == '?'
-}
-
-/**
- * Maps error codes to messages. Use your own messages for localization.
- * @type {Dictionary}
- */
-export const defaultMessages = {
-  'schema.ruleError.enum': 'Invalid input',   // 不正な入力です
-  'schema.ruleError.const': 'Invalid input',   // 不正な入力です
-  'schema.ruleError.required': 'Missing properties',  // フィールドが不足しています
-  'schema.ruleError.switchRequired': 'Unknown instance',  // 未知のインスタンスです
-  'schema.ruleError.same': 'Not a same value', 
-  'schema.ruleError.multipleOf': 'Please enter a multiple of {{0}}',  // %Sの倍数を入力してください
-  'schema.ruleError.maximum': 'Please enter {{0}} or less',  // %s以下を入力してください
-  'schema.ruleError.exclusiveMaximum': 'Please enter a number less than {{0}}',  // %sより小さい数を入力してください
-  'schema.ruleError.minimum': 'Please enter {{0}} or more',  // %s以上を入力してください
-  'schema.ruleError.exclusiveMinimum': 'Please enter a number more than {{0}}',  // %sより大きい数を入力してください
-  'schema.ruleError.maxLength': 'Please enter no more than {{0}} characters',  // %s文字以下で入力してください
-  'schema.ruleError.minLength0': 'Please enter',  // 入力してください
-  'schema.ruleError.minLength': 'Please enter at least {{0}} characters',  // %s文字以上で入力してください
-  'schema.ruleError.pattern': 'Invalid format',  // 形式が不正です
-  'schema.ruleError.maxItems': 'Please make it less than or equal to {{0}}',  // %s個以下にしてください
-  'schema.ruleError.minItems': 'Please make it more than or equal to {{0}}',  // %s個以上にしてください
-  'schema.valueError.generic': 'Invalid value',  // 不正な値です
-  'schema.valueError.null': 'Invalid input', 
-  'schema.valueError.number': 'Please input a number', 
-  'schema.valueError.number?': 'Please input a number', 
-  'schema.valueError.integer': 'Please input an integer', 
-  'schema.valueError.integer?': 'Please input an integer', 
-  'schema.valueError.boolean': 'Please input true or false', 
-  'schema.valueError.boolean?': 'Please input true or false', 
-  'schema.valueError.string': 'Invalid input', 
-  'schema.valueError.array': 'Invalid input', 
-  'schema.valueError.array?': 'Invalid input', 
-  'schema.valueError.object': 'Invalid input', 
-  'schema.valueError.object?': 'Invalid input'
 }
 
 /**
@@ -95,18 +59,6 @@ export const buildDb = (schema) => {
   }
   inner(schema, "")
   return db
-}
-
-/**
- * Makes a localized message for error code.
- * @param {Dictionary} dict 
- * @param {string} code an error code
- * @param {Json} arg a parameter for validation rule
- * @return {string}
- */
-const makeMessage = (dict, code, arg = null) => {
-  const format = dict[code] || (code + ': {{0}}')
-  return format.replace('{{0}}', '' + arg)
 }
 
 /**
@@ -154,7 +106,7 @@ export const defaultRules = {
   type: (param, value) => {
     if (typeof param != 'string') throw new Error('invalid type')
     const result = testType(value, param)
-    if (! result) return 'schema.typeError.' + param
+    if (! result) return {code:'type.'+param}
     return true
   }, 
   'enum': (param, value) => {
@@ -162,17 +114,30 @@ export const defaultRules = {
     for (let i = 0; i < param.length; i++) {
       if (param[i] === value) return true
     }
-    return 'schema.ruleError.enum'
+    return {code:'rule.enum'}
   }, 
   'const': (param, value) => {
     if (param === value) return true
-    return 'schema.ruleError.const'
+    switch (typeOf(param)) {
+      case 'string': 
+      case 'number': 
+      case 'null': 
+      case 'boolean': 
+        return {code:'rule.const', hint: /** @type {string|number|null|boolean} */(param)}
+      default: 
+        return {code:'rule.const.nohint'}
+    }
+  }, 
+  notEmpty: (_param, value) => {
+    if (typeOf(value) != 'string') return true
+    if (value !== '') return true
+    return {code:'rule.notEmpty'}
   }, 
   required: (param, value) => {
     if (! Array.isArray(param)) throw new Error('invalid parameter')
     if (typeOf(value) != 'object') return true
     for (let i = 0; i < param.length; i++) {
-      if (! value.hasOwnProperty(param[i])) return 'schema.ruleError.required'
+      if (! value.hasOwnProperty(param[i])) return {code:'rule.required', hint:param[i]}
     }
     return true
   }, 
@@ -180,18 +145,29 @@ export const defaultRules = {
     if (typeOf(param) != 'object' || !('tagProperty' in /** @type {object} */ (param))) throw new Error('invalid parameter')
     if (typeOf(value) != 'object') return true
     const tag = /** @type {string} */ (lookup('0/' + param.tagProperty))
-    if (!tag || !param.types[tag]) return 'schema.ruleError.switchRequired'
+    if (! tag) return {code:'rule.switchRequired.nohint', decription:'no tag'}
+    if (! param.types[tag]) return {code:'rule.switchRequired.nohint', detail:'no type'}
     const required = param.types[tag]
     if (! Array.isArray(required)) throw new Error('invalid parameter')
     for (let i = 0; i < required.length; i++) {
-      if (! value.hasOwnProperty(required[i])) return 'schema.ruleError.switchRequired'
+      if (! value.hasOwnProperty(required[i])) return {code:'rule.switchRequired', hint:required[i]}
     }
     return true
   }, 
   same: (param, value, lookup) => {
     if (typeof param != 'string') throw new Error('invalid parameter')
     const target = lookup(param)
-    if (target !== value) return 'schema.ruleError.same'
+    if (target !== value) {
+      switch (typeOf(target)) {
+        case 'string': 
+        case 'number': 
+        case 'null': 
+        case 'boolean': 
+          return {code:'rule.same', hint: /** @type {string|number|null|boolean} */(target)}
+        default: 
+          return {code:'rule.same.nohint'}
+      }
+    }
     return true
   }, 
   if: (param, value, lookup, rules) => {
@@ -211,55 +187,55 @@ export const defaultRules = {
     if (typeof param != 'number') throw new Error('invalid parameter')
     if (typeof value != 'number') return true
     if (value % param === 0) return true
-    return 'schema.ruleError.multipleOf'
+    return {code:'rule.multipleOf', hint:param}
   }, 
   maximum: (param, value) => {
     if (typeof value != 'number') return true
     if (param >= value) return true
-    return 'schema.ruleError.maximum'
+    return {code:'rule.maximum', hint: /** @type {number} */ (param)}
   }, 
   exclusiveMaximum: (param, value) => {
     if (typeof value != 'number') return true
     if (param > value) return true
-    return 'schema.ruleError.exclusiveMaximum'
+    return {code:'rule.exclusiveMaximum', hint: /** @type {number} */ (param)}
   }, 
   minimum: (param, value) => {
     if (typeof value != 'number') return true
     if (param <= value) return true
-    return 'schema.ruleError.minimum'
+    return {code:'rule.minimum', hint: /** @type {number} */ (param)}
   }, 
   exclusiveMinimum: (param, value) => {
     if (typeof value != 'number') return true
     if (param < value) return true
-    return 'schema.ruleError.exclusiveMinimum'
+    return {code:'rule.exclusiveMinimum', hint: /** @type {number} */ (param)}
   }, 
   maxLength: (param, value) => {
     if (typeof value != 'string') return true
     if (value.length <= param) return true
-    return 'schema.ruleError.maxLength'
+    return {code:'rule.maxLength', hint: /** @type {number} */ (param)}
   }, 
   minLength: (param, value) => {
     if (typeof value != 'string') return true
     if (value.length >= param) return true
-    return (param == 1) ? 'schema.ruleError.minLength0' : 'schema.ruleError.minLength'
+    return {code:'rule.minLength', hint: /** @type {number} */ (param)}
   }, 
   'pattern': (param, value) => {
     if (typeof param != 'string') throw new Error('invalid parameter')
     if (typeof value != 'string') return true
     if (new RegExp(param).test(value)) return true
-    return 'schema.ruleError.pattern'
+    return {code:'rule.pattern', hint: /** @type {string} */ (param)}
   }, 
   maxItems: (param, value) => {
     if (typeof param != 'number') throw new Error('invalid parameter')
     if (! Array.isArray(value)) return true
     if (value.length <= param) return true
-    return 'schema.ruleError.maxItems'
+    return {code:'rule.maxItems', hint: /** @type {number} */ (param)}
   }, 
   minItems: (param, value) => {
     if (typeof param != 'number') throw new Error('invalid parameter')
     if (! Array.isArray(value)) return true
     if (value.length >= param) return true
-    return 'schema.ruleError.minItems'
+    return {code:'rule.minItems', hint: /** @type {number} */ (param)}
   }
 }
 
@@ -267,23 +243,26 @@ export const defaultRules = {
  * Validates a value with a schema.
  * @description shallow validation
  * @param {Rules} rules
- * @param {Dictionary} dict
  * @returns {(value:any, slot:Slot, schema:Schema, lookup:LookupFunc) => Slot} 
  */
-export const validate = (rules, dict) => (value, slot, schema, lookup) => {
+export const validate = (rules) => (value, slot, schema, lookup) => {
   if (! isJsonValue(value)) {
-    const code = (schema && schema.type) ? 'schema.valueError.' + schema.type : 'schema.valueError.generic'
-    return {...slot, '@value':value, invalid:true, message:makeMessage(dict, code, null)}
+    if (schema && schema.type) {
+      const error = {code:'type.'+schema.type, detail:'given value: '+value}
+      return {...slot, '@value':value, invalid:true, error}
+    } else {
+      const error = {code:'value', detail:'given value: '+value}
+      return {...slot, '@value':value, invalid:true, error}
+    }
   }
 
   if (schema) {
     const result = applyRules(value, schema, lookup, rules)
     if (result !== true) {
-      const message = makeMessage(dict, result, null)  // TODO make precise message
-      return {...slot, '@value':value, invalid:true, message}
+      return {...slot, '@value':value, invalid:true, error:result}
     }
   }
-  return {...slot, '@value':value, invalid:false, message:''}
+  return {...slot, '@value':value, invalid:false, error:null}
 }
 
 /**
@@ -305,11 +284,12 @@ export const applyRules = (value, schema, lookup, rules) => {
 
 /**
  * 
- * @param {Rules} rules 
- * @param {Dictionary} dict 
- * @returns {(input:string, slot:Slot, schema:Schema) => Slot}
+ * @param {string} input
+ * @param {Slot} slot
+ * @param {Schema} schema
+ * @returns {Slot}
  */
-export const coerce = (rules, dict) => (input, slot, schema) => {
+export const coerce = (input, slot, schema) => {
   input = "" + input  // coerce to string
   if (! schema) {
     throw new Error('coerce/0: no schema')
