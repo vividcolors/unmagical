@@ -382,7 +382,7 @@ const updateEnabledApis = {
  * @param {Object} params
  * @param {Json} params.data
  * @param {Schema} params.schema
- * @param {(Env) => import('hyperapp').VNode} params.view
+ * @param {(env:Env) => import('hyperapp').VNode} params.view
  * @param {Element} params.containerEl
  * @param {((env:Env, updatePointer:string, prevEnv:Env|null) => Env) | null} params.evolve
  * @param {{[name:string]:(any)}} params.updates
@@ -554,10 +554,10 @@ export const start = (
       const extra = E.getExtra(name, state.baseEnv)
       if (! extra || ! extra.fulfill) throw new Error('onPromiseSettle/0: no callback or unknown callback')
       // Calling fulfill() will cause the process to re-enter the hyperapp, 
-      // so we call fulfill() not now but in a different tick.
-      window.requestAnimationFrame(() => {
+      // so we call fulfill() not now but in a different opportunity.
+      setTimeout(() => {
         extra.fulfill(result)
-      })
+      }, 0)
       return null  // indicating no update.
     }, 
     onPromiseThen: (context) => (state, actions) => {
@@ -598,6 +598,33 @@ export const start = (
   }
 }
 
+/**
+ * @param {Object} params
+ * @param {Json} params.data
+ * @param {Schema} params.schema
+ * @param {((env:Env, updatePointer:string, prevEnv:Env|null) => Env) | null} params.evolve
+ * @param {Rules} params.rules
+ */
+export const once = (
+    {
+      data, 
+      schema, 
+      evolve = null, 
+      rules = null
+    }) => {
+  // complements reasonable defaults
+  if (! evolve) evolve = (env, _pointer, _prevEnv) => env
+  const validate = S.validate(rules || S.defaultRules)
 
+  const schemaDb = S.buildDb(schema)
+  
+  let updatePointer
+  let baseEnv = E.makeEnv(data, schemaDb, validate, true)
+  baseEnv = E.validate("", baseEnv);
+  [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
+  let env = evolve(baseEnv, updatePointer, null)
+  env = E.validate("", env)
+  return env
+}
 
 export const h = h0
