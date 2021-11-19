@@ -12,9 +12,10 @@
     "demo1": "parcel build -d demo/demo1 --out-file index.js demo/demo1/src.js",
     "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.js",
     "demo3": "parcel build -d demo/demo3 --out-file index.js demo/demo3/src.js",
-    "demo4": "parcel build -d demo/demo4 --out-file index.js demo/demo4/src.js", 
-    "demo5": "parcel build -d demo/demo5 --out-file index.js demo/demo5/src.js", 
-    "demo6": "parcel build -d demo/demo6 --out-file index.js --target node demo/demo6/src.js"
+    "demo4": "parcel build -d demo/demo4 --out-file index.js demo/demo4/src.js",
+    "demo5": "parcel build -d demo/demo5 --out-file index.js demo/demo5/src.js",
+    "demo6": "parcel build -d demo/demo6 --out-file index.js --target node demo/demo6/src.js", 
+    "doc": "jsdoc -r ^-c jsdoc_conf.json -d doc src"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
@@ -22,6 +23,7 @@
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
     "cpx": "^1.5.0",
+    "jsdoc": "^3.6.7",
     "json-server": "^0.17.0",
     "npm-run-all": "^4.1.5",
     "parcel-bundler": "^1.12.5",

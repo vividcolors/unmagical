@@ -16,7 +16,6 @@ import { app, h as h0 } from 'hyperapp'
  * @typedef {import("./schema").Rules} Rules
  * @typedef {import("./env").Env} Env
  * @typedef {import("./errors").MgError} MgError
- * @typedef {import("./errors").Catalog} Catalog
  * 
  */
 
@@ -387,7 +386,7 @@ const updateEnabledApis = {
  * @param {((env:Env, updatePointer:string, prevEnv:Env|null) => Env) | null} params.evolve
  * @param {{[name:string]:(any)}} params.updates
  * @param {Rules} params.rules
- * @param {Catalog} params.catalog
+ * @param {Record<string,string>} params.catalog
  */
 export const start = (
     {

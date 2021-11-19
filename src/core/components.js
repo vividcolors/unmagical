@@ -312,7 +312,7 @@ export const playRadio = (C, map = {}) => {
     attributes['data-mg-path'] = path
     attributes['data-mg-value-attribute'] = map.value
     attributes[map.onchange] = actions.onRadioChange
-    attributes[map.checked] = attributes[map.value] == slot['@value']
+    attributes[map.checked] = attributes[map.value] == slot.value
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")
@@ -333,7 +333,7 @@ export const playCheckbox = (C, map = {}) => {
     attributes['data-mg-path'] = path
     attributes['data-mg-checked-attribute'] = map.checked
     attributes[map.onchange] = actions.onCheckboxChange
-    attributes[map.checked] = slot['@value']
+    attributes[map.checked] = slot.value
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     addAttr(attributes, map.invalid, invalid)
     addClass(attributes, map.class, invalid ? map.invalidClass : "")

@@ -1,4 +1,5 @@
 //@ts-check
+/** @module core/updates */
 
 import { API } from './framework'
 
@@ -13,6 +14,8 @@ import { API } from './framework'
 
 /**
  * 
+ * @function
+ * @private
  * @param {string} s 
  * @returns {string}
  */
@@ -22,6 +25,8 @@ const capitalize = (s) => {
 
 /**
  * 
+ * @function
+ * @private
  * @param {string} prefix 
  * @param {Object} obj 
  * @returns {Object}
@@ -37,9 +42,45 @@ const decoratePropNames = (prefix, obj) => {
 
 /**
  * 
+ * @function
  * @param {Repository} repository 
  * @param {string} prefix
  * @returns {Object}
+ * @description
+ * ```
+ * {
+ *   editItem: (itemPath:string, formPath:string, env:Env) => Env
+ *   createItem: (data:Json, string:formPath, env:Env) => Env
+ *   commitItem: (string:formPath, listPath:formPath, options:Object, env:Env) => Env|Promise
+ *     options = {
+ *       errorSelector :string  // default null
+ *       loadingName :string  // default "loading"
+ *       successName :string  // default "success"
+ *       failureName :string  // default "failure"
+ *     }
+ *   discardItem: (formPath:string, env:Env) => Env
+ *   deleteItem: (itemPath:string, listPath:string, options:Object, env:Env) => Env|Promise
+ *     options = {
+ *       confirmName :string  // default "confirm"
+ *       loadingName :string  // default "loading"
+ *       successName :string  // default "success"
+ *       failureName :string  // default "failure"
+ *     }
+ *   loadItems: (listPath:string, options:Object, env:Env) => Env|Promise
+ *     options = {
+ *       loadingName :string  // default "loading"
+ *       failureName :string  // default "failure"
+ *       page :number  // default null
+ *       pageProperty :string  // default null
+ *     }
+ *   searchItems: (formPath:string, listPath:string, options:Object, env:Env) => Env|Promise
+ *     options = {
+ *       errorSelector :string  // default null
+ *       loadingName :string  // default "loading"
+ *       failureName :string  // default "failure"
+ *     }
+ * }
+ * ```
  */
 export const makeEntityListUpdates = (repository, prefix = '') => {
   const rv = {
@@ -76,8 +117,6 @@ export const makeEntityListUpdates = (repository, prefix = '') => {
      * @param {string} listPath
      * @param {Object} options
      * @param {string} options.errorSelector
-     * @param {string} options.loadMethod
-     * @param {string} options.totalCountHeader
      * @param {string} options.loadingName
      * @param {string} options.successName
      * @param {string} options.failureName
@@ -310,6 +349,30 @@ export const makeEntityListUpdates = (repository, prefix = '') => {
  * @param {Repository} repository 
  * @param {string} prefix
  * @returns {Object}
+ * @description
+ * ```
+ * {
+ *   submit: (method:string, options:Object, env:Env) => Env|Promise
+ *     options = {
+ *       path: string  // default ''
+ *       errorSelector: string  // default null
+ *       loadingName: string  // default "loading"
+ *       successName: string  // default "success"
+ *       failureName: string  // default "failure"
+ *     }
+ *   reset: (data:Json, options:Object, env:Env) => Env|Promise
+ *     options = {
+ *       confirmName: string  // default "confirm"
+ *     }
+ *   editPart: (partPath:string, formPath:string, env:Env) => Env
+ *   createPart: (pathToAdd:string, data:Json, formPath:string, env:Env) => Env
+ *   commitPart: (formPath:string, nextIdPath:string|null, options:Object, env:Env) => Env
+ *     options = {
+ *       errorSelector: string  // default null
+ *       
+ *     }
+ * }
+ * ```
  */
 export const makeEntityUpdates = (repository, prefix = '') => {
   const rv = {
@@ -319,7 +382,6 @@ export const makeEntityUpdates = (repository, prefix = '') => {
      * @param {Object} options
      * @param {string} options.path
      * @param {string} options.errorSelector
-     * @param {string} options.method
      * @param {string} options.loadingName
      * @param {string} options.successName
      * @param {string} options.failureName

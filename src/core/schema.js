@@ -1,30 +1,66 @@
 //@ts-check
+/** @module core/schema */
 
 import {emptyObject, typeOf, isJsonValue, appendPath} from './utils'
 
 /**
- * @typedef {null|number|string|boolean|any[]|{[name:string]:any}} Json 
- * @typedef {import("./errors").MgError} MgError
- * @typedef {{
- *   invalid?:boolean, 
- *   error?:MgError, 
- *   touched?:boolean, 
- *   input?:string, 
- *   ['@value']?:Json
- * }} Slot
- * @typedef {import("./env").Env} Env
- * @typedef {{
- *   [rule:string]:Json
- * }} Schema
- * @typedef {(path:string) => Json} LookupFunc
- * @typedef {(param:Json, value:Json, lookup:LookupFunc, rules:Rules) => true|MgError} RuleFunc
- * @typedef {{[name:string]:RuleFunc}} Rules
- * @typedef {{[path:string]:Schema}} SchemaDb
  * 
+ * @typedef {import("./errors").MgError} MgError
+ */
+/**
+ * 
+ * @callback LookupFunc
+ * @param {string} path
+ * @returns {Json}
+ */
+/**
+ * 
+ * @callback RuleFunc
+ * @param {Json} param
+ * @param {Json} value
+ * @param {LookupFunc} lookup
+ * @param {Rules} rules
+ * @returns {true|MgError}
+ */
+/**
+ * 
+ * @typedef {null|number|string|boolean|array|object} Json 
+ */
+/**
+ * 
+ * @typedef {Object} Slot
+ * @property {boolean} [invalid]
+ * @property {MgError} [error]
+ * @property {boolean} [touched]
+ * @property {string} [input]
+ * @property {Json} [value]
+ */
+/**
+ * 
+ * @callback ValidateFunc
+ * @param {any} value
+ * @param {Slot} slot0
+ * @param {Schema} schema
+ * @param {LookupFunc} lookup
+ * @returns {Slot}
+ */
+/**
+ * 
+ * @typedef {Record<string,Json>} Schema
+ */
+/**
+ * 
+ * @typedef {Record<string,RuleFunc>} Rules
+ */
+/**
+ * 
+ * @typedef {Record<string,Schema>} SchemaDb
  */
 
 /**
  * Returns true if type specification allows null.
+ * @function
+ * @private
  * @param {string|null|undefined} type a type in schema
  */
 const nullable = (type) => {
@@ -34,7 +70,8 @@ const nullable = (type) => {
 }
 
 /**
- * 
+ * Builds a map from path to schema.
+ * @function
  * @param {Json} schema 
  * @returns {SchemaDb}
  */
@@ -63,6 +100,8 @@ export const buildDb = (schema) => {
 
 /**
  * Returns true if the value is in an specified type
+ * @function
+ * @private
  * @param {Json} value
  * @param {string} type 
  * @returns {boolean}
@@ -99,7 +138,7 @@ const testType = (value, type) => {
 }
 
 /**
- * validation rules.
+ * default validation rules.
  * @type {Rules}
  */
 export const defaultRules = {
@@ -241,36 +280,39 @@ export const defaultRules = {
 
 /**
  * Validates a value with a schema.
+ * @function
  * @description shallow validation
  * @param {Rules} rules
- * @returns {(value:any, slot:Slot, schema:Schema, lookup:LookupFunc) => Slot} 
+ * @returns {ValidateFunc} 
  */
 export const validate = (rules) => (value, slot, schema, lookup) => {
   if (! isJsonValue(value)) {
     if (schema && schema.type) {
       const error = {code:'type.'+schema.type, detail:'given value: '+value}
-      return {...slot, '@value':value, invalid:true, error}
+      return {...slot, value, invalid:true, error}
     } else {
       const error = {code:'value', detail:'given value: '+value}
-      return {...slot, '@value':value, invalid:true, error}
+      return {...slot, value, invalid:true, error}
     }
   }
 
   if (schema) {
     const result = applyRules(value, schema, lookup, rules)
     if (result !== true) {
-      return {...slot, '@value':value, invalid:true, error:result}
+      return {...slot, value, invalid:true, error:result}
     }
   }
-  return {...slot, '@value':value, invalid:false, error:null}
+  return {...slot, value, invalid:false, error:null}
 }
 
 /**
  * 
+ * @function
  * @param {Json} value 
  * @param {Schema} schema 
  * @param {LookupFunc} lookup 
  * @param {Rules} rules 
+ * @returns {true|MgError}
  */
 export const applyRules = (value, schema, lookup, rules) => {
   for (let p in schema) {
@@ -284,6 +326,7 @@ export const applyRules = (value, schema, lookup, rules) => {
 
 /**
  * 
+ * @function
  * @param {string} input
  * @param {Slot} slot
  * @param {Schema} schema
@@ -309,27 +352,27 @@ export const coerce = (input, slot, schema) => {
     case 'number?': 
       const n = +input
       if ("" + n === input) {
-        return {'@value':n, input, touched:slot.touched}
+        return {value:n, input, touched:slot.touched}
       }
       break
     case 'integer': 
     case 'integer?': 
       const i = +input
       if ("" + i === input && i % 1 === 0) {
-        return {'@value':i, input, touched:slot.touched}
+        return {value:i, input, touched:slot.touched}
       }
       break
     case 'boolean': 
     case 'boolean?': 
       if (input === "true" || input === "false") {
-        return {'@value':input==="true", input, touched:slot.touched}
+        return {value:input==="true", input, touched:slot.touched}
       }
       break
     case 'string': 
-      return {'@value':input, input, touched:slot.touched}
+      return {value:input, input, touched:slot.touched}
   }
   if (input == "" && nullable(type)) {
-    return {'@value':null, input, touched:slot.touched}
+    return {value:null, input, touched:slot.touched}
   }
   return {input, touched:slot.touched}
 }

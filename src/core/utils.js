@@ -1,7 +1,9 @@
 //@ts-check
+/** @module core/utils */
 
 /**
  * Returns true if x is an string representation of an integer value.
+ * @function
  * @param {any} x
  * @returns {boolean} 
  */
@@ -11,7 +13,8 @@ export const isIntStr = (x) => {
 }
 
 /**
- * 
+ * Returns the array-index independent normalized path.
+ * @function
  * @param {string} path 
  * @returns {string}
  */
@@ -26,7 +29,8 @@ export const normalizePath = (path) => {
 }
 
 /**
- * 
+ * Concatenates two pathes, `path' can be a relative one.
+ * @function
  * @param {string} base 
  * @param {string} path 
  * @returns {string}
@@ -54,7 +58,8 @@ export const appendPath = (base, path) => {
 }
 
 /**
- * 
+ * Normalizes not a string path but an array path, then returns a normalized string path.
+ * @function
  * @param {(string | number)[]} path
  * @returns {string} 
  */
@@ -71,7 +76,8 @@ export const normalizePathArray = (path) => {
 }
 
 /**
- * 
+ * Separates a path described by a string into a (string|number) array.
+ * @function
  * @param {string} path 
  * @returns {(string | number)[]}
  */
@@ -85,25 +91,29 @@ export const pathToArray = (path) => {
 }
 
 /**
- * A variant of `typeof`, which handles null and Array appropreately.
+ * A variant of `typeof', which handles null and Array appropreately.
+ * @function
  * @param {null|array|object|boolean|number|string} x 
  * @returns {string}
  */
 export const typeOf = (x) => x === null ? 'null' : Array.isArray(x) ? 'array' : typeof x
 
 /**
+ * Empty object.
  * @type {{}}
  */
 export const emptyObject = {}
 
 /**
+ * Empty Array.
  * @template T
  * @type {T[]}
  */
 export const emptyArray = []
 
 /**
- * Returns true if `x' is json value.
+ * Returns true if `x' is a json value.
+ * @function
  * @param {any} x
  * @returns {boolean} 
  */
@@ -122,7 +132,8 @@ export const isJsonValue = (x) => {
 }
 
 /**
- * 
+ * Extracts common portion of pathes.
+ * @function
  * @param {string} path1 
  * @param {string} path2 
  * @return {string}
@@ -140,7 +151,8 @@ export const commonPath = (path1, path2) => {
 }
 
 /**
- * 
+ * Builds a query string from `obj'.
+ * @function
  * @param {Object} obj 
  * @param {boolean} omitEmptyParam 
  * @returns {Record<string, string>}

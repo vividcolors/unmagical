@@ -13,8 +13,8 @@ export const run = (assert, assertError, assertUndefined) => {
   assert(1, () => v(null, {}, s).invalid, false)
   assert(1.1, () => v(1, {}, s).invalid, true)
   assert(1.2, () => v("abc", {}, s).invalid, true)
-  assert(1.3, () => c("", {}, s)['@value'], null)
-  assertUndefined(1.4, () => c("abc", {}, s)['@value'])
+  assert(1.3, () => c("", {}, s).value, null)
+  assertUndefined(1.4, () => c("abc", {}, s).value)
   assert(1.5, () => v(undefined, {}, s).invalid, true)
 
   // no schema
@@ -31,57 +31,57 @@ export const run = (assert, assertError, assertUndefined) => {
   assert(3, () => v(null, {}, s).invalid, true)
   assert(3.1, () => v(1, {}, s).invalid, true)
   assert(3.2, () => v(true, {}, s).invalid, false)
-  assertUndefined(3.3, () => c('', {}, s)['@value'])
-  assert(3.4, () => c('false', {}, s)['@value'], false)
-  assertUndefined(3.5, () => c('abc', {}, s)['@value'])
-  assert(3.6, () => c('true', {}, s)['@value'], true)
+  assertUndefined(3.3, () => c('', {}, s).value)
+  assert(3.4, () => c('false', {}, s).value, false)
+  assertUndefined(3.5, () => c('abc', {}, s).value)
+  assert(3.6, () => c('true', {}, s).value, true)
 
   // type boolean?
   s = {type:'boolean?'}
   assert(4, () => v(null, {}, s).invalid, false)
   assert(4.1, () => v(1, {}, s).invalid, true)
   assert(4.2, () => v(true, {}, s).invalid, false)
-  assert(4.3, () => c('', {}, s)['@value'], null)
-  assert(4.4, () => c('false', {}, s)['@value'], false)
-  assertUndefined(4.5, () => c('abc', {}, s)['@value'])
+  assert(4.3, () => c('', {}, s).value, null)
+  assert(4.4, () => c('false', {}, s).value, false)
+  assertUndefined(4.5, () => c('abc', {}, s).value)
 
   // type integer
   s = {type:'integer'}
   assert(5, () => v(null, {}, s).invalid, true)
   assert(5.1, () => v(1, {}, s).invalid, false)
   assert(5.2, () => v(true, {}, s).invalid, true)
-  assertUndefined(5.3, () => c('', {}, s)['@value'])
-  assert(5.4, () => c('10', {}, s)['@value'], 10)
-  assertUndefined(5.5, () => c('abc', {}, s)['@value'])
-  assert(5.6, () => v(132, {}, s)['@value'], 132)
+  assertUndefined(5.3, () => c('', {}, s).value)
+  assert(5.4, () => c('10', {}, s).value, 10)
+  assertUndefined(5.5, () => c('abc', {}, s).value)
+  assert(5.6, () => v(132, {}, s).value, 132)
 
   // type integer?
   s = {type:'integer?'}
   assert(6, () => v(null, {}, s).invalid, false)
   assert(6.1, () => v(1, {}, s).invalid, false)
   assert(6.2, () => v(true, {}, s).invalid, true)
-  assert(6.3, () => c('', {}, s)['@value'], null)
-  assert(6.4, () => c('10', {}, s)['@value'], 10)
-  assertUndefined(6.5, () => c('10.3', {}, s)['@value'])
-  assert(6.6, () => c('132', {}, s)['@value'], 132)
+  assert(6.3, () => c('', {}, s).value, null)
+  assert(6.4, () => c('10', {}, s).value, 10)
+  assertUndefined(6.5, () => c('10.3', {}, s).value)
+  assert(6.6, () => c('132', {}, s).value, 132)
 
   // type number
   s = {type:'number'}
   assert(7, () => v(null, {}, s).invalid, true)
   assert(7.1, () => v(1.2, {}, s).invalid, false)
   assert(7.2, () => v(true, {}, s).invalid, true)
-  assertUndefined(7.3, () => c('', {}, s)['@value'])
-  assert(7.4, () => c('10.3', {}, s)['@value'], 10.3)
-  assertUndefined(7.5, () => c('abc', {}, s)['@value'])
+  assertUndefined(7.3, () => c('', {}, s).value)
+  assert(7.4, () => c('10.3', {}, s).value, 10.3)
+  assertUndefined(7.5, () => c('abc', {}, s).value)
 
   // type number?
   s = {type:'number?'}
   assert(8, () => v(null, {}, s).invalid, false)
   assert(8.1, () => v(1.2, {}, s).invalid, false)
   assert(8.2, () => v(true, {}, s).invalid, true)
-  assert(8.3, () => c('', {}, s)['@value'], null)
-  assert(8.4, () => c('10.3', {}, s)['@value'], 10.3)
-  assertUndefined(8.5, () => c('abc', {}, s)['@value'])
+  assert(8.3, () => c('', {}, s).value, null)
+  assert(8.4, () => c('10.3', {}, s).value, 10.3)
+  assertUndefined(8.5, () => c('abc', {}, s).value)
 
   // type string
   s = {type:'string'}
@@ -89,8 +89,8 @@ export const run = (assert, assertError, assertUndefined) => {
   assert(9.1, () => v('', {}, s).invalid, false)
   assert(9.2, () => v(true, {}, s).invalid, true)
   assert(9.3, () => v('abc', {}, s).invalid, false)
-  assert(9.4, () => c("", {}, s)['@value'], "")
-  assert(9.5, () => c("abc", {}, s)['@value'], "abc")
+  assert(9.4, () => c("", {}, s).value, "")
+  assert(9.5, () => c("abc", {}, s).value, "abc")
 
   // type object
   s = {type:'object'}

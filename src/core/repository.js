@@ -1,4 +1,5 @@
 //@ts-check
+/** @module core/repository */
 
 import {normalizeQuery} from './utils'
 
@@ -7,17 +8,29 @@ import {normalizeQuery} from './utils'
  * @typedef {import("./schema").Json} Json
  * @typedef {import("./errors").MgError} MgError
  * 
- * @typedef {{
- *   search: (query:Record<string,any>) => Promise<{entities:Json[], totalCount:number}>
+ */
+/**
+ * @typedef {Object} Repository
+ * @property {(query:Record<string,any>) => Promise<{entities:Array<Json>,totalCount:number}>} search
+ * @property {(entity:Json) => Promise<Json>} add
+ * @property {(entity:Json) => Promise<Json>} replace
+ * @property {(entity:Json) => Promise<void>} remove
+ * @description 
+ * ```
+ * {
+ *   serach: (query:Record<string,any>) => Promise<{entities:Array<Json>,totalCount:number}>
  *   add: (entity:Json) => Promise<Json>
  *   replace: (entity:Json) => Promise<Json>
  *   remove: (entity:Json) => Promise<void>
- * }} Repository
+ * }
+ * ```
  */
 
 
 /**
  * 
+ * @function
+ * @private
  * @param {Response} response 
  * @returns {Error}
  */
@@ -29,6 +42,8 @@ const responseToError = (response) => {
 }
 
 /**
+ * 
+ * @function
  * @param {string} baseUrl
  * @param {Object} options
  * @param {string} options.idProperty

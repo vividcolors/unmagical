@@ -79,7 +79,7 @@ export const run = (assert, assertError) => {
   assert(15, () => {
     return E.reduceDeep((cur, slot, path) => {
       if (path == '/buddies') return cur
-      return cur + `[${slot['@value']}]`
+      return cur + `[${slot.value}]`
     }, "", '/buddies', env)
   }, '[Dad][Mam][Dad][Pochi]')
 
