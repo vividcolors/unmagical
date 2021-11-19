@@ -2,60 +2,28 @@
 /** @module core/schema */
 
 import {emptyObject, typeOf, isJsonValue, appendPath} from './utils'
+import {MgError, Scalar} from './errors'
 
-/**
- * 
- * @typedef {import("./errors").MgError} MgError
- */
-/**
- * 
- * @callback LookupFunc
- * @param {string} path
- * @returns {Json}
- */
-/**
- * 
- * @callback RuleFunc
- * @param {Json} param
- * @param {Json} value
- * @param {LookupFunc} lookup
- * @param {Rules} rules
- * @returns {true|MgError}
- */
-/**
- * 
- * @typedef {null|number|string|boolean|array|object} Json 
- */
-/**
- * 
- * @typedef {Object} Slot
- * @property {boolean} [invalid]
- * @property {MgError} [error]
- * @property {boolean} [touched]
- * @property {string} [input]
- * @property {Json} [value]
- */
-/**
- * 
- * @callback ValidateFunc
- * @param {any} value
- * @param {Slot} slot0
- * @param {Schema} schema
- * @param {LookupFunc} lookup
- * @returns {Slot}
- */
-/**
- * 
- * @typedef {Record<string,Json>} Schema
- */
-/**
- * 
- * @typedef {Record<string,RuleFunc>} Rules
- */
-/**
- * 
- * @typedef {Record<string,Schema>} SchemaDb
- */
+export type Json = null | number | string | boolean | Json[] | {[prop:string]:Json}
+export type Lookup = (path:string) => Json
+export type Rules = Record<string,RuleFunc>
+export type RuleFunc = (param:Json, value:Json, lookup:Lookup, rules:Rules) => true|MgError
+export type Schema = Record<string,Json>
+export type SchemaDb = Record<string,Schema>
+
+export interface Slot {
+  invalid?: boolean, 
+  error?: MgError, 
+  touched?: boolean, 
+  input?: string, 
+  value?: Json
+}
+
+export type Validate = (value:any, slot0:Slot, schema:Schema, lookup:Lookup) => Slot
+
+type SwitchRequiredParam = {tagProperty:string, types:{[tag:string]:string[]}}
+type IfParam = [string, Schema, Schema, Schema?]
+
 
 /**
  * Returns true if type specification allows null.
@@ -63,7 +31,7 @@ import {emptyObject, typeOf, isJsonValue, appendPath} from './utils'
  * @private
  * @param {string|null|undefined} type a type in schema
  */
-const nullable = (type) => {
+const nullable = (type:any):boolean => {
   if (! type) return true
   const lastChar = type.charAt(type.length - 1)
   return type == 'null' || lastChar == '?'
@@ -75,7 +43,7 @@ const nullable = (type) => {
  * @param {Json} schema 
  * @returns {SchemaDb}
  */
-export const buildDb = (schema) => {
+export const buildDb = (schema:Schema):SchemaDb => {
   const db = /** @type SchemaDb */ ({})
   const inner = (schema, path) => {
     db[path] = schema
@@ -106,7 +74,7 @@ export const buildDb = (schema) => {
  * @param {string} type 
  * @returns {boolean}
  */
-const testType = (value, type) => {
+const testType = (value:Json, type:string):boolean => {
   if (! type) return true
   if (value === null) {
     return nullable(type)
@@ -141,7 +109,7 @@ const testType = (value, type) => {
  * default validation rules.
  * @type {Rules}
  */
-export const defaultRules = {
+export const defaultRules:Rules = {
   type: (param, value) => {
     if (typeof param != 'string') throw new Error('invalid type')
     const result = testType(value, param)
@@ -162,7 +130,7 @@ export const defaultRules = {
       case 'number': 
       case 'null': 
       case 'boolean': 
-        return {code:'rule.const', hint: /** @type {string|number|null|boolean} */(param)}
+        return {code:'rule.const', hint:(param as Scalar)}
       default: 
         return {code:'rule.const.nohint'}
     }
@@ -176,14 +144,15 @@ export const defaultRules = {
     if (! Array.isArray(param)) throw new Error('invalid parameter')
     if (typeOf(value) != 'object') return true
     for (let i = 0; i < param.length; i++) {
-      if (! value.hasOwnProperty(param[i])) return {code:'rule.required', hint:param[i]}
+      if (! value.hasOwnProperty(param[i] as string)) return {code:'rule.required', hint:param[i] as string}
     }
     return true
   }, 
   switchRequired: (param, value, lookup) => {
-    if (typeOf(param) != 'object' || !('tagProperty' in /** @type {object} */ (param))) throw new Error('invalid parameter')
+    if (typeOf(param) != 'object' || !('tagProperty' in (param as object))) throw new Error('invalid parameter')
     if (typeOf(value) != 'object') return true
-    const tag = /** @type {string} */ (lookup('0/' + param.tagProperty))
+    param = param as SwitchRequiredParam
+    const tag = lookup('0/' + param.tagProperty) as string
     if (! tag) return {code:'rule.switchRequired.nohint', decription:'no tag'}
     if (! param.types[tag]) return {code:'rule.switchRequired.nohint', detail:'no type'}
     const required = param.types[tag]
@@ -202,7 +171,7 @@ export const defaultRules = {
         case 'number': 
         case 'null': 
         case 'boolean': 
-          return {code:'rule.same', hint: /** @type {string|number|null|boolean} */(target)}
+          return {code:'rule.same', hint: target as Scalar}
         default: 
           return {code:'rule.same.nohint'}
       }
@@ -211,7 +180,8 @@ export const defaultRules = {
   }, 
   if: (param, value, lookup, rules) => {
     if (typeOf(param) != 'array') throw new Error('invalid parameter')
-    const [target, match, then, el = {}] = /** @type {Array} */ (param)
+    const param1 = param as IfParam
+    const [target, match, then, el = {}] = param1
     if (! target || ! match || ! then) throw new Error('invalid parameter')
     const targetValue = lookup(target)
     const targetResult = applyRules(targetValue, match, lookup, rules)
@@ -231,32 +201,32 @@ export const defaultRules = {
   maximum: (param, value) => {
     if (typeof value != 'number') return true
     if (param >= value) return true
-    return {code:'rule.maximum', hint: /** @type {number} */ (param)}
+    return {code:'rule.maximum', hint:param as Scalar}
   }, 
   exclusiveMaximum: (param, value) => {
     if (typeof value != 'number') return true
     if (param > value) return true
-    return {code:'rule.exclusiveMaximum', hint: /** @type {number} */ (param)}
+    return {code:'rule.exclusiveMaximum', hint:param as Scalar}
   }, 
   minimum: (param, value) => {
     if (typeof value != 'number') return true
     if (param <= value) return true
-    return {code:'rule.minimum', hint: /** @type {number} */ (param)}
+    return {code:'rule.minimum', hint:param as Scalar}
   }, 
   exclusiveMinimum: (param, value) => {
     if (typeof value != 'number') return true
     if (param < value) return true
-    return {code:'rule.exclusiveMinimum', hint: /** @type {number} */ (param)}
+    return {code:'rule.exclusiveMinimum', hint:param as Scalar}
   }, 
   maxLength: (param, value) => {
     if (typeof value != 'string') return true
     if (value.length <= param) return true
-    return {code:'rule.maxLength', hint: /** @type {number} */ (param)}
+    return {code:'rule.maxLength', hint:param as Scalar}
   }, 
   minLength: (param, value) => {
     if (typeof value != 'string') return true
     if (value.length >= param) return true
-    return {code:'rule.minLength', hint: /** @type {number} */ (param)}
+    return {code:'rule.minLength', hint:param as Scalar}
   }, 
   'pattern': (param, value) => {
     if (typeof param != 'string') throw new Error('invalid parameter')
@@ -285,7 +255,7 @@ export const defaultRules = {
  * @param {Rules} rules
  * @returns {ValidateFunc} 
  */
-export const validate = (rules) => (value, slot, schema, lookup) => {
+export const validate = (rules:Rules):Validate => (value, slot, schema, lookup) => {
   if (! isJsonValue(value)) {
     if (schema && schema.type) {
       const error = {code:'type.'+schema.type, detail:'given value: '+value}
@@ -314,7 +284,7 @@ export const validate = (rules) => (value, slot, schema, lookup) => {
  * @param {Rules} rules 
  * @returns {true|MgError}
  */
-export const applyRules = (value, schema, lookup, rules) => {
+export const applyRules = (value:any, schema:Schema, lookup:Lookup, rules:Rules):true|MgError => {
   for (let p in schema) {
     const f = rules[p]
     if (! f) continue
@@ -332,7 +302,7 @@ export const applyRules = (value, schema, lookup, rules) => {
  * @param {Schema} schema
  * @returns {Slot}
  */
-export const coerce = (input, slot, schema) => {
+export const coerce = (input:string, slot:Slot, schema:Schema):Slot => {
   input = "" + input  // coerce to string
   if (! schema) {
     throw new Error('coerce/0: no schema')

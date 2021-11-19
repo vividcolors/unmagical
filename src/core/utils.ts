@@ -1,13 +1,15 @@
 //@ts-check
 /** @module core/utils */
 
+export type Index = string|number
+
 /**
  * Returns true if x is an string representation of an integer value.
  * @function
  * @param {any} x
  * @returns {boolean} 
  */
-export const isIntStr = (x) => {
+export const isIntStr = (x:any):boolean => {
   const n = +x
   return (n % 1 === 0 && x === "" + n)
 }
@@ -18,7 +20,7 @@ export const isIntStr = (x) => {
  * @param {string} path 
  * @returns {string}
  */
-export const normalizePath = (path) => {
+export const normalizePath = (path:string):string => {
   const frags = path.split('/')
   for (let i = 1; i < frags.length; i++) {
     if (isIntStr(frags[i])) {
@@ -35,7 +37,7 @@ export const normalizePath = (path) => {
  * @param {string} path 
  * @returns {string}
  */
-export const appendPath = (base, path) => {
+export const appendPath = (base:string, path:string):string => {
   if (path.charAt(0) == '' || path.charAt(0) == '/') return path  // absolute path
   if (path === '0') return base  // easy frequent case
   
@@ -60,10 +62,10 @@ export const appendPath = (base, path) => {
 /**
  * Normalizes not a string path but an array path, then returns a normalized string path.
  * @function
- * @param {(string | number)[]} path
+ * @param {Index[]} path
  * @returns {string} 
  */
-export const normalizePathArray = (path) => {
+export const normalizePathArray = (path:Index[]):string => {
   let rv = ''
   for (let i = 0; i < path.length; i++) {
     if (typeof path[i] == 'number' || isIntStr(path[i])) {
@@ -76,12 +78,12 @@ export const normalizePathArray = (path) => {
 }
 
 /**
- * Separates a path described by a string into a (string|number) array.
+ * Separates a path described by a string into an Index array.
  * @function
  * @param {string} path 
- * @returns {(string | number)[]}
+ * @returns {Index[]}
  */
-export const pathToArray = (path) => {
+export const pathToArray = (path:string):Index[] => {
   const frags = path.split('/')
   const rv = []
   for (let i = 1; i < frags.length; i++) {
@@ -96,20 +98,20 @@ export const pathToArray = (path) => {
  * @param {null|array|object|boolean|number|string} x 
  * @returns {string}
  */
-export const typeOf = (x) => x === null ? 'null' : Array.isArray(x) ? 'array' : typeof x
+export const typeOf = (x:any):string => x === null ? 'null' : Array.isArray(x) ? 'array' : typeof x
 
 /**
  * Empty object.
  * @type {{}}
  */
-export const emptyObject = {}
+export const emptyObject:{} = {}
 
 /**
  * Empty Array.
  * @template T
  * @type {T[]}
  */
-export const emptyArray = []
+export const emptyArray:[] = []
 
 /**
  * Returns true if `x' is a json value.
@@ -117,7 +119,7 @@ export const emptyArray = []
  * @param {any} x
  * @returns {boolean} 
  */
-export const isJsonValue = (x) => {
+export const isJsonValue = (x:any):boolean => {
   switch (typeOf(x)) {
     case 'null': 
     case 'number': 
@@ -138,7 +140,7 @@ export const isJsonValue = (x) => {
  * @param {string} path2 
  * @return {string}
  */
-export const commonPath = (path1, path2) => {
+export const commonPath = (path1:string, path2:string):string => {
   const frags1 = path1.split('/')
   const frags2 = path2.split('/')
   const rv = []
@@ -157,7 +159,7 @@ export const commonPath = (path1, path2) => {
  * @param {boolean} omitEmptyParam 
  * @returns {Record<string, string>}
  */
-export const normalizeQuery = (obj, omitEmptyParam) => {
+export const normalizeQuery = (obj:Record<string,string>, omitEmptyParam:boolean):Record<string,string> => {
   const rv = /** @type {Record<string, string>} */ ({})
   for (let p in obj) {
     switch (typeOf(p)) {

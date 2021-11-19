@@ -152,8 +152,8 @@ export const makeEntityListUpdates = (repository, prefix = '') => {
       } else {
         env = API.openProgress(opts.loadingName, null, env)
         const data = API.extract(dataPath, env)
-        const action = /** @type {"add"|"replace"} */ (API.extract(methodPath, env))
-        return /** @type {Promise} */ (leave(repository[action](data), env))
+        const action = (API.extract(methodPath, env)) as "add"|"replace"
+        return leave(repository[action](data), env)
         .then(enter((_item, env) => {
           const query = /** @type {Record<string, any>} */ (API.extract(queryPath, env))
           return leave(repository.search(query), env)
@@ -516,12 +516,12 @@ export const makeEntityUpdates = (repository, prefix = '') => {
         }
         return env
       } else {
-        const method = /** @type {"add"|"replace"} */ (API.extract(methodPath, env))
-        const path = /** @type {string} */ (API.extract(actionPath, env))
+        const method = API.extract(methodPath, env) as "add"|"replace"
+        const path = API.extract(actionPath, env) as string
         const data = API.extract(dataPath, env)
         if (method == "add") {
           if (opts.idProperty && nextIdPath) {
-            const nextId = /** @type {number} */ (API.extract(nextIdPath, env))
+            const nextId = API.extract(nextIdPath, env) as number
             env = API.replace(nextIdPath, nextId + 1, env)
             data[opts.idProperty] = nextId
           }
@@ -586,7 +586,7 @@ export const makeEntityUpdates = (repository, prefix = '') => {
       }
       const data = API.extract(partPath, env)
       if (opts.idProperty && nextIdPath) {
-        const nextId = /** @type {number} */ (API.extract(nextIdPath, env))
+        const nextId = API.extract(nextIdPath, env) as number
         data[opts.idProperty] = nextId
         env = API.add(nextIdPath, nextId + 1, env)
       }

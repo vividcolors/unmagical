@@ -3,24 +3,16 @@
 
 import showText from 'string-template'
 
-/**
- * 
- * @callback NormalizeErrorFunc
- * @param {MgError} error
- * @returns {MgError}
- */
-/**
- * @typedef {Object} MgError
- * @property {string} code
- * @property {string} [detail]
- * @property {string|number|boolean|string} [hint]
- * @property {string} [message]
- */
-/* - type.{type}
- * - rule.{rule}
- * - http.{statusCode}
- * - system.net
- */
+export type Scalar = string|number|boolean|null
+
+export interface MgError {
+  code: string, 
+  detail?: string, 
+  hint?: Scalar, 
+  message?: string
+}
+
+export type NormalizeError = (error:MgError) => MgError
 
 /**
  * Returns true if a given object is an instance of MgError
@@ -28,7 +20,7 @@ import showText from 'string-template'
  * @param {any} x
  * @returns {boolean} 
  */
-export const isError = (x) => {
+export const isError = (x:any):boolean => {
   return (typeof x == 'object' && x != null && 'code' in x)
 }
 
@@ -38,7 +30,7 @@ export const isError = (x) => {
   * @param {Record<string,string>} catalog
   * @returns {NormalizeErrorFunc}
   */
-export const normalizeError = (catalog) => (error) => {
+export const normalizeError = (catalog:Record<string,string>):NormalizeError => (error) => {
   const template = catalog[error.code] || catalog['detail' in error ? 'fallback' : 'fallback.nodetail']
   const message = showText(template, error)
   return {...error, message}

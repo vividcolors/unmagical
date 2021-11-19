@@ -4,21 +4,73 @@ import { normalizePath } from './utils'
 import * as E from './env'
 import * as S from './schema'
 import * as X from './errors'
-import { app, h as h0 } from 'hyperapp'
+import { app, h as h0, VNode, ActionType, View } from 'hyperapp'
+import {MgError, NormalizeError} from './errors'
+import {Json, Schema, Slot, SchemaDb, Lookup, Rules} from './schema'
+import {Env} from './env'
 
-/**
- * 
- * @typedef {import("./schema").Json} Json
- * @typedef {import("./schema").Schema} Schema
- * @typedef {import("./schema").Slot} Slot
- * @typedef {import("./schema").SchemaDb} SchemaDb
- * @typedef {import("./schema").LookupFunc} LookupFunc
- * @typedef {import("./schema").Rules} Rules
- * @typedef {import("./env").Env} Env
- * @typedef {import("./errors").MgError} MgError
- * 
- */
+export type Validity = {invalid:boolean, error:MgError|null}
 
+type ThenHandler = (result:any) => any
+type XThenHandler = (result:any, env:Env) => any
+type Update = (...args:any[]) => Env
+type DialogState = {
+  data: any, 
+  fulfill: (result:any) => undefined, 
+  reject: (result:any) => undefined
+}
+type OnPromiseThenParam = {
+  result: any,
+  ret: (any:any) => void,
+  handler: XThenHandler
+}
+/*type OnUpdateByEvent<S, A> = ActionType<Event, S, A>
+type OnUpdateByCall<S, A> = ActionType<{update:string, context:any[]}, S, A>
+type OnUpdate<S, A> = OnUpdateByEvent<S, A>|OnUpdateByCall<S, A>*/
+
+interface UnmagicalState {
+  baseEnv: Env, 
+  env: Env, 
+  normalizeError: NormalizeError
+}
+
+interface UnmagicalActions {
+  onTextboxInput: UnmagicalAction<Event>, 
+  onTextboxBlur: UnmagicalAction<Event>, 
+  onSliderInput: UnmagicalAction<Event>, 
+  onSliderChange: UnmagicalAction<Event>, 
+  onListboxChange: UnmagicalAction<Event>, 
+  onRadioChange: UnmagicalAction<Event>, 
+  onCheckboxChange: UnmagicalAction<Event>, 
+  onSmartControlChange: UnmagicalAction<{path:string,input:string}|[{path:string,input:string}]>, 
+  onUpdate: UnmagicalAction<Event|{update:string,context:any[]}>, 
+  onPromiseSettle: UnmagicalAction<Event|{name:string,result:any}>, 
+  onPromiseThen: UnmagicalAction<OnPromiseThenParam>
+}
+
+type UnmagicalAction<T> = ActionType<T, UnmagicalState, UnmagicalActions>
+
+export interface StartParameter {
+  data: Json, 
+  schema: Schema, 
+  view: (env:Env) => VNode, 
+  containerEl: Element, 
+  evolve?: (env:Env, updatePointer:string|null, prevEnv:Env|null) => Env, 
+  updates?: Record<string,Update>
+  rules?: Rules, 
+  catalog?: Record<string,string>
+}
+
+export interface StartValue {
+  onUpdate: UnmagicalAction<Event|{update:string,context:any[]}>
+}
+
+export interface OnceParameter {
+  data: Json, 
+  schema: Schema, 
+  evolve?: (env:Env, updatePointer:string|null, prevEnv:Env|null) => Env, 
+  rules?: Rules
+}
 
 /**
  * @namespace
@@ -45,7 +97,7 @@ export const API = {
    * @param {Env} env
    * @returns {Env} 
    */
-  touchAll: (path, env) => {
+  touchAll: (path:string, env:Env):Env => {
     return E.mapDeep((slot, _path) => ({...slot, touched:true}), path, env)
   }, 
 
@@ -55,7 +107,7 @@ export const API = {
    * @param {Env} env
    * @returns {number} 
    */
-  countValidationErrors: (path, env) => {
+  countValidationErrors: (path:string, env:Env):number => {
     return E.reduceDeep((cur, slot, _path) => {
       const d = slot.touched && slot.invalid ? 1 : 0
       return cur + d
@@ -68,8 +120,8 @@ export const API = {
    * @param {Env} env
    * @returns {string[]} 
    */
-  validationErrors: (path, env) => {
-    const errors = []
+  validationErrors: (path:string, env:Env):string[] => {
+    const errors:string[] = []
     E.reduceDeep((_cur, slot, path) => {
       if (slot.touched && slot.invalid) {
         errors.push(path)
@@ -82,14 +134,14 @@ export const API = {
   /**
    * @param {string} path
    * @param {Env} env
-   * @returns {{invalid:boolean, error:MgError}}
+   * @returns {{invalid:boolean, error:MgError|null}}
    */
-  foldValidity: (path, env) => {
-    return API.reduceDeep((cur, slot, _path) => {
+  foldValidity: (path:string, env:Env):Validity => {
+    return API.reduceDeep<Validity>((cur, slot, _path) => {
       if (cur.invalid) return cur
       if (slot.touched && slot.invalid) return {invalid:true, error:slot.error}
       return cur
-    }, /** @type {{invalid:boolean,error:MgError}} */({invalid:false, error:null}), path, env)
+    }, {invalid:false, error:null}, path, env)
   }, 
 
   /**
@@ -97,8 +149,8 @@ export const API = {
    * @param {Env} env
    * @returns {[Promise, Env]}
    */
-  sleep: (ms, env) => {
-    const p = new Promise((fulfill, reject) => {
+  sleep: (ms:number, env:Env):[Promise<null>, Env] => {
+    const p = new Promise<null>((fulfill, reject) => {
       setTimeout(() => {
         fulfill(null)
       }, ms)
@@ -113,8 +165,8 @@ export const API = {
    * @param {Env} env
    * @returns {[Promise, Env]}
    */
-  startReordering: (name, itemPath, group, env) => {
-    const p = new Promise((fulfill, reject) => {
+  startReordering: <T>(name:string, itemPath:string, group:string, env:Env):[Promise<T>, Env] => {
+    const p = new Promise<T>((fulfill, reject) => {
       env = E.setExtra(name, {itemPath, group, fulfill, reject}, env)
     })
     return [p, env]
@@ -125,7 +177,7 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  endReordering: (name, env) => {
+  endReordering: (name:string, env:Env):Env => {
     const extra = E.getExtra(name, env)
     if (! extra) return env
     return E.setExtra(name, null, env)
@@ -136,8 +188,8 @@ export const API = {
    * @param {Env} env
    * @returns {string|null}
    */
-  getReordering: (name, env) => {
-    const extra = E.getExtra(name, env)
+  getReordering: (name:string, env:Env):string|null => {
+    const extra = E.getExtra(name, env) as {itemPath:string}|null
     if (! extra) return null
     return extra.itemPath
   }, 
@@ -148,8 +200,8 @@ export const API = {
    * @param {Env} env
    * @returns {[Promise, Env]}
    */
-  openDialog: (name, data, env) => {
-    const p = new Promise((fulfill, reject) => {
+  openDialog: (name:string, data:any, env:Env):[Promise<boolean>,Env] => {
+    const p = new Promise<boolean>((fulfill, reject) => {
       env = E.setExtra(name, {data, fulfill, reject}, env)
     })
     return [p, env]
@@ -160,7 +212,7 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  closeDialog: (name, env) => {
+  closeDialog: (name:string, env:Env):Env => {
     const extra = E.getExtra(name, env)
     if (! extra) return env
     return E.setExtra(name, null, env)
@@ -171,8 +223,8 @@ export const API = {
    * @param {Env} env
    * @returns {any|null}
    */
-  getDialog: (name, env) => {
-    const extra = E.getExtra(name, env)
+  getDialog: (name:string, env:Env):any|null => {
+    const extra = E.getExtra(name, env) as DialogState|null
     if (! extra) return null
     return extra.data
   }, 
@@ -183,7 +235,7 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  openFeedback: (name, data, env) => {
+  openFeedback: (name:string, data:any, env:Env):Env => {
     return E.setExtra(name, data, env)
   }, 
 
@@ -192,7 +244,7 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  closeFeedback: (name, env) => {
+  closeFeedback: (name:string, env:Env):Env => {
     const extra = E.getExtra(name, env)
     if (! extra) return env
     return E.setExtra(name, null, env)
@@ -203,7 +255,7 @@ export const API = {
    * @param {Env} env
    * @returns {any|null}
    */
-  getFeedback: (name, env) => {
+  getFeedback: (name:string, env:Env):any|null => {
     return E.getExtra(name, env)
   }, 
 
@@ -213,7 +265,7 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  setPage: (name, current, env) => {
+  setPage: (name:string, current:number, env:Env):Env => {
     return E.setExtra(name, current, env)
   }, 
 
@@ -222,8 +274,8 @@ export const API = {
    * @param {Env} env
    * @returns {number}
    */
-  getPage: (name, env) => {
-    const extra = E.getExtra(name, env)
+  getPage: (name:string, env:Env):number => {
+    const extra = E.getExtra(name, env) as number|null
     return (extra !== null) ? extra : 0
   }, 
 
@@ -232,8 +284,8 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  nextPage: (name, env) => {
-    const extra = E.getExtra(name, env)
+  nextPage: (name:string, env:Env):Env => {
+    const extra = E.getExtra(name, env) as number|null
     const current = (extra !== null) ? extra : 0
     return E.setExtra(name, current + 1, env)
   }, 
@@ -243,8 +295,8 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  prevPage: (name, env) => {
-    const extra = E.getExtra(name, env)
+  prevPage: (name:string, env:Env):Env => {
+    const extra = E.getExtra(name, env) as number|null
     const current = (extra !== null) ? extra : 0
     return E.setExtra(name, current - 1, env)
   }, 
@@ -255,7 +307,7 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  setSwitch: (name, shown, env) => {
+  setSwitch: (name:string, shown:boolean, env:Env):Env => {
     return E.setExtra(name, shown, env)
   }, 
 
@@ -264,8 +316,8 @@ export const API = {
    * @param {Env} env
    * @returns {boolean}
    */
-  getSwitch: (name, env) => {
-    const extra = E.getExtra(name, env)
+  getSwitch: (name:string, env:Env):boolean => {
+    const extra = E.getExtra(name, env) as boolean|null
     return (extra !== null) ? extra : false
   }, 
 
@@ -274,8 +326,8 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  toggleSwitch: (name, env) => {
-    const extra = E.getExtra(name, env)
+  toggleSwitch: (name:string, env:Env):Env => {
+    const extra = E.getExtra(name, env) as boolean|null
     const current = (extra !== null) ? extra : false
     return E.setExtra(name, !current, env)
   }, 
@@ -289,7 +341,7 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  openProgress: (name, unknown, env) => {
+  openProgress: (name:string, unknown:any, env:Env):Env => {
     return E.setExtra(name, {current:-1}, env)
   }, 
 
@@ -298,7 +350,7 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  closeProgress: (name, env) => {
+  closeProgress: (name:string, env:Env):Env => {
     return E.setExtra(name, null, env)
   }, 
 
@@ -307,8 +359,8 @@ export const API = {
    * @param {Env} env
    * @returns {number|null}
    */
-  getProgress: (name, env) => {
-    const extra = E.getExtra(name, env)
+  getProgress: (name:string, env:Env):number|null => {
+    const extra = E.getExtra(name, env) as {current:number}|null
     if (! extra) return null
     return extra.current
   }, 
@@ -320,9 +372,9 @@ export const API = {
    * @param {Env} env
    * @returns {Env|Promise}
    */
-  reorder: (name, fromPath, group, env) => {
+  reorder: (name:string, fromPath:string, group:string, env:Env):Env|Promise<{path:string}> => {
     const {enter, leave} = API.makePortal(env)
-    return /** @type {Promise} */ (leave(API.startReordering(name, fromPath, group, env)))
+    return leave(API.startReordering<{path:string}>(name, fromPath, group, env))
     .then(enter(({path}, env) => {
       env = API.endReordering(name, env)
       return API.move(fromPath, path, env)
@@ -332,17 +384,17 @@ export const API = {
   /**
    * @param {Env} env
    */
-  makePortal: (env) => {
+  makePortal: (env:Env) => {
     return {
       /**
        * @param {(result:any, env:Env) => any} handler
        * @returns {(result:any) => any}
        */
-      enter: (handler) => {  // Our customized handler :: [result, env] => ...
+      enter: (handler:XThenHandler):ThenHandler => {  // Our customized handler :: [result, env] => ...
         return (result) => {  // This is the actual, standard promise handler
           let result1 = null  // We will get the result in this variable.
           const ret = (res1) => {result1 = res1}
-          env.onPromiseThen({result, handler, ret})  // enter into hyperapp. Its result is undefined.
+          (env.onPromiseThen as UnmagicalAction<OnPromiseThenParam>)({result, handler, ret})  // enter into hyperapp. Its result is undefined.
           return result1
         }
       }, 
@@ -351,7 +403,7 @@ export const API = {
        * @param {Env} [y]
        * @returns {Promise|Error}
        */
-      leave: (x, y) => {
+      leave: <T>(x:[T, Env]|T, y?:Env):T => {
         const p = Array.isArray(x) ? x[0] : x
         const env = Array.isArray(x) ? x[1] : y
         if (! E.isEnv(env)) throw new Error('exit/1: env required')
@@ -398,7 +450,7 @@ export const start = (
       updates = {}, 
       rules = null, 
       catalog = null
-    }) => {
+    }:StartParameter):StartValue => {
   // complements reasonable defaults
   if (! evolve) evolve = (env, _pointer, _prevEnv) => env
   const validate = S.validate(rules || S.defaultRules)
@@ -408,9 +460,9 @@ export const start = (
   const schemaDb = S.buildDb(schema)
 
   const actions0 = {
-    onTextboxInput: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.mgPath
-      const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
+    onTextboxInput: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
+      const path = (ev.currentTarget as HTMLElement).dataset.mgPath
+      const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const slot0 = E.getSlot(path, state.baseEnv)
       const slot = {...slot0, input:value}
       const baseEnv = E.setSlot(path, slot, state.baseEnv)
@@ -421,9 +473,9 @@ export const start = (
       const env = E.setSlot(path, slotb, state.env)
       return {...state, baseEnv, env}
     }, 
-    onTextboxBlur: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.mgPath
-      const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
+    onTextboxBlur: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
+      const path = (ev.currentTarget as HTMLElement).dataset.mgPath
+      const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const npath = normalizePath(path)
       const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
       const slot = coerce(value, slot0, schemaDb[npath])
@@ -436,9 +488,9 @@ export const start = (
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
-    onSliderInput: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.mgPath
-      const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
+    onSliderInput: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
+      const path = (ev.currentTarget as HTMLElement).dataset.mgPath
+      const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const slot0 = E.getSlot(path, state.baseEnv)
       const slot = {...slot0, input:value}
       const baseEnv = E.setSlot(path, slot, state.baseEnv)
@@ -449,9 +501,9 @@ export const start = (
       const env = E.setSlot(path, slotb, state.env)
       return {...state, baseEnv, env}
     }, 
-    onSliderChange: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.mgPath
-      const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
+    onSliderChange: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
+      const path = (ev.currentTarget as HTMLElement).dataset.mgPath
+      const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const npath = normalizePath(path)
       const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
       const slot = coerce(value, slot0, schemaDb[npath])
@@ -464,9 +516,9 @@ export const start = (
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
-    onListboxChange: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.mgPath
-      const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
+    onListboxChange: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
+      const path = (ev.currentTarget as HTMLElement).dataset.mgPath
+      const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const npath = normalizePath(path)
       const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
       const slot = coerce(value, slot0, schemaDb[npath])
@@ -479,9 +531,9 @@ export const start = (
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
-    onRadioChange: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.mgPath
-      const value = ev.currentTarget[ev.currentTarget.dataset.mgValueAttribute]
+    onRadioChange: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
+      const path = (ev.currentTarget as HTMLElement).dataset.mgPath
+      const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const npath = normalizePath(path)
       const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
       const slot = coerce(value, slot0, schemaDb[npath])
@@ -494,9 +546,9 @@ export const start = (
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
-    onCheckboxChange: (ev) => (state, actions) => {
-      const path = ev.currentTarget.dataset.mgPath
-      const checked = ev.currentTarget[ev.currentTarget.dataset.mgCheckedAttribute]
+    onCheckboxChange: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
+      const path = (ev.currentTarget as HTMLElement).dataset.mgPath
+      const checked = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgCheckedAttribute]
       const value = checked ? "true" : "false"
       const npath = normalizePath(path)
       const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
@@ -510,7 +562,7 @@ export const start = (
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
-    onSmartControlChange: (pair) => (state, actions) => {
+    onSmartControlChange: (pair:{path:string,input:string}|[{path:string,input:string}]) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const pairs = Array.isArray(pair) ? pair : [pair]
       let updatePointer
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
@@ -526,10 +578,10 @@ export const start = (
       env = E.validate("", env)
       return {...state, baseEnv, env}
     }, 
-    onUpdate: (ev) => (state, actions) => {
-      const update = ('currentTarget' in ev) ? ev.currentTarget.dataset.mgUpdate : ev.update
-      const context = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgContext || "null") : ev.context
-      let updatePointer
+    onUpdate: (ev:Event|{update:string,context:any[]}) => (state:UnmagicalState, actions:UnmagicalActions) => {
+      const update = ('currentTarget' in ev) ? (ev.currentTarget as HTMLElement).dataset.mgUpdate : ev.update
+      const context = ('currentTarget' in ev) ? JSON.parse((ev.currentTarget as HTMLElement).dataset.mgContext || "null") : ev.context
+      let updatePointer:string
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
       baseEnv = E.setPortal((env0) => {baseEnv = env0}, actions.onPromiseThen, baseEnv)
       const func = updates[update] || updateEnabledApis[update]
@@ -547,10 +599,10 @@ export const start = (
       }
       return {...state, baseEnv, env}
     }, 
-    onPromiseSettle: (ev) => (state, actions) => {
-      const name = ('currentTarget' in ev) ? ev.currentTarget.dataset.mgName : ev.name
-      const result = ('currentTarget' in ev) ? JSON.parse(ev.currentTarget.dataset.mgResult || "null") : ev.result
-      const extra = E.getExtra(name, state.baseEnv)
+    onPromiseSettle: (ev:Event|{name:string,result:any}) => (state:UnmagicalState, actions:UnmagicalActions) => {
+      const name = ('currentTarget' in ev) ? (ev.currentTarget as HTMLElement).dataset.mgName : ev.name
+      const result = ('currentTarget' in ev) ? JSON.parse((ev.currentTarget as HTMLElement).dataset.mgResult || "null") : ev.result
+      const extra = E.getExtra(name, state.baseEnv) as DialogState
       if (! extra || ! extra.fulfill) throw new Error('onPromiseSettle/0: no callback or unknown callback')
       // Calling fulfill() will cause the process to re-enter the hyperapp, 
       // so we call fulfill() not now but in a different opportunity.
@@ -559,8 +611,8 @@ export const start = (
       }, 0)
       return null  // indicating no update.
     }, 
-    onPromiseThen: (context) => (state, actions) => {
-      let updatePointer
+    onPromiseThen: (context:OnPromiseThenParam) => (state:UnmagicalState, actions:UnmagicalActions) => {
+      let updatePointer:string
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
       baseEnv = E.setPortal((env0) => {baseEnv = env0}, actions.onPromiseThen, baseEnv)
       const res = context.handler(context.result, baseEnv)
@@ -579,18 +631,18 @@ export const start = (
     }
   }
 
-  let updatePointer
+  let updatePointer:string
   let baseEnv = E.makeEnv(data, schemaDb, validate, true)
   baseEnv = E.validate("", baseEnv);
   [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
   let env = evolve(baseEnv, updatePointer, null)
   env = E.validate("", env)
-  const state = {
+  const state:UnmagicalState = {
     baseEnv, 
     env, 
     normalizeError
   }
-  const view1 = (state, actions) => view(state.env)
+  const view1:View<UnmagicalState, UnmagicalActions> = (state, actions) => view(state.env)
   const actions = app(state, actions0, view1, containerEl)
   return {
     onUpdate: actions.onUpdate, 
@@ -610,7 +662,7 @@ export const once = (
       schema, 
       evolve = null, 
       rules = null
-    }) => {
+    }:OnceParameter):Env => {
   // complements reasonable defaults
   if (! evolve) evolve = (env, _pointer, _prevEnv) => env
   const validate = S.validate(rules || S.defaultRules)

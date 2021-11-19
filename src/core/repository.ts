@@ -2,29 +2,15 @@
 /** @module core/repository */
 
 import {normalizeQuery} from './utils'
+import {MgError} from './errors'
+import {Json} from './schema'
 
-/**
- * 
- * @typedef {import("./schema").Json} Json
- * @typedef {import("./errors").MgError} MgError
- * 
- */
-/**
- * @typedef {Object} Repository
- * @property {(query:Record<string,any>) => Promise<{entities:Array<Json>,totalCount:number}>} search
- * @property {(entity:Json) => Promise<Json>} add
- * @property {(entity:Json) => Promise<Json>} replace
- * @property {(entity:Json) => Promise<void>} remove
- * @description 
- * ```
- * {
- *   serach: (query:Record<string,any>) => Promise<{entities:Array<Json>,totalCount:number}>
- *   add: (entity:Json) => Promise<Json>
- *   replace: (entity:Json) => Promise<Json>
- *   remove: (entity:Json) => Promise<void>
- * }
- * ```
- */
+export interface Repository {
+  search: (query:Record<string,any>) => Promise<{entities:Json[], totalCount:number}>, 
+  add: (entity:Json) => Promise<Json>, 
+  replace: (entity:Json) => Promise<Json>, 
+  remove: (entity:Json) => Promise<void>
+}
 
 
 /**
@@ -34,11 +20,22 @@ import {normalizeQuery} from './utils'
  * @param {Response} response 
  * @returns {Error}
  */
-const responseToError = (response) => {
+const responseToError = (response:Response):Error => {
   const message = response.status + ' ' + response.statusText
   const error = new Error(message)
   error.name = 'http.' + response.status
   return error
+}
+
+export type CreateRestRepositoryOptions = {
+  idProperty?: string, 
+  omitEmptyQueryParam?:boolean, 
+  totalCountHeader?:string, 
+  headers?:Record<string,string>, 
+  optionsForSearch?:CreateRestRepositoryOptions, 
+  optionsForAdd?:CreateRestRepositoryOptions, 
+  optionsForUpdate?:CreateRestRepositoryOptions, 
+  optionsForRemove?:CreateRestRepositoryOptions
 }
 
 /**
@@ -55,8 +52,8 @@ const responseToError = (response) => {
  * @param {Object} options.optionsForRemove
  * @returns {Repository}
  */
-export const createRestRepository = (baseUrl, options) => {
-  const opts = {
+export const createRestRepository = (baseUrl:string, options:CreateRestRepositoryOptions):Repository => {
+  const opts:CreateRestRepositoryOptions = {
     idProperty: 'id', 
     omitEmptyQueryParam: true, 
     totalCountHeader: 'X-Total-Count', 
@@ -79,7 +76,7 @@ export const createRestRepository = (baseUrl, options) => {
       }
       const qs = new URLSearchParams(normalizeQuery(query, opts.omitEmptyQueryParam))
       const url = baseUrl + '?' + qs.toString()
-      return fetch(url, fetchOptions)
+      return fetch(url, fetchOptions as RequestInit)
       .then(( /** @type {Response} */ response) => {
         if (! response.ok) throw responseToError(response)
         return response.json()
@@ -101,7 +98,7 @@ export const createRestRepository = (baseUrl, options) => {
         body: JSON.stringify(entity)
       }
       const url = baseUrl
-      return fetch(url, fetchOptions)
+      return fetch(url, fetchOptions as RequestInit)
       .then((/** @type {Response} */ response) => {
         if (! response.ok) throw responseToError(response)
         return response.json()
@@ -119,7 +116,7 @@ export const createRestRepository = (baseUrl, options) => {
         body: JSON.stringify(entity)
       }
       const url = baseUrl + '/' + entity[opts.idProperty]
-      return fetch(url, fetchOptions)
+      return fetch(url, fetchOptions as RequestInit)
       .then((/** @type {Response} */ response) => {
         if (! response.ok) throw responseToError(response)
         return response.json()
@@ -136,7 +133,7 @@ export const createRestRepository = (baseUrl, options) => {
         }
       }
       const url = baseUrl + '/' + entity[opts.idProperty]
-      return fetch(url, fetchOptions)
+      return fetch(url, fetchOptions as RequestInit)
       .then((/** @type {Response} */ response) => {
         if (! response.ok) throw responseToError(response)
       })

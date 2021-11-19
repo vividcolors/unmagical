@@ -1,33 +1,36 @@
 {
+  "main": "src/core/framework.ts",
   "dependencies": {
     "ajv": "^8.1.0",
     "hyperapp": "^1.2.10",
     "rambda": "^6.7.0",
     "ramda": "^0.27.1",
-    "string-template": "^1.0.0"
+    "string-template": "^1.0.0",
+    "typescript": "4.4"
   },
   "scripts": {
-    "build": "parcel build -d asset src/core/framework.js",
+    "build": "parcel build -d asset src/core/framework.ts",
     "test": "parcel build --target node -d asset/test tests/_index.js && node asset/test/_index",
     "demo1": "parcel build -d demo/demo1 --out-file index.js demo/demo1/src.js",
     "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.js",
     "demo3": "parcel build -d demo/demo3 --out-file index.js demo/demo3/src.js",
     "demo4": "parcel build -d demo/demo4 --out-file index.js demo/demo4/src.js",
     "demo5": "parcel build -d demo/demo5 --out-file index.js demo/demo5/src.js",
-    "demo6": "parcel build -d demo/demo6 --out-file index.js --target node demo/demo6/src.js", 
-    "doc": "jsdoc -r ^-c jsdoc_conf.json -d doc src"
+    "demo6": "parcel build -d demo/demo6 --out-file index.js --target node demo/demo6/src.js",
+    "docs": "typedoc --tsconfig tsconfig.json --entryPointStrategy expand --out ./docs ./src/core"
   },
   "devDependencies": {
+    "@types/ramda": "^0.27.50",
     "babel-core": "^6.26.3",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
     "cpx": "^1.5.0",
-    "jsdoc": "^3.6.7",
     "json-server": "^0.17.0",
     "npm-run-all": "^4.1.5",
     "parcel-bundler": "^1.12.5",
     "rimraf": "^3.0.0",
-    "sass": "^1.22.1"
+    "sass": "^1.22.1",
+    "typedoc": "^0.22.9"
   }
 }
