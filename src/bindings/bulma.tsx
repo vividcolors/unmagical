@@ -1,37 +1,97 @@
 
-import * as C from '../core/components'
 import template from 'string-template'
-import {API, start, h} from '../core/framework'
+import {VNode} from 'hyperapp'
 export {API, start, h} from '../core/framework'
 
-export const Input = C.playTextbox('input', {fixedClass:'input', invalidClass:'is-danger'})
+import {playTextbox} from '../core/hocs/textbox'
 
-export const Textarea = C.playTextbox('textarea', {fixedClass:'textarea', invalidClass:'is-danger'})
+export const Input = playTextbox(({invalid, message, ...props}) => {
+  let clazz = ('class' in props) ? props['class'] : ''
+  clazz += " input"
+  if (invalid) clazz += " is-danger"
+  return (
+    <input {...props} class={clazz} />
+  )
+})
+
+const foo = () => {
+  return (
+    <Input aria-label="foo" path="/abc" class="abc" />
+  )
+}
+
+export const Textarea = playTextbox(({invalid, message,...props}) => {
+  let clazz = ('class' in props) ? props['class'] : ''
+  clazz + " textarea"
+  if (invalid) clazz += " is-danger"
+  return (
+    <textarea {...props} class={clazz}></textarea>
+  )
+})
 
 // bulma has no range-sliders
 
-export const Select = C.playListbox(({onchange, 'data-mg-path':dataMgPath, 'data-mg-value-attribute':dataMgValueAttribute, disabled = false, ...props}, children) => {
+import {playListbox} from '../core/hocs/listbox'
+
+interface SelectAttrs {
+  class?: string, 
+  disabled?: boolean, 
+  inputProps?: object
+}
+
+const setValueToChildren = (value:string, cs:Array<VNode|string>):Array<VNode|string> => {
+  return cs.map(o => {
+    if (typeof o != 'object') return o
+    const children = (o.children && o.children.length) ? setValueToChildren(value, o.children) : o.children
+    if ('value' in o.attributes) {
+      return {...o, selected: (o as VNode<{value:string}>).attributes.value == value, children}
+    } else {
+      return {...o, children}
+    }
+  })
+}
+
+export const Select = playListbox<SelectAttrs>(({onchange, 'data-mg-path':dataMgPath, 'data-mg-value-attribute':dataMgValueAttribute, value, disabled = false, class:clazz = '', inputProps = {}, ...props}, children) => {
+  clazz += " select"
+  if (props.invalid) clazz += " is-danger"
   return (
     <div {...props}>
-      <select onchange={onchange} data-mg-path={dataMgPath} data-mg-value-attribute={dataMgValueAttribute} disabled={disabled}>
-        {children}
+      <select {...inputProps} onchange={onchange} data-mg-path={dataMgPath} data-mg-value-attribute={dataMgValueAttribute} disabled={disabled}>
+        {setValueToChildren(value, children)}
       </select>
     </div>
   )
-}, {fixedClass:'select', invalidClass:'is-danger'})
+})
 
-export const Radio = C.playRadio(({onchange, 'data-mg-path':dataMgPath, 'data-mg-value-attribute':dataMgValueAttribute, disabled = false, name, checked = false, value, ...props}, children) => {
+import {playRadio} from '../core/hocs/radio'
+
+interface RadioAttrs {
+  name?: string, 
+  disabled?: boolean, 
+  class?: string, 
+  inputProps?: object
+}
+
+export const Radio = playRadio<RadioAttrs>(({onchange, 'data-mg-path':dataMgPath, 'data-mg-value-attribute':dataMgValueAttribute, disabled = false, name, checked = false, value, class:clazz = '', invalid, inputProps = {}, ...props}, children) => {
+  clazz += ' radio'
   return (
-    <label disabled={disabled} {...props}>
-      <input type="radio" onchange={onchange} data-mg-path={dataMgPath} data-mg-value-attribute={dataMgValueAttribute} name={name} disabled={disabled} checked={checked} value={value} />
+    <label {...props} disabled={disabled}>
+      <input {...inputProps} type="radio" onchange={onchange} data-mg-path={dataMgPath} data-mg-value-attribute={dataMgValueAttribute} name={name} disabled={disabled} checked={checked} value={value} />
       {children}
     </label>
   )
-}, {fixedClass:'radio'})
+})
 
-export const Checkbox = C.playCheckbox(({onchange, 'data-mg-path':dataMgPath, 'data-mg-checked-attribute':dataMgCheckedAttribute, disabled = false, checked = false, ...props}, children) => {
+import {playCheckbox} from '../core/hocs/checkbox'
+
+interface CheckboxAttrs {
+  disabled?: boolean, 
+  inputProps?: object
+}
+
+export const Checkbox = playCheckbox<CheckboxAttrs>(({onchange, 'data-mg-path':dataMgPath, 'data-mg-checked-attribute':dataMgCheckedAttribute, disabled = false, checked = false, inputProps ...props}, children) => {
   return (
-    <label disabled={disabled} {...props}>
+    <label {...props} disabled={disabled}>
       <input type="checkbox" onchange={onchange} data-mg-path={dataMgPath} data-mg-checked-attribute={dataMgCheckedAttribute} disabled={disabled} checked={checked} />
       {children}
     </label>
@@ -142,3 +202,4 @@ export const ReorderableMenuList = C.playSortable(({itemPath = null, group = nul
     </ul>
   )
 }, {})
+*/

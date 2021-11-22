@@ -28,13 +28,13 @@ type OnPromiseThenParam = {
 type OnUpdateByCall<S, A> = ActionType<{update:string, context:any[]}, S, A>
 type OnUpdate<S, A> = OnUpdateByEvent<S, A>|OnUpdateByCall<S, A>*/
 
-interface UnmagicalState {
+export interface UnmagicalState {
   baseEnv: Env, 
   env: Env, 
   normalizeError: NormalizeError
 }
 
-interface UnmagicalActions {
+export interface UnmagicalActions {
   onTextboxInput: UnmagicalAction<Event>, 
   onTextboxBlur: UnmagicalAction<Event>, 
   onSliderInput: UnmagicalAction<Event>, 
@@ -48,7 +48,7 @@ interface UnmagicalActions {
   onPromiseThen: UnmagicalAction<OnPromiseThenParam>
 }
 
-type UnmagicalAction<T> = ActionType<T, UnmagicalState, UnmagicalActions>
+export type UnmagicalAction<T> = ActionType<T, UnmagicalState, UnmagicalActions>
 
 export interface StartParameter {
   data: Json, 
@@ -75,21 +75,21 @@ export interface OnceParameter {
 /**
  * @namespace
  */
-export const API = {
+export namespace API {
   // re-export from env
-  test: E.test, 
-  extract: E.extract, 
-  getSlot: E.getSlot, 
-  add: E.add, 
-  remove: E.remove, 
-  replace: E.replace, 
-  move: E.move, 
-  copy: E.copy, 
-  duplicate: E.duplicate, 
-  validate: E.validate, 
-  mapDeep: E.mapDeep, 
-  reduceDeep: E.reduceDeep, 
-  getExtra: E.getExtra, 
+  export const test = E.test
+  export const extract = E.extract
+  export const getSlot = E.getSlot
+  export const add = E.add
+  export const remove = E.remove
+  export const replace = E.replace
+  export const move = E.move
+  export const copy = E.copy
+  export const duplicate = E.duplicate
+  export const validate = E.validate
+  export const mapDeep = E.mapDeep
+  export const reduceDeep = E.reduceDeep
+  export const getExtra = E.getExtra
 
   /**
    * 
@@ -97,9 +97,9 @@ export const API = {
    * @param {Env} env
    * @returns {Env} 
    */
-  touchAll: (path:string, env:Env):Env => {
+  export const touchAll = (path:string, env:Env):Env => {
     return E.mapDeep((slot, _path) => ({...slot, touched:true}), path, env)
-  }, 
+  }
 
   /**
    * 
@@ -107,12 +107,12 @@ export const API = {
    * @param {Env} env
    * @returns {number} 
    */
-  countValidationErrors: (path:string, env:Env):number => {
+  export const countValidationErrors = (path:string, env:Env):number => {
     return E.reduceDeep((cur, slot, _path) => {
       const d = slot.touched && slot.invalid ? 1 : 0
       return cur + d
     }, 0, path, env)
-  }, 
+  }
 
   /**
    * 
@@ -120,7 +120,7 @@ export const API = {
    * @param {Env} env
    * @returns {string[]} 
    */
-  validationErrors: (path:string, env:Env):string[] => {
+  export const validationErrors = (path:string, env:Env):string[] => {
     const errors:string[] = []
     E.reduceDeep((_cur, slot, path) => {
       if (slot.touched && slot.invalid) {
@@ -129,34 +129,34 @@ export const API = {
       return null
     }, null, path, env)
     return errors
-  }, 
+  }
 
   /**
    * @param {string} path
    * @param {Env} env
    * @returns {{invalid:boolean, error:MgError|null}}
    */
-  foldValidity: (path:string, env:Env):Validity => {
+  export const foldValidity = (path:string, env:Env):Validity => {
     return API.reduceDeep<Validity>((cur, slot, _path) => {
       if (cur.invalid) return cur
       if (slot.touched && slot.invalid) return {invalid:true, error:slot.error}
       return cur
     }, {invalid:false, error:null}, path, env)
-  }, 
+  }
 
   /**
    * @param {number} ms
    * @param {Env} env
    * @returns {[Promise, Env]}
    */
-  sleep: (ms:number, env:Env):[Promise<null>, Env] => {
+  export const sleep = (ms:number, env:Env):[Promise<null>, Env] => {
     const p = new Promise<null>((fulfill, reject) => {
       setTimeout(() => {
         fulfill(null)
       }, ms)
     })
     return [p, env]
-  }, 
+  }
 
   /**
    * @param {string} name
@@ -165,34 +165,34 @@ export const API = {
    * @param {Env} env
    * @returns {[Promise, Env]}
    */
-  startReordering: <T>(name:string, itemPath:string, group:string, env:Env):[Promise<T>, Env] => {
+  export const startReordering = <T>(name:string, itemPath:string, group:string, env:Env):[Promise<T>, Env] => {
     const p = new Promise<T>((fulfill, reject) => {
       env = E.setExtra(name, {itemPath, group, fulfill, reject}, env)
     })
     return [p, env]
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {Env}
    */
-  endReordering: (name:string, env:Env):Env => {
+  export const endReordering = (name:string, env:Env):Env => {
     const extra = E.getExtra(name, env)
     if (! extra) return env
     return E.setExtra(name, null, env)
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {string|null}
    */
-  getReordering: (name:string, env:Env):string|null => {
+  export const getReordering = (name:string, env:Env):string|null => {
     const extra = E.getExtra(name, env) as {itemPath:string}|null
     if (! extra) return null
     return extra.itemPath
-  }, 
+  }
 
   /**
    * @param {string} name
@@ -200,34 +200,34 @@ export const API = {
    * @param {Env} env
    * @returns {[Promise, Env]}
    */
-  openDialog: (name:string, data:any, env:Env):[Promise<boolean>,Env] => {
+  export const openDialog = (name:string, data:any, env:Env):[Promise<boolean>,Env] => {
     const p = new Promise<boolean>((fulfill, reject) => {
       env = E.setExtra(name, {data, fulfill, reject}, env)
     })
     return [p, env]
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {Env}
    */
-  closeDialog: (name:string, env:Env):Env => {
+  export const closeDialog = (name:string, env:Env):Env => {
     const extra = E.getExtra(name, env)
     if (! extra) return env
     return E.setExtra(name, null, env)
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {any|null}
    */
-  getDialog: (name:string, env:Env):any|null => {
+  export const getDialog = (name:string, env:Env):any|null => {
     const extra = E.getExtra(name, env) as DialogState|null
     if (! extra) return null
     return extra.data
-  }, 
+  }
 
   /**
    * @param {string} name
@@ -235,29 +235,29 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  openFeedback: (name:string, data:any, env:Env):Env => {
+  export const openFeedback = (name:string, data:any, env:Env):Env => {
     return E.setExtra(name, data, env)
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {Env}
    */
-  closeFeedback: (name:string, env:Env):Env => {
+  export const closeFeedback = (name:string, env:Env):Env => {
     const extra = E.getExtra(name, env)
     if (! extra) return env
     return E.setExtra(name, null, env)
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {any|null}
    */
-  getFeedback: (name:string, env:Env):any|null => {
+  export const getFeedback = (name:string, env:Env):any|null => {
     return E.getExtra(name, env)
-  }, 
+  }
 
   /**
    * @param {string} name
@@ -265,41 +265,41 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  setPage: (name:string, current:number, env:Env):Env => {
+  export const setPage = (name:string, current:number, env:Env):Env => {
     return E.setExtra(name, current, env)
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {number}
    */
-  getPage: (name:string, env:Env):number => {
+  export const getPage = (name:string, env:Env):number => {
     const extra = E.getExtra(name, env) as number|null
     return (extra !== null) ? extra : 0
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {Env}
    */
-  nextPage: (name:string, env:Env):Env => {
+  export const nextPage = (name:string, env:Env):Env => {
     const extra = E.getExtra(name, env) as number|null
     const current = (extra !== null) ? extra : 0
     return E.setExtra(name, current + 1, env)
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {Env}
    */
-  prevPage: (name:string, env:Env):Env => {
+  export const prevPage = (name:string, env:Env):Env => {
     const extra = E.getExtra(name, env) as number|null
     const current = (extra !== null) ? extra : 0
     return E.setExtra(name, current - 1, env)
-  }, 
+  }
 
   /**
    * @param {string} name
@@ -307,30 +307,30 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  setSwitch: (name:string, shown:boolean, env:Env):Env => {
+  export const setSwitch = (name:string, shown:boolean, env:Env):Env => {
     return E.setExtra(name, shown, env)
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {boolean}
    */
-  getSwitch: (name:string, env:Env):boolean => {
+  export const getSwitch = (name:string, env:Env):boolean => {
     const extra = E.getExtra(name, env) as boolean|null
     return (extra !== null) ? extra : false
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {Env}
    */
-  toggleSwitch: (name:string, env:Env):Env => {
+  export const toggleSwitch = (name:string, env:Env):Env => {
     const extra = E.getExtra(name, env) as boolean|null
     const current = (extra !== null) ? extra : false
     return E.setExtra(name, !current, env)
-  }, 
+  }
 
   /*
    * TODO: progress bar, ReadStream, ...
@@ -341,29 +341,29 @@ export const API = {
    * @param {Env} env
    * @returns {Env}
    */
-  openProgress: (name:string, unknown:any, env:Env):Env => {
+  export const openProgress = (name:string, unknown:any, env:Env):Env => {
     return E.setExtra(name, {current:-1}, env)
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {Env}
    */
-  closeProgress: (name:string, env:Env):Env => {
+  export const closeProgress = (name:string, env:Env):Env => {
     return E.setExtra(name, null, env)
-  }, 
+  }
 
   /**
    * @param {string} name
    * @param {Env} env
    * @returns {number|null}
    */
-  getProgress: (name:string, env:Env):number|null => {
+  export const getProgress = (name:string, env:Env):number|null => {
     const extra = E.getExtra(name, env) as {current:number}|null
     if (! extra) return null
     return extra.current
-  }, 
+  }
   
   /**
    * @param {string} name 
@@ -372,19 +372,19 @@ export const API = {
    * @param {Env} env
    * @returns {Env|Promise}
    */
-  reorder: (name:string, fromPath:string, group:string, env:Env):Env|Promise<{path:string}> => {
+  export const reorder = (name:string, fromPath:string, group:string, env:Env):Env|Promise<{path:string}> => {
     const {enter, leave} = API.makePortal(env)
     return leave(API.startReordering<{path:string}>(name, fromPath, group, env))
     .then(enter(({path}, env) => {
       env = API.endReordering(name, env)
       return API.move(fromPath, path, env)
     }))
-  }, 
+  }
 
   /**
    * @param {Env} env
    */
-  makePortal: (env:Env) => {
+  export const makePortal = (env:Env) => {
     return {
       /**
        * @param {(result:any, env:Env) => any} handler

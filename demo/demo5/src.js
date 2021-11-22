@@ -90,13 +90,13 @@ const ContactModal = ({env}) => {
             <div class="control">{form.data.id > 0 ? form.data.id : '（新規追加）'}</div>
           </Field>
           <Field mg-path="/form/data/created" label="日時">
-            <div class="control"><Input type="datetime-local" mg-path="/form/data/created" /></div>
+            <div class="control"><Input type="datetime-local" path="/form/data/created" /></div>
           </Field>
           <Field mg-path="/form/data/name" label="名前">
-            <div class="control"><Input mg-path="/form/data/name" /></div>
+            <div class="control"><Input path="/form/data/name" /></div>
           </Field>
           <Field mg-path="/form/data/email" label="メールアドレス">
-            <div class="control"><Input mg-path="/form/data/email" /></div>
+            <div class="control"><Input path="/form/data/email" /></div>
           </Field>
           <Field mg-path="/form/data/content" label="本文">
             <div class="control"><Textarea mg-path="/form/data/content" /></div>
@@ -127,10 +127,10 @@ const view = (env) => {
         </div>
         <div class="level-right">
           <div class="level-item">
-            <Input mg-path="/search/name_like" placeholder="名前" />
+            <Input path="/search/name_like" placeholder="名前" />
           </div>
           <div class="level-item">
-            <Input mg-path="/search/created_gte" type="date" />～<Input mg-path="/search/created_lte" type="date" />
+            <Input path="/search/created_gte" type="date" />～<Input path="/search/created_lte" type="date" />
           </div>
           <div class="level-item">
             <UpdateButton mg-update="searchItems" mg-context={["/search", "/contacts", {}]}>検索</UpdateButton>

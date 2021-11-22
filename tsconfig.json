@@ -1,8 +1,16 @@
 {
     "compilerOptions":{
-        "lib":["es2015", "dom"]
+        "lib":["es2015", "dom"], 
+        "baseUrl": ".", 
+        "paths": {
+            "*": ["src/*", "src/fixed_types/*"]
+        }, 
+        "jsx": "preserve", 
+        "jsxFactory": "h"
     }, 
     "include":[
-        "src/core/*.ts"
+        "src/**/*.ts", 
+        "src/**/*.tsx", 
+        "src/fixed_types/**/*.d.ts"
     ]
 }
