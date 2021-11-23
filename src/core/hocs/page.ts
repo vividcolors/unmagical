@@ -14,7 +14,7 @@ export type PageAutoProps = {
   shown: boolean
 }
 
-export const playPage = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<PageAutoProps & OtherAttrs>):NodeName<PageExtraProps & OtherAttrs> => {
+export const playPage = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<PageAutoProps & OtherAttrs>):UnmagicalComponent<PageExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const attributes = props
     const index = attributes.index

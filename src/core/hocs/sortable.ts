@@ -68,13 +68,14 @@ export type SortableAutoProps = {
   ondestroy: OnDestroyFunc
 }
 
-export const playSortable = <OtherAttrs extends {}>(C:NodeName<SortableAutoProps & OtherAttrs>):NodeName<SortableExtraProps & OtherAttrs> => {
+export const playSortable = <OtherAttrs extends {}>(C:NodeName<SortableAutoProps & OtherAttrs>):UnmagicalComponent<SortableExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {name, path, options = {}, ...attributes} = props
     const extra = API.getExtra(name, state.env) as {itemPath:string, group:string}
     const active = !!extra
     const {oncreate, ondestroy} = instantiateSortable(name, actions.onUpdate, actions.onPromiseSettle, options)
     const attrs:SortableAutoProps = {
+      ...attributes, 
       'data-mg-path': path, 
       active, 
       itemPath: extra ? extra.itemPath : "", 

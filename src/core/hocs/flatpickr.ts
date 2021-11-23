@@ -43,7 +43,7 @@ export type FlatpickrAutoProps = {
   ondestroy: OnDestroyFunc
 }
 
-export const playFlatpickr = <OtherAttrs extends {}>(C:NodeName<FlatpickrAutoProps & OtherAttrs>):NodeName<FlatpickrExtraProps & OtherAttrs> => {
+export const playFlatpickr = <OtherAttrs extends {}>(C:NodeName<FlatpickrAutoProps & OtherAttrs>):UnmagicalComponent<FlatpickrExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, clearerId = null, config = {}, ...attributes} = props
     const slot = API.getSlot(path, state.env)

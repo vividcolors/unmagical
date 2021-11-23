@@ -25,7 +25,7 @@ export type CheckboxAutoProps = {
  * @category Checkbox
  * @param C 
  */
-export const playCheckbox = <OtherAttrs extends {}>(C:NodeName<CheckboxAutoProps & OtherAttrs>):NodeName<CheckboxExtraProps & OtherAttrs> => {
+export const playCheckbox = <OtherAttrs extends {}>(C:NodeName<CheckboxAutoProps & OtherAttrs>):UnmagicalComponent<CheckboxExtraProps & OtherAttrs> => {
   return (props, children:Children[]) => (state, actions) => {
     const {path, ...attributes} = props
     const slot = API.getSlot(path, state.env)

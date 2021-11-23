@@ -31,7 +31,7 @@ export type PaginationAutoProps = {
   siblings: number[]
 }
 
-export const playPagination = <OtherAttrs extends {}>(C:NodeName<PaginationAutoProps & OtherAttrs>):NodeName<PaginationExtraProps & OtherAttrs> => {
+export const playPagination = <OtherAttrs extends {}>(C:NodeName<PaginationAutoProps & OtherAttrs>):UnmagicalComponent<PaginationExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {listPath, width = 2, pageProperty = 'page', limitProperty = 'limit', ...attributes} = props
     const query = API.extract(listPath + '/query', state.env)

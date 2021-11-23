@@ -13,7 +13,7 @@ export type ModalExtraProps = {
     onremove: OnRemoveFunc
   }
   
-  export const playModal = (transition:"fade"|"scale", nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<ModalAutoProps & OtherAttrs>):NodeName<ModalExtraProps & OtherAttrs> => {
+  export const playModal = (transition:"fade"|"scale", nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<ModalAutoProps & OtherAttrs>):UnmagicalComponent<ModalExtraProps & OtherAttrs> => {
     return (props, children) => (state, actions) => {
       const attributes = props
       if (! attributes.shown && nullIfHidden) return null

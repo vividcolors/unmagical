@@ -27,7 +27,7 @@ export type RadioAutoProps = {
  * @category Radio
  * @param C 
  */
-export const playRadio = <OtherAttrs extends {}>(C:NodeName<RadioAutoProps & OtherAttrs>):NodeName<RadioExtraProps & OtherAttrs> => {
+export const playRadio = <OtherAttrs extends {}>(C:NodeName<RadioAutoProps & OtherAttrs>):UnmagicalComponent<RadioExtraProps & OtherAttrs> => {
   return (props, children:Children[]) => (state, actions) => {
     const {path, value, ...attributes} = props
     const slot = API.getSlot(path, state.env)

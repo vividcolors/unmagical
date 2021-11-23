@@ -98,7 +98,8 @@ export function app<State, Actions>(
 
 declare global {
   namespace JSX {
-    interface Element extends VNode<any> {}
+    //interface Element extends VNode<any> {}
+    type Element = VNode<any> | View<any, any>;
     interface IntrinsicElements {
       [elemName: string]: any
     }

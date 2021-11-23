@@ -12,7 +12,7 @@ export type ProgressAutoProps = {
   current: number|undefined
 }
 
-export const playProgress = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<ProgressAutoProps & OtherAttrs>):NodeName<ProgressExtraProps & OtherAttrs> => {
+export const playProgress = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<ProgressAutoProps & OtherAttrs>):UnmagicalComponent<ProgressExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const attributes = props
     const name = attributes.name

@@ -53,7 +53,7 @@ export type PickrAutoProps = {
   ondestroy: OnDestroyFunc
 }
 
-export const playPickr = <OtherAttrs extends {}>(C:NodeName<PickrAutoProps & OtherAttrs>):NodeName<PickrExtraProps & OtherAttrs> => {
+export const playPickr = <OtherAttrs extends {}>(C:NodeName<PickrAutoProps & OtherAttrs>):UnmagicalComponent<PickrExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, clearerId = null, options = {}, ...attributes} = props
     const slot = API.getSlot(path, state.env)
@@ -61,6 +61,7 @@ export const playPickr = <OtherAttrs extends {}>(C:NodeName<PickrAutoProps & Oth
     const {oncreate, ondestroy} = instantiatePickr(path, actions.onSmartControlChange, slot.input, clearerId, options)
     const invalid = ((slot.touched || false) && (slot.invalid || false))
     const attrs:PickrAutoProps = {
+      ...attributes, 
       value: slot.input, 
       invalid, 
       message: slot.error ? state.normalizeError(slot.error).message : '', 

@@ -16,7 +16,7 @@ export type ListboxAutoProps = {
   value: string
 }
 
-export const playListbox = <OtherAttrs extends {}>(C:NodeName<ListboxAutoProps & OtherAttrs>):NodeName<ListboxExtraProps & OtherAttrs> => {
+export const playListbox = <OtherAttrs extends {}>(C:NodeName<ListboxAutoProps & OtherAttrs>):UnmagicalComponent<ListboxExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
@@ -31,5 +31,6 @@ export const playListbox = <OtherAttrs extends {}>(C:NodeName<ListboxAutoProps &
       message: slot.error ? state.normalizeError(slot.error).message : '', 
       value: slot.input
     }
+    return h(C, attrs, ...children)
   }
 }

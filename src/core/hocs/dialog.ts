@@ -50,7 +50,7 @@ export type DialogAutoProps = {
   shown: boolean
 }
 
-export const playDialog = (transition:"fade"|"scale", nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<DialogAutoProps & OtherAttrs>):NodeName<DialogExtraProps & OtherAttrs> => {
+export const playDialog = (transition:"fade"|"scale", nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<DialogAutoProps & OtherAttrs>):UnmagicalComponent<DialogExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const attributes = props
     const name = attributes.name
@@ -63,6 +63,6 @@ export const playDialog = (transition:"fade"|"scale", nullIfHidden:boolean) => <
       onremove: dialogOnRemove[transition], 
       shown: (data !== null)
     }
-    return h(C, attributes, ...children)
+    return h(C, attrs, ...children)
   }
 }

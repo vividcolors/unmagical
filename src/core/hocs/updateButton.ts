@@ -1,11 +1,12 @@
 
+import {Json} from '../schema'
 import {UnmagicalAction, UnmagicalState, UnmagicalActions, API} from '../framework'
 import {NodeName, Children, h, UnmagicalComponent} from '../components'
 
 
 export type UpdateButtonExtraProps = {
   update: string, 
-  context: JSON
+  context: Json
 }
 
 export type UpdateButtonAutoProps = {
@@ -14,7 +15,7 @@ export type UpdateButtonAutoProps = {
   onclick: UnmagicalAction<Event>
 }
 
-export const playUpdateButton = <OtherAttrs extends {}>(C:NodeName<UpdateButtonAutoProps & OtherAttrs>):NodeName<UpdateButtonExtraProps & OtherAttrs> => {
+export const playUpdateButton = <OtherAttrs extends {}>(C:NodeName<UpdateButtonAutoProps & OtherAttrs>):UnmagicalComponent<UpdateButtonExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {update, context, ...attributes} = props
     const attrs:UpdateButtonAutoProps = {

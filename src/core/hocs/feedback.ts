@@ -67,7 +67,7 @@ export type FeedbackAutoProps = {
 }
 
 // nullIfHidden, transition
-export const playFeedback = (transition:"fade"|"zoom"|"slide", nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<FeedbackAutoProps & OtherAttrs>):NodeName<FeedbackExtraProps & OtherAttrs> => {
+export const playFeedback = (transition:"fade"|"zoom"|"slide", nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<FeedbackAutoProps & OtherAttrs>):UnmagicalComponent<FeedbackExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {duration, ...attributes} = props
     const name = attributes.name
@@ -75,7 +75,7 @@ export const playFeedback = (transition:"fade"|"zoom"|"slide", nullIfHidden:bool
     if (nullIfHidden && data === null) return null
     const attrs:FeedbackAutoProps = {
       ...attributes, 
-      data, 
+      data: ('code' in data) ? state.normalizeError(data) : data, 
       shown: data !== null, 
       oncreate: feedbackOnCreate[transition], 
       onremove: feedbackOnRemove[transition]

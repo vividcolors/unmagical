@@ -1,6 +1,6 @@
 
 import {UnmagicalAction, UnmagicalState, UnmagicalActions, API} from '../framework'
-import {NodeName, Children, h, UnmagicalComponent} from '../components'
+import {NodeName, Children, h, UnmagicalComponent, Hoc} from '../components'
 
 /**
  * Properties users provide to Textbox component.
@@ -51,7 +51,7 @@ export type TextboxAutoProps = {
  * @param C A component or tagName to which you give the Textbox role
  * @returns A component, which plays the Textbox
  */
-export const playTextbox = <OtherAttrs extends {}>(C:NodeName<TextboxAutoProps & OtherAttrs>):NodeName<TextboxExtraProps & OtherAttrs> => {
+export const playTextbox = <OtherAttrs extends {}>(C:NodeName<TextboxAutoProps & OtherAttrs>):UnmagicalComponent<TextboxExtraProps & OtherAttrs> => {
   return (props, children:Children[]) => (state:UnmagicalState, actions:UnmagicalActions) => {
     const {path, ...attributes} = props
     const slot = API.getSlot(path, state.env)

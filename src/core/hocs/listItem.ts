@@ -45,7 +45,7 @@ export type ListItemAutoProps = {
   onremove: OnRemoveFunc
 }
 
-export const playListItem = (transition:"fade"|"slide") => <OtherAttrs extends {}>(C:NodeName<ListItemAutoProps & OtherAttrs>):NodeName<ListItemExtraProps & OtherAttrs> => {
+export const playListItem = (transition:"fade"|"slide") => <OtherAttrs extends {}>(C:NodeName<ListItemAutoProps & OtherAttrs>):UnmagicalComponent<ListItemExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const attributes = props
     const attrs:ListItemAutoProps = {

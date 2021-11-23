@@ -17,7 +17,7 @@ export type SliderAutoProps = {
   message: string
 }
 
-export const playSlider = <OtherAttrs extends {}>(C:NodeName<SliderAutoProps & OtherAttrs>):NodeName<SliderExtraProps & OtherAttrs> => {
+export const playSlider = <OtherAttrs extends {}>(C:NodeName<SliderAutoProps & OtherAttrs>):UnmagicalComponent<SliderExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, ...attributes} = props
     const slot = API.getSlot(path, state.env)

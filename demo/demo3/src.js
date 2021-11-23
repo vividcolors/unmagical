@@ -1,5 +1,5 @@
 
-import {h, API, start, Input, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, DatePicker, ColorPicker, ReorderableMenuList} from '../../src/bindings/bulma'
+import {h, API, start, Input, Select, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, DatePicker, ColorPicker, ReorderableMenuList} from '../../src/bindings/bulma'
 import {playSmartControl, playReorderable} from '../../src/core/components'
 
 
@@ -126,10 +126,10 @@ const view = (env) => {
   return (
     <div class="block">
       <h2>UI（拡張とブラウザネイティブ）</h2>
-      <Field mg-path="/date" label="カレンダー">
+      <Field path="/date" label="カレンダー">
         <div class="field has-addons">
           <div class="control">
-            <DatePicker mg-path="/date" class="input" clearerId="datepicker-clearer" />
+            <DatePicker path="/date" class="input" clearerId="datepicker-clearer" />
           </div>
           <div class="control">
             <a class="button is-info" id="datepicker-clearer">Clear</a>
@@ -137,14 +137,14 @@ const view = (env) => {
         </div>
       </Field>
       <p>value: {data.date}</p>
-      <Field mg-path="/date2" label="input type=date">
-        <Input type="date" mg-path="/date2" />
+      <Field path="/date2" label="input type=date">
+        <Input type="date" path="/date2" />
       </Field>
       <p>value: {data.date2}</p>
-      <Field mg-path="/color" label="カラー">
+      <Field path="/color" label="カラー">
         <div class="field has-addons">
           <div class="control">
-            <ColorPicker mg-path="/color" class="button" clearerId="colorpicker-clearer" options={pickrOptions} />
+            <ColorPicker path="/color" class="button" clearerId="colorpicker-clearer" options={pickrOptions} />
           </div>
           <div class="control">
             <a class="button is-info" id="colorpicker-clearer">Clear</a>
@@ -152,45 +152,45 @@ const view = (env) => {
         </div>
       </Field>
       <p>value: {data.color}</p>
-      <Field mg-path="/color2" label="input type=color">
-        <Input class="input" type="color" mg-path="/color2" />
+      <Field path="/color2" label="input type=color">
+        <Input class="input" type="color" path="/color2" />
       </Field>
       <p>value: {data.color2}</p>
       <hr />
       <h2>数値入力とバリデーション</h2>
-      <Field mg-path="/int" label="整数">
-        <Input mg-path="/int" type="number" />
+      <Field path="/int" label="整数">
+        <Input path="/int" />
       </Field>
       <hr />
       <h2>同じアドレスを二度入力する</h2>
-      <Field mg-path="/email" mg-fold-validity label="メールアドレス">
-        <Input mg-path="/email/firstTime" />
-        <Input mg-path="/email/secondTime" placeholder="もう一度" />
+      <Field path="/email" foldValidity label="メールアドレス">
+        <Input path="/email/firstTime" />
+        <Input path="/email/secondTime" placeholder="もう一度" />
       </Field>
       <hr />
       <h2>住所の自動補完</h2>
-      <Field mg-path="/address" mg-fold-validity label="住所">
-        <Input mg-path="/address/zip" oncreate={onZipCreated} />
-        <Input mg-path="/address/pref" />
-        <Input mg-path="/address/city" />
-        <Input mg-path="/address/street" />
-        <Input mg-path="/address/bld" />
+      <Field path="/address" foldValidity label="住所">
+        <Input path="/address/zip" oncreate={onZipCreated} />
+        <Input path="/address/pref" />
+        <Input path="/address/city" />
+        <Input path="/address/street" />
+        <Input path="/address/bld" />
       </Field>
       <hr />
       <h2>順序の入れ替え（基本）</h2>
       <div class="menu">
-        <ReorderableMenuList class="menu-list" mg-name="reorder" mg-path="/persons" options={{group:'persons'}}>
+        <ReorderableMenuList class="menu-list" name="reorder" path="/persons" options={{group:'persons'}}>
           {data.persons.map(p => (<li key={p}><a>{p}</a></li>))}
         </ReorderableMenuList>
       </div>
       <hr />
       <h2>順序の入れ替え（アドバンスト）</h2>
       <div class="menu">
-        <ReorderableMenuList class="menu-list" mg-name="reorder" mg-path="/members" options={{group:'members'}} items={data.members} showItem={(item, index, activePath, group) => {
+        <ReorderableMenuList class="menu-list" name="reorder" path="/members" options={{group:'members'}} items={data.members} showItem={(item, index, activePath, group) => {
           return (
             <li key={item.name}>
               <a style={group && group != 'members' ? undroppableStyle : {}}>{item.name}</a>
-              <ReorderableMenuList mg-name="reorder" mg-path={`/members/${index}/things`} options={{group:'things'}} items={item.things} showItem={(subitem, index, activePath, group) => {
+              <ReorderableMenuList name="reorder" path={`/members/${index}/things`} options={{group:'things'}} items={item.things} showItem={(subitem, index, activePath, group) => {
                 return (
                   <li key={subitem}><a style={group && group != 'things' ? undroppableStyle : {}}>{subitem}</a></li>
                 )

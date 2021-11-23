@@ -3,14 +3,15 @@
         "lib":["es2015", "dom"], 
         "baseUrl": ".", 
         "paths": {
-            "*": ["src/*", "src/fixed_types/*"]
+            "*": ["src/*", "src/fixed_types/*", "demo/*"]
         }, 
-        "jsx": "preserve", 
+        "jsx": "react", 
         "jsxFactory": "h"
     }, 
     "include":[
         "src/**/*.ts", 
         "src/**/*.tsx", 
-        "src/fixed_types/**/*.d.ts"
+        "src/fixed_types/**/*.d.ts", 
+        "demo/**/*.tsx"
     ]
 }

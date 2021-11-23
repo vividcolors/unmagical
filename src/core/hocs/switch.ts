@@ -12,7 +12,7 @@ export type SwitchAutoProps = {
   shown: boolean
 }
 
-export const playSwitch = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<SwitchAutoProps & OtherAttrs>):NodeName<SwitchExtraProps & OtherAttrs> => {
+export const playSwitch = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<SwitchAutoProps & OtherAttrs>):UnmagicalComponent<SwitchExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const attributes = props
     const name = attributes.name

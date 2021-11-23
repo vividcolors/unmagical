@@ -52,7 +52,7 @@ export type CreateRestRepositoryOptions = {
  * @param {Object} options.optionsForRemove
  * @returns {Repository}
  */
-export const createRestRepository = (baseUrl:string, options:CreateRestRepositoryOptions):Repository => {
+export const createRestRepository = (baseUrl:string, options:CreateRestRepositoryOptions = {}):Repository => {
   const opts:CreateRestRepositoryOptions = {
     idProperty: 'id', 
     omitEmptyQueryParam: true, 

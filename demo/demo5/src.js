@@ -77,7 +77,7 @@ const ContactModal = ({env}) => {
   const form = API.extract('/form', env)
   if (! form) return null
   return (
-    <Modal mg-shown={true} key="contactModal" id="contactModal">
+    <Modal shown={true} key="contactModal" id="contactModal">
       <div class="modal-card">
         <div class="modal-card-head">
           <p class="modal-card-title">
@@ -85,26 +85,26 @@ const ContactModal = ({env}) => {
           </p>
         </div>
         <div class="modal-card-body">
-          <Notification mg-name="failure2" title="エラー" message="エラーが発生しました（{message}）" />
-          <Field mg-path="/form/data/id" env={env} label="ID">
+          <Notification name="failure2" title="エラー" message="エラーが発生しました（{message}）" />
+          <Field path="/form/data/id" env={env} label="ID">
             <div class="control">{form.data.id > 0 ? form.data.id : '（新規追加）'}</div>
           </Field>
-          <Field mg-path="/form/data/created" label="日時">
+          <Field path="/form/data/created" label="日時">
             <div class="control"><Input type="datetime-local" path="/form/data/created" /></div>
           </Field>
-          <Field mg-path="/form/data/name" label="名前">
+          <Field path="/form/data/name" label="名前">
             <div class="control"><Input path="/form/data/name" /></div>
           </Field>
-          <Field mg-path="/form/data/email" label="メールアドレス">
+          <Field path="/form/data/email" label="メールアドレス">
             <div class="control"><Input path="/form/data/email" /></div>
           </Field>
-          <Field mg-path="/form/data/content" label="本文">
-            <div class="control"><Textarea mg-path="/form/data/content" /></div>
+          <Field path="/form/data/content" label="本文">
+            <div class="control"><Textarea path="/form/data/content" /></div>
           </Field>
         </div>
         <div class="modal-card-foot">
-          <UpdateButton mg-name="loading2" class="button is-primary" mg-update="commitItem" mg-context={['/form', '/contacts', {failureName:'failure2', loadingName:'loading2'}]}>確定</UpdateButton>
-          <UpdateButton class="button" mg-update="discardItem" mg-context={['/form']}>キャンセル</UpdateButton>
+          <UpdateButton name="loading2" class="button is-primary" update="commitItem" context={['/form', '/contacts', {failureName:'failure2', loadingName:'loading2'}]}>確定</UpdateButton>
+          <UpdateButton class="button" update="discardItem" context={['/form']}>キャンセル</UpdateButton>
         </div>
       </div>
     </Modal>
@@ -118,9 +118,9 @@ const view = (env) => {
   const tab = API.getPage("tab", env)
   return (
     <div class="container my-3">
-      <Notification mg-name="success" message="成功しました。" mg-duration={5000} />
-      <Notification mg-name="failure" title="エラー" message="エラーが発生しました（{message}）" />
-      <UpdateButton key="updateButton" class="button is-primary" mg-update="createItem" mg-context={[{id:0, created:'', name:'', email:'', content:''}, '/form']}>新規追加</UpdateButton>
+      <Notification name="success" message="成功しました。" duration={5000} />
+      <Notification name="failure" title="エラー" message="エラーが発生しました（{message}）" />
+      <UpdateButton key="updateButton" class="button is-primary" update="createItem" context={[{id:0, created:'', name:'', email:'', content:''}, '/form']}>新規追加</UpdateButton>
       <nav class="level" key="search">
         <div class="level-left">
           <div class="level-item">{contacts.totalCount ? `${contacts.totalCount}件中 ${from}～${to}` : 'コンタクトはありません'}</div>
@@ -133,11 +133,11 @@ const view = (env) => {
             <Input path="/search/created_gte" type="date" />～<Input path="/search/created_lte" type="date" />
           </div>
           <div class="level-item">
-            <UpdateButton mg-update="searchItems" mg-context={["/search", "/contacts", {}]}>検索</UpdateButton>
+            <UpdateButton update="searchItems" context={["/search", "/contacts", {}]}>検索</UpdateButton>
           </div>
         </div>
       </nav>
-      <Pagination mg-width={1} mg-page-property="_page" mg-limit-property="_limit" mg-list-path="/contacts" loadItemsOptions={{totalCountHeader:'X-Total-Count', pageProperty:'_page'}} />
+      <Pagination width={1} pageProperty="_page" limitProperty="_limit" listPath="/contacts" loadItemsOptions={{totalCountHeader:'X-Total-Count', pageProperty:'_page'}} />
       <table class="table is-hoverable">
         <thead>
           <th>ID</th>
@@ -157,21 +157,21 @@ const view = (env) => {
                 <td>{c.email}</td>
                 <td>{c.content.replace('\n', '').slice(0, 10)}</td>
                 <td>
-                  <UpdateButton class="is-info is-inverted mx-1" mg-update="editItem" mg-context={['/contacts/items/' + i, '/form']}><span class="icon"><span class="material-icons">edit</span></span></UpdateButton>
-                  <UpdateButton class="is-danger is-inverted mx-1" mg-update="deleteItem" mg-context={['/contacts/items/' + i, '/contacts', {}]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
+                  <UpdateButton class="is-info is-inverted mx-1" update="editItem" context={['/contacts/items/' + i, '/form']}><span class="icon"><span class="material-icons">edit</span></span></UpdateButton>
+                  <UpdateButton class="is-danger is-inverted mx-1" update="deleteItem" context={['/contacts/items/' + i, '/contacts', {}]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
                 </td>
               </tr>
             )
           })}
         </tbody>
       </table>
-      <Dialog mg-name="confirm" title="確認" message="削除しますよ？" />
+      <Dialog name="confirm" title="確認" message="削除しますよ？" />
       <ContactModal env={env} />
       <div key="tabs">
         <div class="tabs">
           <ul>
-            <li class={tab == 0 ? 'is-active' : ''}><Clickable mg-update="setPage" mg-context={["tab", 0]}>概要</Clickable></li>
-            <li class={tab == 1 ? 'is-active' : ''}><Clickable mg-update="setPage" mg-context={["tab", 1]}>詳細</Clickable></li>
+            <li class={tab == 0 ? 'is-active' : ''}><Clickable update="setPage" context={["tab", 0]}>概要</Clickable></li>
+            <li class={tab == 1 ? 'is-active' : ''}><Clickable update="setPage" context={["tab", 1]}>詳細</Clickable></li>
           </ul>
         </div>
         {tab == 0 ? (

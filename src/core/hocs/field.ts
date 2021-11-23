@@ -12,7 +12,7 @@ export type FieldAutoProps = {
   message: string
 }
 
-export const playField = <OtherAttrs extends {}>(C:NodeName<FieldAutoProps & OtherAttrs>):NodeName<FieldExtraProps & OtherAttrs> => {
+export const playField = <OtherAttrs extends {}>(C:NodeName<FieldAutoProps & OtherAttrs>):UnmagicalComponent<FieldExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, foldValidity, ...attributes} = props
     if (! API.test(path, state.env)) return null

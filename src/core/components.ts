@@ -13,6 +13,7 @@ export type OnDestroyFunc = (el:Element) => void
 
 export type UnmagicalComponent<A> = Component<A,UnmagicalState,UnmagicalActions>
 export type NodeName<A> = UnmagicalComponent<A> | string
+export type Hoc<A> = (c:NodeName<A>) => UnmagicalComponent<A>
 
 
 export const suspendRoot = () => {
@@ -48,13 +49,17 @@ export const prepareToDestroy = (el:Element, anim:Animation, done:DoneFunc) => {
   }
 }
 
-export const compose = <A1,A2>(p1, p2) => (C, map = null) => {
+export const compose = <Attrs>(p1:Hoc<Attrs>, p2:Hoc<Attrs>):Hoc<Attrs> => (C) => {
   return (props, children) => (state, actions) => {
     const more = (props, children) => {
-      return p1(C, map)(props, children)(state, actions)
+      const i = p1(C)(props, children)
+      return (typeof i == 'function') ? i(state, actions) : i
     }
-    const x = p2(more, map)(props, children)(state, actions)
-    return x || p1(C, map)(props, children)(state, actions)
+    const i = p2(more)(props, children)
+    const x = (typeof i == 'function') ? i(state, actions) : i
+    if (x) return x
+    const i2 = p1(C)(props, children)
+    return (typeof i == 'function') ? i(state, actions) : i
   }
 }
 

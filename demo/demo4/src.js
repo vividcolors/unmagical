@@ -1,6 +1,7 @@
 
 import {h, API, start, Input, Select, Radio, Checkbox, UpdateButton, Clickable, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
-import {playSortable, playListItem} from '../../src/core/components'
+import {playSortable} from '../../src/core/hocs/sortable'
+import {playListItem} from '../../src/core/hocs/listitem'
 import {createRestRepository} from '../../src/core/repository'
 import {makeEntityUpdates} from '../../src/core/updates'
 
@@ -14,7 +15,7 @@ const ReorderableList = playSortable(({itemPath = null, group = null, showItem =
       )}
     </div>
   )
-}, {})
+})
 
 const todoSchema = {
   type: 'object', 
@@ -58,7 +59,7 @@ const updates = {
   ...makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs'))
 }
 
-const TodoItem = playListItem(({path, editing, env, ...props}) => {
+const TodoItem = playListItem("slide")(({path, editing, env, ...props}) => {
   const id = API.extract(path + '/id', env)
   const handleStyle = editing ? {pointerEvents:'none', opacity:0.26} : {}
   return (
@@ -69,18 +70,18 @@ const TodoItem = playListItem(({path, editing, env, ...props}) => {
             <span class={`icon is-medium my-1 ${editing ? '' : 'handle'}`}><span class="material-icons" style={handleStyle}>drag_handle</span></span>
           </div>
           <div class="column">
-            <Checkbox class="px-2 py-1" mg-path={path + '/done'} />
+            <Checkbox class="px-2 py-1" path={path + '/done'} />
           </div>
         </div>
       </div>
       <div class="media-content">
         <p class="py-2 is-fullwidth">
-          <Clickable style={{cursor:'pointer'}} mg-update="editPart" mg-context={[path, '/form']}>{API.extract(path + '/subject', env)} @{API.extract(path + '/context', env)}</Clickable>
+          <Clickable style={{cursor:'pointer'}} update="editPart" context={[path, '/form']}>{API.extract(path + '/subject', env)} @{API.extract(path + '/context', env)}</Clickable>
         </p>
       </div>
       <div class="media-right">
-        <UpdateButton class="is-info is-inverted mx-1" mg-update="copyPart" mg-context={[path, '/nextId', {}]}><span class="icon"><span class="material-icons">content_copy</span></span></UpdateButton>
-        <UpdateButton class="is-danger is-inverted mx-1" mg-update="removePart" mg-context={[path, {}]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
+        <UpdateButton class="is-info is-inverted mx-1" update="copyPart" context={[path, '/nextId', {}]}><span class="icon"><span class="material-icons">content_copy</span></span></UpdateButton>
+        <UpdateButton class="is-danger is-inverted mx-1" update="removePart" context={[path, {}]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
       </div>
     </div>
   )
@@ -96,20 +97,20 @@ const TodoForm = ({env}) => {
             <span class="icon is-medium my-1"><span class="material-icons" style={{pointerEvents:'none', opacity:0.26}}>drag_handle</span></span>
           </div>
           <div class="column">
-            <Checkbox class="px-2 py-1" mg-path="/form/data/done" />
+            <Checkbox class="px-2 py-1" path="/form/data/done" />
           </div>
         </div>
       </div>
       <div class="media-content">
         <div class="columns">
           <div class="column">
-            <Field mg-path="/form/data/subject">
-              <Input mg-path="/form/data/subject" class="input" type="text" />
+            <Field path="/form/data/subject">
+              <Input path="/form/data/subject" class="input" type="text" />
             </Field>
           </div>
           <div class="column">
-            <Field mg-path="/form/data/context">
-              <Select mg-path="/form/data/context">
+            <Field path="/form/data/context">
+              <Select path="/form/data/context">
                 <option value="" disabled></option>
                 <option value="home">home</option>
                 <option value="work">work</option>
@@ -119,8 +120,8 @@ const TodoForm = ({env}) => {
         </div>
       </div>
       <div class="media-right">
-        <UpdateButton class="is-primary is-inverted mx-1" mg-update="commitPart" mg-context={['/form', '/nextId', {}]}><span class="icon"><span class="material-icons">check</span></span></UpdateButton>
-        <UpdateButton class="is-danger is-inverted mx-1" mg-update="discardPart" mg-context={['/form']}><span class="icon"><span class="material-icons">clear</span></span></UpdateButton>
+        <UpdateButton class="is-primary is-inverted mx-1" update="commitPart" context={['/form', '/nextId', {}]}><span class="icon"><span class="material-icons">check</span></span></UpdateButton>
+        <UpdateButton class="is-danger is-inverted mx-1" update="discardPart" context={['/form']}><span class="icon"><span class="material-icons">clear</span></span></UpdateButton>
       </div>
     </div>
   )
@@ -130,7 +131,7 @@ const TodoButton = () => {
   return (
     <div class="media" key="add">
       <div class="media-content">
-        <UpdateButton class="is-primary" mg-update="createPart" mg-context={['/todos/-', {id:0, done:false, subject:'', context:''}, '/form']}>追加</UpdateButton>
+        <UpdateButton class="is-primary" update="createPart" context={['/todos/-', {id:0, done:false, subject:'', context:''}, '/form']}>追加</UpdateButton>
       </div>
     </div>
   )
@@ -140,14 +141,14 @@ const view = (env) => {
   const form = API.extract('/form', env)
   return (
     <div class="container my-3">
-      <ReorderableList mg-name="todos" mg-path="/todos" options={{group:'todos', handle:'.handle'}}>
+      <ReorderableList name="todos" path="/todos" options={{group:'todos', handle:'.handle'}}>
         {API.extract('/todos', env).map((item, i) => {
           const path = '/todos/' + i
           return (form && form.action == path) ? <TodoForm env={env} /> : <TodoItem path={path} editing={!!form} env={env} />
         })}
       </ReorderableList>
       {(form && form.action.endsWith('-')) ? <TodoForm env={env} /> : <TodoButton />}
-      <Dialog mg-name="confirm" title="確認" message="このTODOを削除します。よろしいですか？" hideCancelButton={false} />
+      <Dialog name="confirm" title="確認" message="このTODOを削除します。よろしいですか？" hideCancelButton={false} />
     </div>
   )
 }
