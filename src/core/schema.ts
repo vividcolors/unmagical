@@ -1,7 +1,7 @@
 //@ts-check
 /** @module core/schema */
 
-import {emptyObject, typeOf, isJsonValue, appendPath} from './utils'
+import {typeOf, isJsonValue, appendPath} from './utils'
 import {MgError, Scalar} from './errors'
 
 export type Json = null | number | string | boolean | Json[] | {[prop:string]:Json}

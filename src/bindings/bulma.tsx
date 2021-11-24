@@ -19,12 +19,6 @@ export const Input = playTextbox<AnyAttrs>(({invalid, message, class:clazz = '',
   )
 })
 
-const foo = () => {
-  return (
-    <Input path="a" />
-  )
-}
-
 export const Textarea = playTextbox<AnyAttrs>(({invalid, message, class:clazz = '', ...props}) => {
   clazz += " textarea"
   if (invalid) clazz += " is-danger"

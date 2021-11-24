@@ -1,24 +1,39 @@
-//@ts-check
-/** @module core/utils */
 
+/**
+ * Some utility functions.
+ * 
+ * @module core/utils 
+ */
+
+/**
+ * JSON path's index portion.  
+ * We handle JSON path of `"/abc/1/def"` as an index array of `["abc", 1, "def"]`.
+ */
 export type Index = string|number
 
 /**
  * Returns true if x is an string representation of an integer value.
- * @function
- * @param {any} x
- * @returns {boolean} 
+ * 
+ * @example
+ * ```js
+ * isIntStr("abc");  // => false
+ * isIntStr("123");  // => true
+ * isIntStr("1a");   // => false
+ * ```
+ * 
  */
-export const isIntStr = (x:any):boolean => {
+export const isIntStr = (x:string):boolean => {
   const n = +x
   return (n % 1 === 0 && x === "" + n)
 }
 
 /**
  * Returns the array-index independent normalized path.
- * @function
- * @param {string} path 
- * @returns {string}
+ * 
+ * @example
+ * ```
+ * normalizePath("/abc/1/def");  // => "/abc/" + "*" + "/def"
+ * ```
  */
 export const normalizePath = (path:string):string => {
   const frags = path.split('/')
@@ -31,11 +46,15 @@ export const normalizePath = (path:string):string => {
 }
 
 /**
- * Concatenates two pathes, `path' can be a relative one.
- * @function
- * @param {string} base 
- * @param {string} path 
- * @returns {string}
+ * Concatenates two paths, `path' can be a relative one.
+ * It roughly follows the Relative JSON path standard.
+ * 
+ * @example
+ * ```
+ * appendPath("/abc/def", "1/zzz");  // => "/abc/zzz"
+ * appendPath("/abc/def", "0/zzz");  // => "/abc/def/zzz"
+ * appendPath("/abc/def", "/zzz");   // => "/zzz"
+ * ```
  */
 export const appendPath = (base:string, path:string):string => {
   if (path.charAt(0) == '' || path.charAt(0) == '/') return path  // absolute path
@@ -61,14 +80,12 @@ export const appendPath = (base:string, path:string):string => {
 
 /**
  * Normalizes not a string path but an array path, then returns a normalized string path.
- * @function
- * @param {Index[]} path
- * @returns {string} 
+ * 
  */
 export const normalizePathArray = (path:Index[]):string => {
   let rv = ''
   for (let i = 0; i < path.length; i++) {
-    if (typeof path[i] == 'number' || isIntStr(path[i])) {
+    if (typeof path[i] == 'number' || isIntStr("" + path[i])) {
       rv += '/*'
     } else {
       rv += '/' + path[i]
@@ -79,9 +96,7 @@ export const normalizePathArray = (path:Index[]):string => {
 
 /**
  * Separates a path described by a string into an Index array.
- * @function
- * @param {string} path 
- * @returns {Index[]}
+ * 
  */
 export const pathToArray = (path:string):Index[] => {
   const frags = path.split('/')
@@ -94,30 +109,18 @@ export const pathToArray = (path:string):Index[] => {
 
 /**
  * A variant of `typeof', which handles null and Array appropreately.
- * @function
- * @param {null|array|object|boolean|number|string} x 
- * @returns {string}
+ * 
+ * @example
+ * ```
+ * typeOf([]);    // => 'array'
+ * typeOf(null);  // => 'null'
+ * ```
  */
 export const typeOf = (x:any):string => x === null ? 'null' : Array.isArray(x) ? 'array' : typeof x
 
 /**
- * Empty object.
- * @type {{}}
- */
-export const emptyObject:{} = {}
-
-/**
- * Empty Array.
- * @template T
- * @type {T[]}
- */
-export const emptyArray:[] = []
-
-/**
- * Returns true if `x' is a json value.
- * @function
- * @param {any} x
- * @returns {boolean} 
+ * Returns true if `x' is a json value. This is just a shallow test.
+ * 
  */
 export const isJsonValue = (x:any):boolean => {
   switch (typeOf(x)) {
@@ -134,11 +137,15 @@ export const isJsonValue = (x:any):boolean => {
 }
 
 /**
- * Extracts common portion of pathes.
- * @function
- * @param {string} path1 
- * @param {string} path2 
- * @return {string}
+ * Extracts common portion of paths.
+ * 
+ * @example
+ * ```
+ * commonPath("/abc/def", "/abc/zzz");  // => "/abc"
+ * commonPath("/abc/def", "/abc/deX");  // => "/abc"
+ * commonPath("/abc", "/xxx");  // => ""
+ * commonPath("/abc/def/aaa", "/abc/def/bbb");  // => "/abc/def"
+ * ```
  */
 export const commonPath = (path1:string, path2:string):string => {
   const frags1 = path1.split('/')
@@ -154,10 +161,7 @@ export const commonPath = (path1:string, path2:string):string => {
 
 /**
  * Builds a query string from `obj'.
- * @function
- * @param {Object} obj 
- * @param {boolean} omitEmptyParam 
- * @returns {Record<string, string>}
+ * 
  */
 export const normalizeQuery = (obj:Record<string,string>, omitEmptyParam:boolean):Record<string,string> => {
   const rv = /** @type {Record<string, string>} */ ({})

@@ -50,7 +50,10 @@ export interface UnmagicalActions {
 
 export type UnmagicalAction<T> = ActionType<T, UnmagicalState, UnmagicalActions>
 
-export interface StartParameter {
+/**
+ * @category start
+ */
+export type StartParameter = {
   data: Json, 
   schema: Schema, 
   view: (env:Env) => VNode<{}>, 
@@ -61,15 +64,11 @@ export interface StartParameter {
   catalog?: Record<string,string>
 }
 
-export interface StartValue {
+/**
+ * @category start
+ */
+export type StartValue = {
   onUpdate: UnmagicalAction<Event|{update:string,context:any[]}>
-}
-
-export interface OnceParameter {
-  data: Json, 
-  schema: Schema, 
-  evolve?: (env:Env, updatePointer:string|null, prevEnv:Env|null) => Env, 
-  rules?: Rules
 }
 
 /**
@@ -430,15 +429,8 @@ const updateEnabledApis = {
 }
 
 /**
- * @param {Object} params
- * @param {Json} params.data
- * @param {Schema} params.schema
- * @param {(env:Env) => import('hyperapp').VNode} params.view
- * @param {Element} params.containerEl
- * @param {((env:Env, updatePointer:string, prevEnv:Env|null) => Env) | null} params.evolve
- * @param {{[name:string]:(any)}} params.updates
- * @param {Rules} params.rules
- * @param {Record<string,string>} params.catalog
+ * Starts frontend application.
+ * @category start
  */
 export const start = (
     {
@@ -650,11 +642,18 @@ export const start = (
 }
 
 /**
- * @param {Object} params
- * @param {Json} params.data
- * @param {Schema} params.schema
- * @param {((env:Env, updatePointer:string, prevEnv:Env|null) => Env) | null} params.evolve
- * @param {Rules} params.rules
+ * @category once
+ */
+export type OnceParameter = {
+  data: Json, 
+  schema: Schema, 
+  evolve?: (env:Env, updatePointer:string|null, prevEnv:Env|null) => Env, 
+  rules?: Rules
+}
+
+/**
+ * Runs Unmagical. Thus you can obtain the evolved env.
+ * @category once
  */
 export const once = (
     {

@@ -1,35 +1,56 @@
-// @ts-check
-/** @module core/errors */
+/**
+ * An error type and error messages.
+ * 
+ * @module core/errors
+ */
 
 import showText from 'string-template'
 
 export type Scalar = string|number|boolean|null
 
 export interface MgError {
+  /**
+   * An error code. This is used to distinguish an error from others.
+   */
   code: string, 
+
+  /**
+   * A detail description for developers.
+   */
   detail?: string, 
+
+  /**
+   * A hint data to build an error message.
+   */
   hint?: Scalar, 
+
+  /**
+   * An error message for users.
+   */
   message?: string
 }
 
+/**
+ * A type of normalizeError function.
+ */
 export type NormalizeError = (error:MgError) => MgError
 
 /**
  * Returns true if a given object is an instance of MgError
- * @function
+ * 
  * @param {any} x
- * @returns {boolean} 
+ * @returns 
  */
 export const isError = (x:any):boolean => {
   return (typeof x == 'object' && x != null && 'code' in x)
 }
 
- /**
-  * Extends a MgError for viewing, and returns its extended instance.
-  * @function
-  * @param {Record<string,string>} catalog
-  * @returns {NormalizeErrorFunc}
-  */
+/**
+ * Extends a MgError for viewing, and returns its extended instance.
+ * 
+ * @param {Record<string,string>} catalog
+ * @returns {NormalizeErrorFunc}
+ */
 export const normalizeError = (catalog:Record<string,string>):NormalizeError => (error) => {
   const template = catalog[error.code] || catalog['detail' in error ? 'fallback' : 'fallback.nodetail']
   const message = showText(template, error)
