@@ -1,7 +1,9 @@
 
-import {h, API, start, Input, Textarea, Listbox, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, Pagination, Clickable, Modal} from '../../src/bindings/bulma'
+import {h, API, start, Input, Textarea, Select, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, Pagination, Clickable, Modal} from '../../src/bindings/bulma'
 import {createRestRepository} from '../../src/core/repository'
 import {makeEntityListUpdates} from '../../src/core/updates'
+import {Env} from '../../src/core/env'
+import {StartParameter} from '../../src/core/framework'
 
 const contactSchema = {
   type: 'object', 
@@ -47,7 +49,34 @@ const schema = {
   }
 }
 
-const data = {
+type Contact = {
+  id: number, 
+  created: string, 
+  name: string, 
+  email: string, 
+  content: string
+}
+type Search = {
+  name_like: string, 
+  created_gte: string, 
+  created_lte: string, 
+  _page: number, 
+  _limit: number
+}
+type Data = {
+  contacts: {
+    query: Search, 
+    totalCount: number, 
+    items: Array<Contact>
+  }, 
+  form: {
+    method: string, 
+    data: Contact
+  }, 
+  search: Search
+}
+
+const data:Data = {
   contacts: {
     query: {
       name_like: '', 
@@ -73,8 +102,8 @@ const updates = {
   ...makeEntityListUpdates(createRestRepository('http://localhost:3000/contacts'))
 }
 
-const ContactModal = ({env}) => {
-  const form = API.extract('/form', env)
+const ContactModal = ({env}:{env:Env}) => {
+  const form = API.extract('/form', env) as Data["form"]
   if (! form) return null
   return (
     <Modal shown={true} key="contactModal" id="contactModal">
@@ -111,8 +140,8 @@ const ContactModal = ({env}) => {
   )
 }
 
-const view = (env) => {
-  const contacts = API.extract('/contacts', env)
+const view = (env:Env) => {
+  const contacts = API.extract('/contacts', env) as Data["contacts"]
   const from = (contacts.query._page - 1) * contacts.query._limit + 1
   const to = from + contacts.items.length - 1
   const tab = API.getPage("tab", env)
@@ -185,6 +214,6 @@ const view = (env) => {
 }
 
 const containerEl = document.getElementById('app')
-const {onUpdate} = start({data, schema, view, containerEl, updates})
+const {onUpdate} = start({data, schema, view:view as StartParameter["view"], containerEl, updates})
 
 onUpdate({update:'loadItems', context:['/contacts', {}]})

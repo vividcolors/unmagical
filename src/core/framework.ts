@@ -53,7 +53,7 @@ export type UnmagicalAction<T> = ActionType<T, UnmagicalState, UnmagicalActions>
 export interface StartParameter {
   data: Json, 
   schema: Schema, 
-  view: (env:Env) => VNode, 
+  view: (env:Env) => VNode<{}>, 
   containerEl: Element, 
   evolve?: (env:Env, updatePointer:string|null, prevEnv:Env|null) => Env, 
   updates?: Record<string,Update>

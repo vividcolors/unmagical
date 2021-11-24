@@ -179,7 +179,7 @@ export const Progress = playProgress(true)<AnyAttrs>(({current, name, shown, cla
 
 import {playModal} from '../core/hocs/modal'
 
-export const Modal = playModal("fade", true)<AnyAttrs>(({class:clazz = '', props}, children) => {
+export const Modal = playModal("fade", true)<AnyAttrs>(({class:clazz = '', ...props}, children) => {
   clazz += ' modal is-active'
   return (
     <div {...props} class={clazz}>
@@ -193,7 +193,7 @@ import {playPagination} from '../core/hocs/pagination'
 
 export const Pagination = playPagination<{prevLabel?: string, nextLabel?: string, loadItemsOptions?: object} & AnyAttrs>(({current, prev, next, first, last, siblings, listPath, prevLabel = 'Previous', nextLabel = 'Next', loadItemsOptions = {}, ...props}) => {
   return (
-    <nav class="pagination" role="navigation" aria-label="pagination">
+    <nav {...props} class="pagination" role="navigation" aria-label="pagination">
       <Clickable class="pagination-previous" update="loadItems" context={[listPath, {...loadItemsOptions, page:prev}]} disabled={! prev}>{prevLabel}</Clickable>
       <Clickable class="pagination-next" update="loadItems" context={[listPath, {...loadItemsOptions, page:next}]} disabled={! next}>{nextLabel}</Clickable>
       <ul class="pagination-list">

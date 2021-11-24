@@ -55,7 +55,7 @@ const feedbackOnRemove:Record<string,OnRemoveFunc> = {
 
 export type FeedbackExtraProps = {
   name: string, 
-  duration: number
+  duration?: number
 }
 
 export type FeedbackAutoProps = {
@@ -69,7 +69,7 @@ export type FeedbackAutoProps = {
 // nullIfHidden, transition
 export const playFeedback = (transition:"fade"|"zoom"|"slide", nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<FeedbackAutoProps & OtherAttrs>):UnmagicalComponent<FeedbackExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
-    const {duration, ...attributes} = props
+    const {duration = 0, ...attributes} = props
     const name = attributes.name
     const data = API.getFeedback(name, state.env)
     if (nullIfHidden && data === null) return null
