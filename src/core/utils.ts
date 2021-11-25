@@ -8,6 +8,8 @@
 /**
  * JSON path's index portion.  
  * We handle JSON path of `"/abc/1/def"` as an index array of `["abc", 1, "def"]`.
+ * 
+ * @category Common Types
  */
 export type Index = string|number
 
@@ -20,7 +22,7 @@ export type Index = string|number
  * isIntStr("123");  // => true
  * isIntStr("1a");   // => false
  * ```
- * 
+ * @category Common Variables
  */
 export const isIntStr = (x:string):boolean => {
   const n = +x
@@ -34,6 +36,7 @@ export const isIntStr = (x:string):boolean => {
  * ```
  * normalizePath("/abc/1/def");  // => "/abc/" + "*" + "/def"
  * ```
+ * @category Common Variables
  */
 export const normalizePath = (path:string):string => {
   const frags = path.split('/')
@@ -55,6 +58,7 @@ export const normalizePath = (path:string):string => {
  * appendPath("/abc/def", "0/zzz");  // => "/abc/def/zzz"
  * appendPath("/abc/def", "/zzz");   // => "/zzz"
  * ```
+ * @category Common Variables
  */
 export const appendPath = (base:string, path:string):string => {
   if (path.charAt(0) == '' || path.charAt(0) == '/') return path  // absolute path
@@ -81,6 +85,7 @@ export const appendPath = (base:string, path:string):string => {
 /**
  * Normalizes not a string path but an array path, then returns a normalized string path.
  * 
+ * @category Common Variables
  */
 export const normalizePathArray = (path:Index[]):string => {
   let rv = ''
@@ -97,6 +102,7 @@ export const normalizePathArray = (path:Index[]):string => {
 /**
  * Separates a path described by a string into an Index array.
  * 
+ * @category Common Variables
  */
 export const pathToArray = (path:string):Index[] => {
   const frags = path.split('/')
@@ -115,12 +121,14 @@ export const pathToArray = (path:string):Index[] => {
  * typeOf([]);    // => 'array'
  * typeOf(null);  // => 'null'
  * ```
+ * @category Common Variables
  */
 export const typeOf = (x:any):string => x === null ? 'null' : Array.isArray(x) ? 'array' : typeof x
 
 /**
  * Returns true if `x' is a json value. This is just a shallow test.
  * 
+ * @category Common Variables
  */
 export const isJsonValue = (x:any):boolean => {
   switch (typeOf(x)) {
@@ -146,6 +154,7 @@ export const isJsonValue = (x:any):boolean => {
  * commonPath("/abc", "/xxx");  // => ""
  * commonPath("/abc/def/aaa", "/abc/def/bbb");  // => "/abc/def"
  * ```
+ * @category Common Variables
  */
 export const commonPath = (path1:string, path2:string):string => {
   const frags1 = path1.split('/')
@@ -162,6 +171,7 @@ export const commonPath = (path1:string, path2:string):string => {
 /**
  * Builds a query string from `obj'.
  * 
+ * @category Common Variables
  */
 export const normalizeQuery = (obj:Record<string,string>, omitEmptyParam:boolean):Record<string,string> => {
   const rv = /** @type {Record<string, string>} */ ({})

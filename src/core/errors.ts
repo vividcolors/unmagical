@@ -8,12 +8,19 @@ import showText from 'string-template'
 
 /**
  * Type of `MgError.hint`
+ * 
+ * @category Common Types
  */
 export type Scalar = string|number|boolean|null
 
-export interface MgError {
+/**
+ * Error type
+ * 
+ * @category Common Types
+ */
+export type MgError = {
   /**
-   * An error code. This is used to distinguish an error from others.
+   * An error code. This is used to distinguish an error type from others.
    */
   code: string, 
 
@@ -28,233 +35,236 @@ export interface MgError {
   hint?: Scalar, 
 
   /**
-   * An error message for users.
+   * An error message for users.<br>
+   * Usually this property is undefined, so someone should call normalizeError() to generate a message.
    */
   message?: string
 }
 
 /**
  * A type of normalizeError function.
+ * 
+ * @category Common Types
  */
 export type NormalizeError = (error:MgError) => MgError
 
 /**
  * Returns true if a given object is an instance of MgError
  * 
- * @param {any} x
- * @returns 
+ * @param x
+ * 
+ * @category Common Variables
  */
 export const isError = (x:any):boolean => {
   return (typeof x == 'object' && x != null && 'code' in x)
 }
 
 /**
- * Extends a MgError for viewing, and returns its extended instance.
+ * Extends a MgError for viewing, and returns its extended instance.<br>
+ * Actually, this function adds `message` value to the error.
  * 
- * @param {Record<string,string>} catalog
- * @returns {NormalizeErrorFunc}
+ * @category Common Variables
  */
 export const normalizeError = (catalog:Record<string,string>):NormalizeError => (error) => {
-  const template = catalog[error.code] || catalog['detail' in error ? 'fallback' : 'fallback.nodetail']
+  const template = catalog[error.code] || catalog['detail' in error ? '_fallback' : '_fallback.nodetail']
   const message = showText(template, error)
   return {...error, message}
 }
 
 /**
- * @namespace
+ * 
+ * @category Common Variables
  */
-export const defaultErrorMessages = {
+export enum defaultCatalog {
   /**
-   * @name "fallback"
+   * In fact, this is not an error code. This entry will be used when generating a message for an unknown code.
    */
-  'fallback': 'Error code:{code}; detail:{detail}', 
+  '_fallback' = 'Error code:{code}; detail:{detail}', 
   /**
-   * @name "fallback.nodetail"
+   * In fact, this is not an error code. This entry will be used when generating a message for an unknown code.
    */
-  'fallback.nodetail': 'Error code:{code}', 
-  /**
-   * @name "value"
-   */
-  'value': 'Invalid value', 
+  '_fallback.nodetail' = 'Error code:{code}', 
+  
+  'value' = 'Invalid value', 
   /**
    * @name "type.null"
    */
-  'type.null': 'Please input a null value', 
+  'type.null' = 'Please input a null value', 
   /**
    * @name "type.boolean"
    */
-  'type.boolean': 'Please input a boolean value', 
+  'type.boolean' = 'Please input a boolean value', 
   /**
    * @name "type.boolean?"
    */
-  'type.boolean?': 'Please input a boolean value or a null', 
+  'type.boolean?' = 'Please input a boolean value or a null', 
   /**
    * @name "type.integer"
    */
-  'type.integer': 'Please input an integer', 
+  'type.integer' = 'Please input an integer', 
   /**
    * @name "type.integer?"
    */
-  'type.integer?': 'Please input an integer or a null', 
+  'type.integer?' = 'Please input an integer or a null', 
   /**
    * @name "type.number"
    */
-  'type.number': 'Please input a number', 
+  'type.number' = 'Please input a number', 
   /**
    * @name "type.number?"
    */
-  'type.number?': 'Please input a number or a null', 
+  'type.number?' = 'Please input a number or a null', 
   /**
    * @name "type.string"
    */
-  'type.string': 'Please input a string', 
+  'type.string' = 'Please input a string', 
   /**
    * @name "type.object"
    */
-  'type.object': 'Please input an object value', 
+  'type.object' = 'Please input an object value', 
   /**
    * @name "type.object?"
    */
-  'type.object?': 'Please input an object value or a null', 
+  'type.object?' = 'Please input an object value or a null', 
   /**
    * @name "type.array"
    */
-  'type.array': 'Please input an array value', 
+  'type.array' = 'Please input an array value', 
   /**
    * @name "type.array?"
    */
-  'type.array?': 'Please input an array value or a null', 
+  'type.array?' = 'Please input an array value or a null', 
   /**
    * @name "rule.enum"
    */
-  'rule.enum': 'Invalid input', 
+  'rule.enum' = 'Invalid input', 
   /**
    * @name "rule.const"
    */
-  'rule.const': 'Input {hint}',  // param
+  'rule.const' = 'Input {hint}',  // param
   /**
    * @name "rule.const.nohint"
    */
-  'rule.const.nohint': 'Invalid input', 
+  'rule.const.nohint' = 'Invalid input', 
   /**
    * @name "rule.notEmpty"
    */
-  'rule.notEmpty': 'Please input', 
+  'rule.notEmpty' = 'Please input', 
   /**
    * @name "rule.required"
    */
-  'rule.required': 'Missing property "{hint}"',  // param[i]
+  'rule.required' = 'Missing property "{hint}"',  // param[i]
   /**
    * @name "rule.switchRequired"
    */
-  'rule.switchRequired': 'Missing property "{hint}"',  // required[i]
+  'rule.switchRequired' = 'Missing property "{hint}"',  // required[i]
   /**
    * @name "rule.sqitchRequired.nohint"
    */
-  'rule.switchRequired.nohint': 'Properties are missing', 
+  'rule.switchRequired.nohint' = 'Properties are missing', 
   /**
    * @name "rule.same"
    */
-  'rule.same': 'Please input {hint}',  // target
+  'rule.same' = 'Please input {hint}',  // target
   /**
    * @name "rule.same.nohint"
    */
-  'rule.same.nohint': 'Invalid input', 
+  'rule.same.nohint' = 'Invalid input', 
   /**
    * @name "rule.multipleOf"
    */
-  'rule.multipleOf': 'Please enter a multiple of {hint}',  // param
+  'rule.multipleOf' = 'Please enter a multiple of {hint}',  // param
   /**
    * @name "rule.maximum"
    */
-  'rule.maximum': 'Please enter {hint} or less',  // param
+  'rule.maximum' = 'Please enter {hint} or less',  // param
   /**
    * @name "rule.exclusiveMaximum"
    */
-  'rule.exclusiveMaximum': 'Please enter less than {hint}',  // param
+  'rule.exclusiveMaximum' = 'Please enter less than {hint}',  // param
   /**
    * @name "rule.minimum"
    */
-  'rule.minimum': 'Please enter {hint} or more',  // param
+  'rule.minimum' = 'Please enter {hint} or more',  // param
   /**
    * @name "rule.exclusiveMinimum"
    */
-  'rule.exclusiveMinimum': 'Please enter more than {hint}',  // param
+  'rule.exclusiveMinimum' = 'Please enter more than {hint}',  // param
   /**
    * @name "rule.maxLength"
    */
-  'rule.maxLength': 'Please enter no more than {hint} characters',  // param
+  'rule.maxLength' = 'Please enter no more than {hint} characters',  // param
   /**
    * @name "rule.minLength"
    */
-  'rule.minLength': 'Please enter at least {hint} characters',  // param
+  'rule.minLength' = 'Please enter at least {hint} characters',  // param
   /**
    * @name "rule.pattern"
    */
-  'rule.pattern': 'Invalid format',  // param
+  'rule.pattern' = 'Invalid format',  // param
   /**
    * @name "rule.maxItems"
    */
-  'rule.maxItems': 'Please make it {hint} or less',  // param
+  'rule.maxItems' = 'Please make it {hint} or less',  // param
   /**
    * @name "rule.minItems"
    */
-  'rule.minItems': 'Please make it {hint} or more',  // param
+  'rule.minItems' = 'Please make it {hint} or more',  // param
   /**
    * @name "http.400"
    */
-  'http.400': 'HTTP error: {detail}', 
+  'http.400' = 'HTTP error: {detail}', 
   /**
    * @name "http.401"
    */
-  'http:401': 'HTTP error: {detail}', 
+  'http:401' = 'HTTP error: {detail}', 
   /**
    * @name "http.403"
    */
-  'http:403': 'HTTP error: {detail}', 
+  'http:403' = 'HTTP error: {detail}', 
   /**
    * @name "http.404"
    */
-  'http.404': 'HTTP error: {detail}', 
+  'http.404' = 'HTTP error: {detail}', 
   /**
    * @name "http.405"
    */
-  'http.405': 'HTTP error: {detail}', 
+  'http.405' = 'HTTP error: {detail}', 
   /**
    * @name "http.406"
    */
-  'http.406': 'HTTP error: {detail}', 
+  'http.406' = 'HTTP error: {detail}', 
   /**
    * @name "http.407"
    */
-  'http.407': 'HTTP error: {detail}', 
+  'http.407' = 'HTTP error: {detail}', 
   /**
    * @name "http.408"
    */
-  'http.408': 'HTTP error: {detail}', 
+  'http.408' = 'HTTP error: {detail}', 
   /**
    * @name "http.409"
    */
-  'http.409': 'HTTP error: {detail}', 
+  'http.409' = 'HTTP error: {detail}', 
   /**
    * @name "http.410"
    */
-  'http.410': 'HTTP error: {detail}', 
+  'http.410' = 'HTTP error: {detail}', 
   /**
    * @name "http.500"
    */
-  'http.500': 'HTTP error: {detail}', 
+  'http.500' = 'HTTP error: {detail}', 
   /**
    * @name "http.501"
    */
-  'http.501': 'HTTP error: {detail}', 
+  'http.501' = 'HTTP error: {detail}', 
   /**
    * @name "http.502"
    */
-  'http.502': 'HTTP error: {detail}', 
+  'http.502' = 'HTTP error: {detail}', 
   /**
    * @name "http.503"
    */
-  'http.503': 'HTTP error: {detail}', 
+  'http.503' = 'HTTP error: {detail}', 
 
 }

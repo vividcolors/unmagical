@@ -1,0 +1,15 @@
+{
+    "tsconfig": "tsconfig.json", 
+    "name": "Unmagical API Reference", 
+    "entryPointStrategy": "expand", 
+    "categorizeByGroup": false, 
+    "sort": "source-order", 
+    "out": "./docs", 
+    "categoryOrder": [
+        "Common Types", "Common Variables", 
+        "Textbox", "Slider", "Listbox", "Radio", "Checkbox", "UpdateButton", "SettleButton", "Field", "Dialog", "Feedback", "Modal", "Progress", "Page", "Switch", "ListItem", "Pagination", "Flatpickr", "Pickr", "Sortable", 
+        "start", "once", 
+        "Predefined Rules", 
+        "*"
+    ]
+}

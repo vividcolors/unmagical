@@ -4,12 +4,37 @@ import { normalizePath } from './utils'
 import * as E from './env'
 import * as S from './schema'
 import * as X from './errors'
-import { app, h as h0, VNode, ActionType, View } from 'hyperapp'
+import { app, h as h0, VNode, ActionType, View as HaView } from 'hyperapp'
 import {MgError, NormalizeError} from './errors'
 import {Json, Schema, Slot, SchemaDb, Lookup, Rules} from './schema'
 import {Env} from './env'
 
+/**
+ * @category Common Types
+ */
 export type Validity = {invalid:boolean, error:MgError|null}
+
+/**
+ * Developer-supplied evolve function.<br>
+ * In this function, derived data are calculated.
+ * 
+ * @param env an env before evolve
+ * @param updatePointer a common path of currently updated data
+ * @param prevEnv an env before current update
+ * @returns evolved env
+ * @category Common Types
+ */
+export type Evolve = (env:Env, updatePointer:string|null, prevEnv:Env|null) => Env
+
+/**
+ * Developer-supplied view function.<br>
+ * View function maps env to vdom.
+ * 
+ * @param env current env
+ * @returns VDOM
+ * @category Common Types
+ */
+export type View = (env:Env) => VNode<{}>
 
 type ThenHandler = (result:any) => any
 type XThenHandler = (result:any, env:Env) => any
@@ -28,13 +53,19 @@ type OnPromiseThenParam = {
 type OnUpdateByCall<S, A> = ActionType<{update:string, context:any[]}, S, A>
 type OnUpdate<S, A> = OnUpdateByEvent<S, A>|OnUpdateByCall<S, A>*/
 
-export interface UnmagicalState {
+/**
+ * @hidden
+ */
+export type UnmagicalState = {
   baseEnv: Env, 
   env: Env, 
   normalizeError: NormalizeError
 }
 
-export interface UnmagicalActions {
+/**
+ * @hidden
+ */
+export type UnmagicalActions = {
   onTextboxInput: UnmagicalAction<Event>, 
   onTextboxBlur: UnmagicalAction<Event>, 
   onSliderInput: UnmagicalAction<Event>, 
@@ -48,6 +79,9 @@ export interface UnmagicalActions {
   onPromiseThen: UnmagicalAction<OnPromiseThenParam>
 }
 
+/**
+ * @hidden
+ */
 export type UnmagicalAction<T> = ActionType<T, UnmagicalState, UnmagicalActions>
 
 /**
@@ -56,9 +90,9 @@ export type UnmagicalAction<T> = ActionType<T, UnmagicalState, UnmagicalActions>
 export type StartParameter = {
   data: Json, 
   schema: Schema, 
-  view: (env:Env) => VNode<{}>, 
+  view: View, 
   containerEl: Element, 
-  evolve?: (env:Env, updatePointer:string|null, prevEnv:Env|null) => Env, 
+  evolve?: Evolve, 
   updates?: Record<string,Update>
   rules?: Rules, 
   catalog?: Record<string,string>
@@ -447,7 +481,7 @@ export const start = (
   if (! evolve) evolve = (env, _pointer, _prevEnv) => env
   const validate = S.validate(rules || S.defaultRules)
   const coerce = S.coerce
-  const normalizeError = X.normalizeError(catalog || X.defaultErrorMessages)
+  const normalizeError = X.normalizeError(catalog || X.defaultCatalog)
 
   const schemaDb = S.buildDb(schema)
 
@@ -634,7 +668,7 @@ export const start = (
     env, 
     normalizeError
   }
-  const view1:View<UnmagicalState, UnmagicalActions> = (state, actions) => view(state.env)
+  const view1:HaView<UnmagicalState, UnmagicalActions> = (state, actions) => view(state.env)
   const actions = app(state, actions0, view1, containerEl)
   return {
     onUpdate: actions.onUpdate, 
@@ -647,12 +681,12 @@ export const start = (
 export type OnceParameter = {
   data: Json, 
   schema: Schema, 
-  evolve?: (env:Env, updatePointer:string|null, prevEnv:Env|null) => Env, 
+  evolve?: Evolve, 
   rules?: Rules
 }
 
 /**
- * Runs Unmagical. Thus you can obtain the evolved env.
+ * Runs headless Unmagical once. Thus you can obtain the evolved env from data.
  * @category once
  */
 export const once = (
@@ -677,4 +711,8 @@ export const once = (
   return env
 }
 
+/**
+ * 
+ * @category Common Variables
+ */
 export const h = h0

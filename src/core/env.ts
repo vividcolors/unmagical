@@ -1,14 +1,28 @@
-//@ts-check
-/** @module core/env */
+/**
+ * This is the core data store object in Unmagical, and it is an abstract data type.
+ * @module core/env
+ */
 
 import {normalizePath, typeOf, isIntStr, normalizePathArray, appendPath, Index} from './utils'
-import {hasPath as rhasPath, init, path as rpath, assocPath, insert, last, dissoc, remove as rremove, update } from 'ramda'
+import rhasPath from 'ramda/src/hasPath'
+import init from 'ramda/src/init'
+import rpath from 'ramda/src/path'
+import assocPath from 'ramda/src/assocPath'
+import insert from 'ramda/src/insert'
+import last from 'ramda/src/last'
+import dissoc from 'ramda/src/dissoc'
+import rremove from 'ramda/src/remove'
+import update from 'ramda/src/update'
 import {Json, Schema, Slot, SchemaDb, Lookup, Validate} from './schema'
 
 type MutateSlot = (slot:Slot, path:string) => Slot
 type ReduceSlot<T> = (cur:T, slot:Slot, path:string) => T
 
-export interface Env {
+/**
+ * Env is the abstract data type.
+ * @ignore
+ */
+export type Env = {
   tree: Json, 
   trackUpdate: boolean, 
   updatePoint: Index[], 
@@ -142,6 +156,8 @@ const strip = (tree:Json):Json => {
  * @param {ValidateFunc} validate
  * @param {boolean} trackUpdate
  * @returns {Env}
+ * 
+ * @category Common Variables
  */
 export const makeEnv = (data:Json, schemaDb:SchemaDb, validate:Validate, trackUpdate:boolean):Env => {
   const tree = wrap(data) as Json
@@ -161,6 +177,8 @@ export const makeEnv = (data:Json, schemaDb:SchemaDb, validate:Validate, trackUp
  * @param {Env} env0 
  * @param {Env} env1 
  * @returns {boolean}
+ * 
+ * @category Common Variables
  */
 export const isSame = (env0:Env, env1:Env):boolean => {
   return (env0.tree === env1.tree && env0.extra === env1.extra)
@@ -225,6 +243,8 @@ const intersect = (path0:Index[]|null, path1:Index[]|null):Index[]|null => {
  * @function
  * @param {Env} env 
  * @returns {Env}
+ * 
+ * @category Common Variables
  */
 export const beginUpdateTracking = (env:Env):Env => {
   // Essentially, `updatePoint' should be set to null, but it can be omitted 
@@ -237,6 +257,8 @@ export const beginUpdateTracking = (env:Env):Env => {
  * @function
  * @param {Env} env 
  * @returns {[string|null, Env]}
+ * 
+ * @category Common Variables
  */
 export const endUpdateTracking = (env:Env):[string|null, Env] => {
   const updatePoint = env.updatePoint ? externPath(env.updatePoint) : null
@@ -253,6 +275,8 @@ export const endUpdateTracking = (env:Env):[string|null, Env] => {
  * @param {string} path 
  * @param {Env} env 
  * @returns {boolean}
+ * 
+ * @category Common Variables
  */
 export const test = (path:string, env:Env):boolean => {
   return hasPath(/** @type {string[]} */ (internPath(path)), env.tree)
@@ -264,6 +288,8 @@ export const test = (path:string, env:Env):boolean => {
  * @param {string} path
  * @param {Env} env
  * @returns {Json}
+ * 
+ * @category Common Variables
  */
 export const extract = (path:string, env:Env):Json => {
   const epath = /** @type {string[]} */ (internPath(path))
@@ -280,6 +306,8 @@ export const extract = (path:string, env:Env):Json => {
  * @param {string} path 
  * @param {Env} env
  * @returns {Slot} 
+ * 
+ * @category Common Variables
  */
 export const getSlot = (path:string, env:Env):Slot => {
   const epath = /** @type {string[]} */ (internPath(path))
@@ -299,6 +327,8 @@ export const getSlot = (path:string, env:Env):Slot => {
  * @returns {Env} 
  * 
  * slot value must be a scalar.
+ * 
+ * @category Common Variables
  */
 export const setSlot = (path:string, slot:Slot, env:Env):Env => {
   const epath = internPath(path)
@@ -328,6 +358,8 @@ export const setSlot = (path:string, slot:Slot, env:Env):Env => {
  * @param {Json} value 
  * @param {Env} env 
  * @returns {Env}
+ * 
+ * @category Common Variables
  */
 export const add = (path:string, value:Json, env:Env):Env => {
   const epath = internPath(path)
@@ -376,6 +408,7 @@ export const add = (path:string, value:Json, env:Env):Env => {
  * @param {string} path 
  * @param {Env} env 
  * @returns {Env}
+ * @category Common Variables
  */
 export const remove = (path:string, env:Env):Env => {
   const epath = internPath(path)
@@ -419,6 +452,7 @@ export const remove = (path:string, env:Env):Env => {
  * @param {Json} value 
  * @param {Env} env 
  * @returns {Env}
+ * @category Common Variables
  */
 export const replace = (path:string, value:Json, env:Env):Env => {
   const epath = internPath(path)
@@ -473,6 +507,7 @@ export const replace = (path:string, value:Json, env:Env):Env => {
  * @param {string} path 
  * @param {Env} env
  * @returns {Env} 
+ * @category Common Variables
  */
 export const move = (from:string, path:string, env:Env):Env => {
   const value = extract(from, env)
@@ -488,6 +523,7 @@ export const move = (from:string, path:string, env:Env):Env => {
  * @param {string} path 
  * @param {Env} env
  * @returns {Env} 
+ * @category Common Variables
  */
 export const copy = (from:string, path:string, env:Env):Env => {
   const value = extract(from, env)
@@ -501,6 +537,7 @@ export const copy = (from:string, path:string, env:Env):Env => {
  * @param {string} path 
  * @param {Env} env
  * @returns {Env} 
+ * @category Common Variables
  */
 export const validate = (path:string, env:Env):Env => {
   let basePath = null
@@ -566,6 +603,7 @@ export const validate = (path:string, env:Env):Env => {
  * @param {string} path 
  * @param {Env} env 
  * @returns {Env}
+ * @category Common Variables
  */
 export const mapDeep = (f:MutateSlot, path:string, env:Env):Env => {
   const inner = (slot0:Slot, path:string):Slot => {
@@ -606,6 +644,7 @@ export const mapDeep = (f:MutateSlot, path:string, env:Env):Env => {
  * @param {string} path 
  * @param {Env} env 
  * @returns {T}
+ * @category Common Variables
  */
 export const reduceDeep = <T>(f:ReduceSlot<T>, cur:T, path:string, env:Env):T => {
   const inner = (cur:T, slot:Slot, path:string):T => {
@@ -633,6 +672,13 @@ export const reduceDeep = <T>(f:ReduceSlot<T>, cur:T, path:string, env:Env):T =>
   return inner(cur, slot, path)
 }
 
+/**
+ * 
+ * @param path 
+ * @param fromEnv 
+ * @param toEnv 
+ * @category Common Variables
+ */
 export const duplicate = (path:string, fromEnv:Env, toEnv:Env):Env => {
   const epath = internPath(path)
   if (epath.length == 0) {
@@ -686,6 +732,7 @@ export const duplicate = (path:string, fromEnv:Env, toEnv:Env):Env => {
  * @param {Object|null} info 
  * @param {Env} env
  * @returns {Env} 
+ * @category Common Variables
  */
 export const setExtra = (name:string, info:Object|null, env:Env):Env => {
   if (info === null) {
@@ -703,6 +750,7 @@ export const setExtra = (name:string, info:Object|null, env:Env):Env => {
  * @param {string} name 
  * @param {Env} env
  * @returns {Object|null} 
+ * @category Common Variables
  */
 export const getExtra = (name:string, env:Env):Object|null => {
   return env.extra[name] || null
@@ -715,6 +763,7 @@ export const getExtra = (name:string, env:Env):Object|null => {
  * @param {any} onPromiseThen
  * @param {Env} env 
  * @returns {Env}
+ * @category Common Variables
  */
 export const setPortal = (ret:any, onPromiseThen:any, env:Env):Env => {
   if (ret) return {...env, ret, onPromiseThen}
@@ -727,6 +776,7 @@ export const setPortal = (ret:any, onPromiseThen:any, env:Env):Env => {
  * @function
  * @param {Env} env
  * @returns {void} 
+ * @category Common Variables
  */
 export const doReturn = (env:Env):void => {
   if (env.ret) {
@@ -741,6 +791,7 @@ export const doReturn = (env:Env):void => {
  * @function
  * @param {any} x
  * @returns {boolean} 
+ * @category Common Variables
  */
 export const isEnv = (x:any):boolean => {
   return (x != null 

@@ -5,7 +5,7 @@ import {normalizeQuery} from './utils'
 import {MgError} from './errors'
 import {Json} from './schema'
 
-export interface Repository {
+export type Repository = {
   search: (query:Record<string,any>) => Promise<{entities:Json[], totalCount:number}>, 
   add: (entity:Json) => Promise<Json>, 
   replace: (entity:Json) => Promise<Json>, 

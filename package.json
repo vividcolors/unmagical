@@ -17,7 +17,7 @@
     "demo4": "parcel build -d demo/demo4 --out-file index.js demo/demo4/src.js",
     "demo5": "parcel build -d demo/demo5 --out-file index.js demo/demo5/src.tsx",
     "demo6": "parcel build -d demo/demo6 --out-file index.js --target node demo/demo6/src.js",
-    "docs": "typedoc --tsconfig tsconfig.json --name \"Unmagical API Reference\" --entryPointStrategy expand --categorizeByGroup false --sort source-order --out ./docs ./src"
+    "docs": "typedoc --options typedoc.json ./src"
   },
   "devDependencies": {
     "@types/ramda": "^0.27.50",
