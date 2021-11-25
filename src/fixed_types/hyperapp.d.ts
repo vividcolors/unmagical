@@ -38,7 +38,7 @@ export type Children = VNode | string | number | null
  * @returns A VNode tree.
  * 
  * @remarks
- * In unmagical, we added `ToAttributes` type parameter.
+ * In unmagical, we added `ToAttributes` type parameter.<br>
  * Also we changed Element type from: 
  * ```
  * interface Element extends VNode<any> {}
