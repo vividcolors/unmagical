@@ -14,6 +14,9 @@ export interface VNode<Attributes = {}> {
 }
 
 /** A Component is a function that returns a custom VNode or View.
+ * 
+ * @remark
+ * In unmagical, we added `ToAttributes` type parameter.
  *
  * @memberOf [VDOM]
  */
@@ -33,6 +36,17 @@ export type Children = VNode | string | number | null
  * @param attributes     Any valid HTML atributes, events, styles, and meta data
  * @param children  The children of the VNode
  * @returns A VNode tree.
+ * 
+ * @remarks
+ * In unmagical, we added `ToAttributes` type parameter.
+ * Also we changed Element type from: 
+ * ```
+ * interface Element extends VNode<any> {}
+ * ```
+ * to: 
+ * ```
+ * type Element = VNode<any> | View<any, any>;
+ * ```
  *
  * @memberOf [VDOM]
  */
