@@ -6,6 +6,9 @@
 
 import showText from 'string-template'
 
+/**
+ * Type of `MgError.hint`
+ */
 export type Scalar = string|number|boolean|null
 
 export interface MgError {
