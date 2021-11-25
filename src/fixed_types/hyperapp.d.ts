@@ -39,7 +39,7 @@ export type Children = VNode | string | number | null
  * 
  * @remarks
  * In unmagical, we added `ToAttributes` type parameter.<br>
- * Also we changed Element type from: 
+ * Also we changed `Element` type from: 
  * ```
  * interface Element extends VNode<any> {}
  * ```
