@@ -3,19 +3,37 @@ import { API, h, UnmagicalState, UnmagicalActions, UnmagicalAction } from './fra
 export { API, h, UnmagicalState, UnmagicalActions, UnmagicalAction } from './framework'
 import * as X from './errors'
 import {VNode, Component, Children} from 'hyperapp'
-export {VNode, Component, Children} from 'hyperapp'
 import { Json } from './schema'
 
-export type DoneFunc = () => void
-export type OnCreateFunc = (el:Element) => void
-export type OnRemoveFunc = (el:Element, done:DoneFunc) => void
-export type OnDestroyFunc = (el:Element) => void
+type DoneFunc = () => void
+type OnCreateFunc = (el:Element) => void
+type OnRemoveFunc = (el:Element, done:DoneFunc) => void
+type OnDestroyFunc = (el:Element) => void
 
-export type UnmagicalComponent<A> = Component<A,UnmagicalState,UnmagicalActions>
+/**
+ * @category Types
+ */
+export type UnmagicalComponent<Attributes> = Component<Attributes,UnmagicalState,UnmagicalActions>
+
+/**
+ * @category Types
+ */
 export type NodeName<A> = UnmagicalComponent<A> | string
+
+/**
+ * @category Types
+ */
 export type Hoc<A> = (c:NodeName<A>) => UnmagicalComponent<A>
 
+/**
+ * @category Types
+ */
+export {VNode} from 'hyperapp'
 
+
+/**
+ * @category Entries
+ */
 export const suspendRoot = () => {
   const rootEl = document.documentElement
   const c = +rootEl.dataset.mgSuspendCount
@@ -27,6 +45,9 @@ export const suspendRoot = () => {
   }
 }
 
+/**
+ * @category Entries
+ */
 export const resumeRoot = () => {
   const rootEl = document.documentElement
   const c = +rootEl.dataset.mgSuspendCount
@@ -38,6 +59,9 @@ export const resumeRoot = () => {
   }
 }
 
+/**
+ * @category Entries
+ */
 export const prepareToDestroy = (el:Element, anim:Animation, done:DoneFunc) => {
   const tid = setTimeout(() => {
     done()
@@ -49,6 +73,9 @@ export const prepareToDestroy = (el:Element, anim:Animation, done:DoneFunc) => {
   }
 }
 
+/**
+ * @category Entries
+ */
 export const compose = <Attrs>(p1:Hoc<Attrs>, p2:Hoc<Attrs>):Hoc<Attrs> => (C) => {
   return (props, children) => (state, actions) => {
     const more = (props, children) => {
@@ -61,12 +88,6 @@ export const compose = <Attrs>(p1:Hoc<Attrs>, p2:Hoc<Attrs>):Hoc<Attrs> => (C) =
     const i2 = p1(C)(props, children)
     return (typeof i == 'function') ? i(state, actions) : i
   }
-}
-
-export const addClass = (attributes, attr, clazz) => {
-  if (! clazz) return
-  if (! attributes.hasOwnProperty(attr)) attributes[attr] = ''
-  attributes[attr] += ' ' + clazz
 }
 
 

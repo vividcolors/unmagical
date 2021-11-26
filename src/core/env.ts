@@ -149,13 +149,23 @@ const strip = (tree:Json):Json => {
 }
 
 /**
- * Makes env.
- * @function
- * @param {Json} data 
- * @param {SchemaDb} schemaDb 
- * @param {ValidateFunc} validate
- * @param {boolean} trackUpdate
- * @returns {Env}
+ * @en Makes env.
+ * @ja Envを作る。
+ * @param data
+ * - `en` initial data
+ * - `ja` 初期データ
+ * @param schemaDb
+ * - `en` schema database
+ * - `ja` スキーマデータベース
+ * @param validate
+ * - `en` validation function
+ * - `ja` バリデーション関数
+ * @param trackUpdate
+ * - `en` if true, then env is created with update tracking in place.
+ * - `ja` trueならenvはアップデートトラッキングをしている状態で作られます。
+ * @returns 
+ * - `en` newly created env
+ * - `ja` 新しく作成されたenv
  * 
  * @category Entries
  */
