@@ -10,13 +10,13 @@ const master = {
     {name:'SC130-T', price:32000}
   ], 
   os: [
-    {name:'Home', price:8000}, 
-    {name:'Pro', price:13000}
+    {name:'Windows10 Home', price:8000}, 
+    {name:'Windows10 Pro', price:13000}
   ], 
   cpu: [
-    {name:'i7', price:24000}, 
-    {name:'i5', price:16000}, 
-    {name:'i3', price:10000}
+    {name:'Intel i7', price:24000}, 
+    {name:'Intel i5', price:16000}, 
+    {name:'Intel i3', price:10000}
   ], 
   memory: [
     {name:'4G', price:10000}, 
@@ -136,9 +136,7 @@ const data = {
   }
 }
 
-const updates = {
-  ...makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs', {}))
-}
+const updates = makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs', {}))
 
 const view = (env:Env) => {
   const flags = API.extract('/flags', env) as Data["flags"]

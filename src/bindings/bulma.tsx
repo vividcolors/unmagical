@@ -197,7 +197,6 @@ export const ColorPicker = C.playPickr<{iconClass?: string, iconText?: string} &
 export type ShowItemFunc = (item:any, index:number, itemPath:string, group:string) => VNode<any>
 
 export const ReorderableMenuList = C.playSortable<{showItem?: ShowItemFunc, items?: any[]} & AnyAttrs>(({active, itemPath, group, showItem = null, items = null, ...props}, children) => {
-  console.log('ReorderableMenuList', showItem, items)
   return (
     <ul {...props}>
       {(showItem && items) ? (
