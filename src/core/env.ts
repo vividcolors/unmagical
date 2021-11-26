@@ -15,8 +15,6 @@ import rremove from 'ramda/src/remove'
 import update from 'ramda/src/update'
 import {Json, Schema, Slot, SchemaDb, Lookup, Validate} from './schema'
 
-type MutateSlot = (slot:Slot, path:string) => Slot
-type ReduceSlot<T> = (cur:T, slot:Slot, path:string) => T
 
 /**
  * Env is the abstract data type.
@@ -608,14 +606,9 @@ export const validate = (path:string, env:Env):Env => {
 
 /**
  * By f, maps every slot descending to a location specified by path.
- * @function
- * @param {MutateSlotFunc} f 
- * @param {string} path 
- * @param {Env} env 
- * @returns {Env}
  * @category Entries
  */
-export const mapDeep = (f:MutateSlot, path:string, env:Env):Env => {
+export const mapDeep = (f:(slot:Slot, path:string) => Slot, path:string, env:Env):Env => {
   const inner = (slot0:Slot, path:string):Slot => {
     const value0 = slot0.value
     switch (typeOf(value0)) {
@@ -656,7 +649,7 @@ export const mapDeep = (f:MutateSlot, path:string, env:Env):Env => {
  * @returns {T}
  * @category Entries
  */
-export const reduceDeep = <T>(f:ReduceSlot<T>, cur:T, path:string, env:Env):T => {
+export const reduceDeep = <T>(f:(cur:T, slot:Slot, path:string) => T, cur:T, path:string, env:Env):T => {
   const inner = (cur:T, slot:Slot, path:string):T => {
     const value0 = slot.value
     switch (typeOf(value0)) {

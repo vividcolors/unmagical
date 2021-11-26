@@ -1,14 +1,25 @@
 
 import { API, h, UnmagicalState, UnmagicalActions, UnmagicalAction } from './framework'
-export { API, h, UnmagicalState, UnmagicalActions, UnmagicalAction } from './framework'
+export { API, h, UnmagicalActions, UnmagicalAction } from './framework'
 import * as X from './errors'
 import {VNode, Component, Children} from 'hyperapp'
 import { Json } from './schema'
 
-type DoneFunc = () => void
-type OnCreateFunc = (el:Element) => void
-type OnRemoveFunc = (el:Element, done:DoneFunc) => void
-type OnDestroyFunc = (el:Element) => void
+/**
+ * `oncreate` lifecycle hook.
+ * @category Types
+ */
+export type OnCreateFunc = (el:Element) => void
+
+/**
+ * `onremove` lifecycle hook.
+ */
+export type OnRemoveFunc = (el:Element, done:() => void) => void
+
+/**
+ * `ondestroy` lifecycle hook.
+ */
+export type OnDestroyFunc = (el:Element) => void
 
 /**
  * @category Types
@@ -62,7 +73,7 @@ export const resumeRoot = () => {
 /**
  * @category Entries
  */
-export const prepareToDestroy = (el:Element, anim:Animation, done:DoneFunc) => {
+export const prepareToDestroy = (el:Element, anim:Animation, done:() => void) => {
   const tid = setTimeout(() => {
     done()
     anim.onfinish = null
@@ -205,6 +216,9 @@ export type SliderAutoProps = {
   message: string
 }
 
+/**
+ * @category Slider
+ */
 export const playSlider = <OtherAttrs extends {}>(C:NodeName<SliderAutoProps & OtherAttrs>):UnmagicalComponent<SliderExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, ...attributes} = props
@@ -476,7 +490,7 @@ const dialogOnCreate:Record<string,OnCreateFunc> = {
 }
 
 const dialogOnRemove:Record<string,OnRemoveFunc> = {
-  fade: (el:Element, done:DoneFunc):void => {
+  fade: (el:Element, done:() => void):void => {
     resumeRoot()
     const anim = el.animate([
       {opacity: 1}, 
@@ -484,7 +498,7 @@ const dialogOnRemove:Record<string,OnRemoveFunc> = {
     ], 200)
     prepareToDestroy(el, anim, done)
   }, 
-  scale: (el:Element, done:DoneFunc):void => {
+  scale: (el:Element, done:() => void):void => {
     resumeRoot()
     const anim = el.animate([
       {transform: 'scale(1)'}, 

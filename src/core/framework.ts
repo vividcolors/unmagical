@@ -1,4 +1,6 @@
-//@ts-check
+/**
+ * @module core/framework
+ */
 
 import { normalizePath } from './utils'
 import * as E from './env'
@@ -55,9 +57,6 @@ type OnPromiseThenParam = {
   ret: (any:any) => void,
   handler: XThenHandler
 }
-/*type OnUpdateByEvent<S, A> = ActionType<Event, S, A>
-type OnUpdateByCall<S, A> = ActionType<{update:string, context:any[]}, S, A>
-type OnUpdate<S, A> = OnUpdateByEvent<S, A>|OnUpdateByCall<S, A>*/
 
 /**
  * @hidden
