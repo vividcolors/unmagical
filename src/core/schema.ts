@@ -10,14 +10,14 @@ import {MgError, Scalar} from './errors'
 /**
  * Simple Json type definition
  * 
- * @category Common Types
+ * @category Types
  */
 export type Json = null | number | string | boolean | Json[] | {[prop:string]:Json}
 
 /**
  * Type of lookup function used in validation rules.
  * 
- * @category Common Types
+ * @category Types
  */
 export type Lookup = (path:string) => Json
 
@@ -26,21 +26,21 @@ export type Lookup = (path:string) => Json
  * They returns true if validation succeeded.<br>
  * Otherwise return MgError.
  * 
- * @category Common Types
+ * @category Types
  */
 export type RuleFunc = (param:Json, value:Json, lookup:Lookup, rules:Rules) => true|MgError
 
 /**
  * Named set of Rule functions.
  * 
- * @category Common Types
+ * @category Types
  */
 export type Rules = Record<string,RuleFunc>
 
 /**
  * The schema is modeled after JSON Schema.
  * 
- * @category Common Types
+ * @category Types
  */
 export type Schema = Record<string,Json>
 
@@ -48,14 +48,14 @@ export type Schema = Record<string,Json>
  * Compiled schema.<br>
  * You can lookup a schema by a normalized path.
  * 
- * @category Common Types
+ * @category Types
  */
 export type SchemaDb = Record<string,Schema>
 
 /**
  * Slot is where metadata of each value of the model data comes. 
  * 
- * @category Common Types
+ * @category Types
  */
 export type Slot = {
   /**
@@ -83,7 +83,7 @@ export type Slot = {
 /**
  * Type of validation function.
  * 
- * @category Common Types
+ * @category Types
  */
 export type Validate = (value:any, slot0:Slot, schema:Schema, lookup:Lookup) => Slot
 
@@ -104,7 +104,7 @@ const nullable = (type:any):boolean => {
 /**
  * Builds a map from path to schema.
  * 
- * @category Common Variables
+ * @category Entries
  */
 export const buildDb = (schema:Schema):SchemaDb => {
   const db = /** @type SchemaDb */ ({})
@@ -458,7 +458,7 @@ export const minItems:RuleFunc = (param, value) => {
  * default validation rules.
  * Rules prefixed by '$' is registered by its true name. Use `defaultRules.if` instead of `defaultRules.$if`.
  * 
- * @category Common Variables
+ * @category Entries
  */
 export const defaultRules:Rules = {
   type, 'enum':$enum, 'const':$const, notEmpty, required, switchRequired, same, 'if':$if, 
@@ -471,7 +471,7 @@ export const defaultRules:Rules = {
  * 
  * @param rules set of validation rules, which means that you can add your own rules.
  * 
- * @category Common Variables
+ * @category Entries
  */
 export const validate = (rules:Rules):Validate => (value, slot, schema, lookup) => {
   if (! isJsonValue(value)) {
@@ -497,7 +497,7 @@ export const validate = (rules:Rules):Validate => (value, slot, schema, lookup) 
  * 
  * 
  * 
- * @category Common Variables
+ * @category Entries
  */
 export const applyRules = (value:any, schema:Schema, lookup:Lookup, rules:Rules):true|MgError => {
   for (let p in schema) {
@@ -512,7 +512,7 @@ export const applyRules = (value:any, schema:Schema, lookup:Lookup, rules:Rules)
 /**
  * Executes coercion. Coercion is a process that interpretes a user input of string into a value of schema-specified type.
  * 
- * @category Common Variables
+ * @category Entries
  */
 export const coerce = (input:string, slot:Slot, schema:Schema):Slot => {
   input = "" + input  // coerce to string

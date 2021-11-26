@@ -10,7 +10,7 @@ import {Json, Schema, Slot, SchemaDb, Lookup, Rules} from './schema'
 import {Env} from './env'
 
 /**
- * @category Common Types
+ * @category Types
  */
 export type Validity = {invalid:boolean, error:MgError|null}
 
@@ -22,7 +22,7 @@ export type Validity = {invalid:boolean, error:MgError|null}
  * @param updatePointer a common path of currently updated data
  * @param prevEnv an env before current update
  * @returns evolved env
- * @category Common Types
+ * @category Types
  */
 export type Evolve = (env:Env, updatePointer:string|null, prevEnv:Env|null) => Env
 
@@ -32,7 +32,7 @@ export type Evolve = (env:Env, updatePointer:string|null, prevEnv:Env|null) => E
  * 
  * @param env current env
  * @returns VDOM
- * @category Common Types
+ * @category Types
  */
 export type View = (env:Env) => VNode<{}>
 
@@ -713,6 +713,6 @@ export const once = (
 
 /**
  * 
- * @category Common Variables
+ * @category Entries
  */
 export const h = h0

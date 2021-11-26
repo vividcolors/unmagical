@@ -9,14 +9,14 @@ import showText from 'string-template'
 /**
  * Type of `MgError.hint`
  * 
- * @category Common Types
+ * @category Types
  */
 export type Scalar = string|number|boolean|null
 
 /**
  * Error type
  * 
- * @category Common Types
+ * @category Types
  */
 export type MgError = {
   /**
@@ -44,7 +44,7 @@ export type MgError = {
 /**
  * A type of normalizeError function.
  * 
- * @category Common Types
+ * @category Types
  */
 export type NormalizeError = (error:MgError) => MgError
 
@@ -53,7 +53,7 @@ export type NormalizeError = (error:MgError) => MgError
  * 
  * @param x
  * 
- * @category Common Variables
+ * @category Entries
  */
 export const isError = (x:any):boolean => {
   return (typeof x == 'object' && x != null && 'code' in x)
@@ -63,7 +63,7 @@ export const isError = (x:any):boolean => {
  * Extends a MgError for viewing, and returns its extended instance.<br>
  * Actually, this function adds `message` value to the error.
  * 
- * @category Common Variables
+ * @category Entries
  */
 export const normalizeError = (catalog:Record<string,string>):NormalizeError => (error) => {
   const template = catalog[error.code] || catalog['detail' in error ? '_fallback' : '_fallback.nodetail']
@@ -73,7 +73,7 @@ export const normalizeError = (catalog:Record<string,string>):NormalizeError => 
 
 /**
  * 
- * @category Common Variables
+ * @category Entries
  */
 export enum defaultCatalog {
   /**
