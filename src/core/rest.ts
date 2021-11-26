@@ -1,17 +1,11 @@
-//@ts-check
-/** @module core/repository */
+/**
+ * REST client of Repository implmentation
+ * 
+ * @module core/rest
+ */
 
 import {normalizeQuery} from './utils'
-import {MgError} from './errors'
-import {Json} from './schema'
-
-export type Repository = {
-  search: (query:Record<string,any>) => Promise<{entities:Json[], totalCount:number}>, 
-  add: (entity:Json) => Promise<Json>, 
-  replace: (entity:Json) => Promise<Json>, 
-  remove: (entity:Json) => Promise<void>
-}
-
+import {Repository} from './updates'
 
 /**
  * 

@@ -36,9 +36,15 @@ export type Evolve = (env:Env, updatePointer:string|null, prevEnv:Env|null) => E
  */
 export type View = (env:Env) => VNode<{}>
 
+/**
+ * Type of update function.
+ * @param args one or more arguments; The last parameter will be Env.
+ * @category Types
+ */
+export type Update = (...args:any[]) => Env|Promise<any>
+
 type ThenHandler = (result:any) => any
 type XThenHandler = (result:any, env:Env) => any
-type Update = (...args:any[]) => Env
 type DialogState = {
   data: any, 
   fulfill: (result:any) => undefined, 

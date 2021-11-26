@@ -9,7 +9,7 @@
         "Types", "Entries", 
         "Textbox", "Slider", "Listbox", "Radio", "Checkbox", "UpdateButton", "SettleButton", "Field", "Dialog", "Feedback", "Modal", "Progress", "Page", "Switch", "ListItem", "Pagination", "Flatpickr", "Pickr", "Sortable", 
         "start", "once", 
-        "Predefined Rules", 
+        "For Entity List", "For Single Entity", 
         "*"
     ]
 }

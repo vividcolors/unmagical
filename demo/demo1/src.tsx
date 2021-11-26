@@ -1,6 +1,6 @@
 
 import {h, API, start, Input, Select, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
-import {createRestRepository} from '../../src/core/repository'
+import {createRestRepository} from '../../src/core/rest'
 import {makeEntityUpdates} from '../../src/core/updates'
 import {StartParameter} from '../../src/core/framework'
 import {Env} from '../../src/core/env'
