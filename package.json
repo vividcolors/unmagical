@@ -9,7 +9,8 @@
     "typescript": "4.4"
   },
   "scripts": {
-    "build": "parcel build -d asset src/core/framework.ts",
+    "buildbulma": "parcel build --global unmagical -d asset src/unmagical-bulma.ts", 
+    "build": "run-s buildbulma",
     "test": "parcel build --target node -d asset/test tests/_index.js && node asset/test/_index",
     "demo1": "parcel build -d demo/demo1 --out-file index.js demo/demo1/src.tsx",
     "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.js",

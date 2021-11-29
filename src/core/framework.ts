@@ -10,6 +10,7 @@ import { app, h as h0, VNode, ActionType, View as HaView } from 'hyperapp'
 import {MgError, NormalizeError} from './errors'
 import {Json, Schema, Slot, SchemaDb, Lookup, Rules} from './schema'
 import {Env} from './env'
+export {Env} from './env'
 
 /**
  * @category Types

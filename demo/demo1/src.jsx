@@ -1,9 +1,6 @@
 
-import {h, API, start, Input, Select, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress} from '../../src/bindings/bulma'
-import {createRestRepository} from '../../src/core/rest'
-import {makeEntityUpdates} from '../../src/core/updates'
-import {StartParameter} from '../../src/core/framework'
-import {Env} from '../../src/core/env'
+const {h, API, start, Input, Textarea, Select, Radio, Checkbox, Field, UpdateButton, DeleteButton, Clickable, SettleButton, Dialog, Notification, Progress, Modal, Pagination, DatePicker, ColorPicker, ReorderableMenuList, createRestRepository, makeEntityListUpdates, makeENtityUpdates, validate, defaultRules} = unmagical
+const U = unmagical
 
 const master = {
   frame: [
@@ -86,33 +83,6 @@ const schema = {
   }
 }
 
-type Data = {
-  detail: {
-    frame: string, 
-    os: string, 
-    cpu: string, 
-    memory: string, 
-    accessories: Record<string,boolean>, 
-    bonus: string
-  }, 
-  flags: {
-    isPro: boolean, 
-    bigDeal: boolean
-  }, 
-  quotation: {
-    lines: Array<{
-      category: string, 
-      description: string, 
-      unitPrice: number, 
-      quantity: number, 
-      amount: number
-    }>, 
-    subtotal: number, 
-    tax: number, 
-    total: number
-  }
-}
-
 const data = {
   detail: {
     frame: master.frame[0].name, 
@@ -136,11 +106,11 @@ const data = {
   }
 }
 
-const updates = makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs', {}))
+const updates = U.makeEntityUpdates(U.createRestRepository('http://localhost:3000/btopcs', {}))
 
-const view = (env:Env) => {
-  const flags = API.extract('/flags', env) as Data["flags"]
-  const quotation = API.extract('/quotation', env) as Data["quotation"]
+const view = (env) => {
+  const flags = API.extract('/flags', env)
+  const quotation = API.extract('/quotation', env)
   return (
     <div id="rootMarker" class="container">
       <Notification name="success" message="送信に成功しました。" duration={5000} />
@@ -211,20 +181,20 @@ const view = (env:Env) => {
   )
 }
 
-const findByProp = <V, T>(name:string, value:V, lis:T[]):T|undefined => {
+const findByProp = (name, value, lis) => {
   for (let i = 0; i < lis.length; i++) {
     if (lis[i][name] == value) return lis[i]
   }
   return undefined
 }
-const evolve = (env:Env, path:string, prevEnv:Env):Env => {
-  const addLine = (category:string, x:{name:string,price:number}, env:Env):Env => {
+const evolve = (env, path, prevEnv) => {
+  const addLine = (category, x, env) => {
     const line = {category, description:x.name, unitPrice:x.price, quantity:1, amount:x.price}
     return API.add('/quotation/lines/-', line, env)
   }
   let subtotal = 0
   let isPro = false
-  let detail = API.extract('/detail', env) as Data["detail"]
+  let detail = API.extract('/detail', env)
   if (detail.frame) {
     const frame = findByProp('name', detail.frame, master.frame)
     env = addLine('筐体', frame, env)
@@ -234,7 +204,7 @@ const evolve = (env:Env, path:string, prevEnv:Env):Env => {
     const os = findByProp('name', detail.os, master.os)
     env = addLine('OS', os, env)
     subtotal += os.price
-    if (os.name == 'Pro') isPro = true
+    if (os.name == 'Windows10 Pro') isPro = true
   }
   if (detail.cpu) {
     const cpu = findByProp('name', detail.cpu, master.cpu)
@@ -244,7 +214,7 @@ const evolve = (env:Env, path:string, prevEnv:Env):Env => {
   env = API.add('/flags/isPro', isPro, env)
   if (! isPro && detail.memory && detail.memory == '32G') {
     env = API.add('/detail/memory', '', env)
-    detail = API.extract('/detail', env) as Data["detail"]  // we modified `/detail' so load again.
+    detail = API.extract('/detail', env)  // we modified `/detail' so load again.
   }
   if (detail.memory) {
     const memory = findByProp('name', detail.memory, master.memory)
@@ -261,7 +231,7 @@ const evolve = (env:Env, path:string, prevEnv:Env):Env => {
   env = API.add('/flags/bigDeal', bigDeal, env)
   if (! bigDeal) {
     env = API.remove('/detail/bonus', env)
-    detail = API.extract('/detail', env) as Data["detail"]  // we modified `/detail' so load again.
+    detail = API.extract('/detail', env)  // we modified `/detail' so load again.
   }
   if (detail.bonus) {
     const bonus = findByProp('name', detail.bonus, master.bonus)
@@ -276,5 +246,5 @@ const evolve = (env:Env, path:string, prevEnv:Env):Env => {
 
 const containerEl = document.getElementById('app')
 
-start({data, schema, view:view as StartParameter["view"], containerEl, updates, evolve})
+start({data, schema, view, containerEl, updates, evolve})
 
