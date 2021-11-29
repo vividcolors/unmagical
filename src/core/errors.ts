@@ -4,7 +4,7 @@
  * @module core/errors
  */
 
-import showText from 'string-template'
+import {showText} from './utils'
 
 /**
  * Type of `MgError.hint`

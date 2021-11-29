@@ -1,8 +1,8 @@
 
-import template from 'string-template'
 import {VNode} from 'hyperapp'
 import * as C from '../core/components'
 import {h} from '../core/framework'
+import {showText} from '../core/utils'
 export {API, start, h} from '../core/framework'
 
 export type AnyAttrs = {
@@ -111,7 +111,7 @@ export const SettleButton = C.playSettleButton<AnyAttrs>(({class:clazz = '', ...
 })
 
 export const Dialog = C.playDialog("fade", true)<{title: string, message: string, hideCancelButton?: boolean, okLabel?: string, cancelLabel?: string} & AnyAttrs>(({data, name, shown, title, message, hideCancelButton = false, okLabel = 'OK', cancelLabel = 'Cancel', class:clazz = '', ...props}) => {
-  const effectiveMessage = template(message, data)
+  const effectiveMessage = showText(message, data)
   clazz += ' modal is-active'
   console.log('Dialog', name, props)
   return (
@@ -134,7 +134,7 @@ export const Dialog = C.playDialog("fade", true)<{title: string, message: string
 })
 
 export const Notification = C.playFeedback("slide", true)<{message: string} & AnyAttrs>(({name, data, shown, message, class:clazz = '', ...props}) => {
-  const effectiveMessage = template(message, data)
+  const effectiveMessage = showText(message, data)
   clazz += ' notification'
   return (
     <div {...props} key={name} class={clazz}>

@@ -5,6 +5,8 @@
  * @module core/utils 
  */
 
+import showText from 'string-template'
+
 /**
  * JSON path's index portion.  
  * We handle JSON path of `"/abc/1/def"` as an index array of `["abc", 1, "def"]`.
@@ -194,3 +196,5 @@ export const normalizeQuery = (obj:Record<string,string>, omitEmptyParam:boolean
   }
   return rv
 }
+
+export {showText}
