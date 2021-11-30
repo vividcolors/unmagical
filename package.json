@@ -1,5 +1,9 @@
 {
-  "main": "src/core/framework.ts",
+  "name": "unmagical", 
+  "version": "0.0.1", 
+  "description": "frontend framework for typical applications", 
+  "keywords": ["jsx", "typescript", "tsx", "frontend", "framework"], 
+  "license": "MIT", 
   "dependencies": {
     "ajv": "^8.1.0",
     "hyperapp": "^1.2.10",
@@ -10,14 +14,12 @@
   },
   "scripts": {
     "buildbulma": "parcel build --global unmagical -d asset src/unmagical-bulma.ts", 
-    "build": "run-s buildbulma",
+    "buildnode": "parcel build -d . src/index.ts --target node", 
+    "build": "run-s buildbulma buildnode",
     "test": "parcel build --target node -d asset/test tests/_index.js && node asset/test/_index",
-    "demo1": "parcel build -d demo/demo1 --out-file index.js demo/demo1/src.tsx",
     "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.js",
-    "demo3": "parcel build -d demo/demo3 --out-file index.js demo/demo3/src.js",
     "demo4": "parcel build -d demo/demo4 --out-file index.js demo/demo4/src.js",
     "demo5": "parcel build -d demo/demo5 --out-file index.js demo/demo5/src.tsx",
-    "demo6": "parcel build -d demo/demo6 --out-file index.js --target node demo/demo6/src.js",
     "docs": "typedoc --options typedoc.json ./src"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 
-import {h, API, start, Input, Select, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, DatePicker, ColorPicker, ReorderableMenuList} from '../../src/bindings/bulma'
-import {playSmartControl, playReorderable} from '../../src/core/components'
+
+const {h, API, start, Input, Textarea, Select, Radio, Checkbox, Field, UpdateButton, DeleteButton, Clickable, SettleButton, Dialog, Notification, Progress, Modal, Pagination, DatePicker, ColorPicker, ReorderableMenuList, createRestRepository, makeEntityListUpdates, makeEntityUpdates, validate, defaultRules, defaultCatalog, normalizeError} = unmagical
 
 
 const zipPattern = '^[0-9]{3}-?[0-9]{4}$'
@@ -203,6 +203,25 @@ const view = (env) => {
   )
 }
 
+
+const catalog = {
+  ...defaultCatalog, 
+  'value': '不正な入力です', 
+  'type.boolean': '"true"か"false"と入力してください', 
+  'type.boolean?': '"true"か"false"と入力してください', 
+  'type.integer': '整数を入力してください', 
+  'type.integer?': '整数を入力してください', 
+  'type.number': '数値を入力してください', 
+  'type.number?': '数値を入力してください', 
+  'rule.enum': '選択してください', 
+  'rule.const': '選択してください',  // param
+  'rule.const.nohint': '選択してください', 
+  'rule.notEmpty': '入力してください', 
+  'rule.same': '入力内容が違っています',  // target
+  'rule.same.nohint': '入力内容が違っています', 
+  'rule.pattern': '形式が不正です',  // param
+}
+
 const containerEl = document.getElementById('app')
 
-const {onUpdate} = start({data, schema, view, containerEl, updates})
+const {onUpdate} = start({data, schema, view, catalog, containerEl, updates})

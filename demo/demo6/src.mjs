@@ -1,4 +1,7 @@
-import {once, API} from '../../src/core/framework'
+// launch by: 
+//   $ node demo/demo6/src.mjs
+import U from '../../index.js'
+const {once, API} = U
 
 const master = {
   frame: [

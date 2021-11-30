@@ -1,9 +1,5 @@
 
-import {h, API, start, Input, Textarea, Select, Radio, Checkbox, UpdateButton, SettleButton, Field, Dialog, Notification, Progress, Pagination, Clickable, Modal} from '../../src/bindings/bulma'
-import {createRestRepository} from '../../src/core/rest'
-import {makeEntityListUpdates} from '../../src/core/updates'
-import {Env} from '../../src/core/env'
-import {StartParameter} from '../../src/core/framework'
+import {h, API, start, Input, Textarea, UpdateButton, Field, Dialog, Notification, Pagination, Clickable, Modal, createRestRepository, makeEntityListUpdates, Env, StartParameter} from '../../src/unmagical-bulma'
 
 const contactSchema = {
   type: 'object', 
