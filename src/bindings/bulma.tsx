@@ -196,14 +196,13 @@ export const ColorPicker = C.playPickr<{iconClass?: string, iconText?: string} &
 
 export type ShowItemFunc = (item:any, index:number, itemPath:string, group:string) => VNode<any>
 
-export const ReorderableMenuList = C.playSortable<{showItem?: ShowItemFunc, items?: any[]} & AnyAttrs>(({active, itemPath, group, showItem = null, items = null, ...props}, children) => {
-  return (
-    <ul {...props}>
-      {(showItem && items) ? (
-        items.map((item, index) => showItem(item, index, itemPath, group))
-      ) : (
-        children
-      )}
-    </ul>
-  )
+export const ReorderableList = C.playSortable<{showItem?: ShowItemFunc, items?: any[], tag?: string} & AnyAttrs>(({active, itemPath, group, showItem = null, items = null, tag = 'div', ...props}, children) => {
+  if (showItem && items) {
+    children =items.map((item, index) => showItem(item, index, itemPath, group))
+  }
+  return h(tag, props, ...children)
+})
+
+export const ListItem = C.playListItem("slide")<{tag?: string} & AnyAttrs>(({tag = 'li', ...props}, children) => {
+  return h(tag, props, children)
 })

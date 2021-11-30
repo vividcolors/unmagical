@@ -1,6 +1,6 @@
 
 
-const {h, API, start, Input, Textarea, Select, Radio, Checkbox, Field, UpdateButton, DeleteButton, Clickable, SettleButton, Dialog, Notification, Progress, Modal, Pagination, DatePicker, ColorPicker, ReorderableMenuList, createRestRepository, makeEntityListUpdates, makeEntityUpdates, validate, defaultRules, defaultCatalog, normalizeError} = unmagical
+const {h, API, start, Input, Textarea, Select, Radio, Checkbox, Field, UpdateButton, DeleteButton, Clickable, SettleButton, Dialog, Notification, Progress, Modal, Pagination, DatePicker, ColorPicker, ReorderableList, ListItem, createRestRepository, makeEntityListUpdates, makeEntityUpdates, validate, defaultRules, defaultCatalog, normalizeError} = unmagical
 
 
 const zipPattern = '^[0-9]{3}-?[0-9]{4}$'
@@ -179,18 +179,18 @@ const view = (env) => {
       <hr />
       <h2>順序の入れ替え（基本）</h2>
       <div class="menu">
-        <ReorderableMenuList class="menu-list" name="reorder" path="/persons" options={{group:'persons'}}>
+        <ReorderableList tag="ul" class="menu-list" name="reorder" path="/persons" options={{group:'persons'}}>
           {data.persons.map(p => (<li key={p}><a>{p}</a></li>))}
-        </ReorderableMenuList>
+        </ReorderableList>
       </div>
       <hr />
       <h2>順序の入れ替え（アドバンスト）</h2>
       <div class="menu">
-        <ReorderableMenuList class="menu-list" name="reorder" path="/members" options={{group:'members'}} items={data.members} showItem={(item, index, activePath, group) => {
+        <ReorderableList tag="ul" class="menu-list" name="reorder" path="/members" options={{group:'members'}} items={data.members} showItem={(item, index, activePath, group) => {
           return (
             <li key={item.name}>
               <a style={group && group != 'members' ? undroppableStyle : {}}>{item.name}</a>
-              <ReorderableMenuList name="reorder" path={`/members/${index}/things`} options={{group:'things'}} items={item.things} showItem={(subitem, index, activePath, group) => {
+              <ReorderableList tag="ul" name="reorder" path={`/members/${index}/things`} options={{group:'things'}} items={item.things} showItem={(subitem, index, activePath, group) => {
                 return (
                   <li key={subitem}><a style={group && group != 'things' ? undroppableStyle : {}}>{subitem}</a></li>
                 )
