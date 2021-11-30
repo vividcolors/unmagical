@@ -17,7 +17,7 @@
     "buildnode": "parcel build -d . src/index.ts --target node", 
     "build": "run-s buildbulma buildnode",
     "test": "parcel build --target node -d asset/test tests/_index.js && node asset/test/_index",
-    "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.js",
+    "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.tsx",
     "demo4": "parcel build -d demo/demo4 --out-file index.js demo/demo4/src.js",
     "demo5": "parcel build -d demo/demo5 --out-file index.js demo/demo5/src.tsx",
     "docs": "typedoc --options typedoc.json ./src"
