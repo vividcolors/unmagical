@@ -210,6 +210,6 @@ const view = (env:Env) => {
 }
 
 const containerEl = document.getElementById('app')
-const {onUpdate} = start({data, schema, view:view as StartParameter["view"], containerEl, updates})
+const {onUpdate} = start({data, schema, view, containerEl, updates})
 
 onUpdate({update:'loadItems', context:['/contacts', {}]})

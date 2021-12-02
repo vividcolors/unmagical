@@ -54,7 +54,7 @@ export function h<Attributes,ToAttributes>(
   nodeName: Component<Attributes, any, any, ToAttributes> | string,
   attributes?: Attributes,
   ...children: Array<Children | Children[]>
-): VNode<ToAttributes>
+): VNode<ToAttributes> | View<any, any>
 
 /** @namespace [App] */
 

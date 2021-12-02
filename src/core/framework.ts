@@ -37,7 +37,7 @@ export type Evolve = (env:Env, updatePointer:string|null, prevEnv:Env|null) => E
  * @returns VDOM
  * @category Types
  */
-export type View = (env:Env) => VNode<{}>
+export type View = (env:Env) => VNode<{}> | HaView<UnmagicalState, UnmagicalActions>
 
 /**
  * Type of update function.
@@ -674,7 +674,7 @@ export const start = (
     env, 
     normalizeError
   }
-  const view1:HaView<UnmagicalState, UnmagicalActions> = (state, actions) => view(state.env)
+  const view1:HaView<UnmagicalState, UnmagicalActions> = (state, actions) => view(state.env) as VNode
   const actions = app(state, actions0, view1, containerEl)
   return {
     onUpdate: actions.onUpdate, 

@@ -2,7 +2,7 @@
 import { API, h, UnmagicalState, UnmagicalActions, UnmagicalAction } from './framework'
 export { API, h, UnmagicalActions, UnmagicalAction } from './framework'
 import * as X from './errors'
-import {VNode, Component, Children} from 'hyperapp'
+import {VNode, Component, Children, View} from 'hyperapp'
 import { Json } from './schema'
 
 /**
@@ -24,7 +24,7 @@ export type OnDestroyFunc = (el:Element) => void
 /**
  * @category Types
  */
-export type UnmagicalComponent<Attributes> = Component<Attributes,UnmagicalState,UnmagicalActions>
+export type UnmagicalComponent<Attributes> = Component<Attributes,any,any>
 
 /**
  * @category Types
@@ -176,7 +176,7 @@ export type TextboxAutoProps = {
  * @returns A component, which plays the Textbox
  * @category Textbox
  */
-export const playTextbox = <OtherAttrs extends {}>(C:NodeName<TextboxAutoProps & OtherAttrs>):UnmagicalComponent<TextboxExtraProps & OtherAttrs> => {
+export const playTextbox = <OtherAttrs extends {}>(C:NodeName<TextboxAutoProps & OtherAttrs>):Component<TextboxExtraProps & OtherAttrs> => {
   return (props, children:Children[]) => (state:UnmagicalState, actions:UnmagicalActions) => {
     const {path, ...attributes} = props
     const slot = API.getSlot(path, state.env)
@@ -192,7 +192,7 @@ export const playTextbox = <OtherAttrs extends {}>(C:NodeName<TextboxAutoProps &
       invalid, 
       message: slot.error ? state.normalizeError(slot.error).message : ''
     } 
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -235,7 +235,7 @@ export const playSlider = <OtherAttrs extends {}>(C:NodeName<SliderAutoProps & O
       invalid, 
       message: slot.error ? state.normalizeError(slot.error).message : ''
     } 
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -279,7 +279,7 @@ export const playListbox = <OtherAttrs extends {}>(C:NodeName<ListboxAutoProps &
       message: slot.error ? state.normalizeError(slot.error).message : '', 
       value: slot.input
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -324,7 +324,7 @@ export const playRadio = <OtherAttrs extends {}>(C:NodeName<RadioAutoProps & Oth
       message: slot.error ? state.normalizeError(slot.error).message : '', 
       value
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -366,7 +366,7 @@ export const playCheckbox = <OtherAttrs extends {}>(C:NodeName<CheckboxAutoProps
       invalid, 
       message: slot.error ? state.normalizeError(slot.error).message : ''
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -399,7 +399,7 @@ export const playUpdateButton = <OtherAttrs extends {}>(C:NodeName<UpdateButtonA
       'data-mg-context': JSON.stringify(typeof context == "undefined" ? null : context), 
       onclick: actions.onUpdate
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -432,7 +432,7 @@ export const playSettleButton = <OtherAttrs extends {}>(C:NodeName<SettleButtonA
       'data-mg-result': JSON.stringify(typeof result == "undefined" ? null : result), 
       onclick: actions.onPromiseSettle
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -468,7 +468,7 @@ export const playField = <OtherAttrs extends {}>(C:NodeName<FieldAutoProps & Oth
       invalid, 
       message: error ? state.normalizeError(error).message : ''
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -542,7 +542,7 @@ export const playDialog = (transition:"fade"|"scale", nullIfHidden:boolean) => <
       onremove: dialogOnRemove[transition], 
       shown: (data !== null)
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -646,7 +646,7 @@ export const playFeedback = (transition:"fade"|"zoom"|"slide", nullIfHidden:bool
         if (onremove) onremove(el, done)
       }
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -678,7 +678,7 @@ export const playModal = (transition:"fade"|"scale", nullIfHidden:boolean) => <O
       oncreate: dialogOnCreate[transition], 
       onremove: dialogOnRemove[transition]
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -712,7 +712,7 @@ export const playProgress = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:
       shown: current !== null, 
       current: (current === null) ? undefined : current
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -748,7 +748,7 @@ export const playPage = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:Node
       ...attributes, 
       shown
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -816,7 +816,7 @@ export const playSwitch = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:No
       ...attributes, 
       shown
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -844,7 +844,7 @@ export const playListItem = (transition:"fade"|"slide") => <OtherAttrs extends {
       oncreate: listItemOnCreate[transition], 
       onremove: listItemOnRemove[transition]
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -904,7 +904,7 @@ export const playPagination = <OtherAttrs extends {}>(C:NodeName<PaginationAutoP
         last: page + width < last ? last : null, 
         siblings
       }
-      return h(C, attrs, ...children)
+      return h(C, attrs, ...children) as VNode
     } else {
       const attrs:PaginationAutoProps = {
         ...attributes, 
@@ -916,7 +916,7 @@ export const playPagination = <OtherAttrs extends {}>(C:NodeName<PaginationAutoP
         last: null, 
         siblings: []
       }
-      return h(C, attrs, ...children)
+      return h(C, attrs, ...children) as VNode
     }
   }
 }
@@ -986,7 +986,7 @@ export const playFlatpickr = <OtherAttrs extends {}>(C:NodeName<FlatpickrAutoPro
       oncreate, 
       ondestroy
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -1065,7 +1065,7 @@ export const playPickr = <OtherAttrs extends {}>(C:NodeName<PickrAutoProps & Oth
       oncreate, 
       ondestroy
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 interface SortableEvent {
@@ -1158,7 +1158,7 @@ export const playSortable = <OtherAttrs extends {}>(C:NodeName<SortableAutoProps
       oncreate, 
       ondestroy
     }
-    return h(C, attrs, ...children)
+    return h(C, attrs, ...children) as VNode
   }
 }
 
