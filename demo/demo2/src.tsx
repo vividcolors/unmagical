@@ -92,4 +92,4 @@ const view = (env) => {
 
 console.log(updates)
 const containerEl = document.getElementById('app')
-const {onUpdate} = start({schema, data, view:view as StartParameter["view"], containerEl, updates})
+const {onUpdate} = start({schema, data, view, containerEl, updates})
