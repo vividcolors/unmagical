@@ -16,9 +16,10 @@
     "buildbulma": "parcel build --global unmagical -d asset src/unmagical-bulma.ts", 
     "buildnode": "parcel build -d . src/index.ts --target node", 
     "build": "run-s buildbulma buildnode",
-    "test": "parcel build --target node -d asset/test tests/_index.js && node asset/test/_index",
+    "buildtest": "parcel build --target node -d asset/test tests/_index.js", 
+    "runtest": "node asset/test/_index", 
+    "test": "run-s buildtest runtest",
     "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.tsx",
-    "demo4": "parcel build -d demo/demo4 --out-file index.js demo/demo4/src.js",
     "demo5": "parcel build -d demo/demo5 --out-file index.js demo/demo5/src.tsx",
     "docs": "typedoc --options typedoc.json ./src"
   },
