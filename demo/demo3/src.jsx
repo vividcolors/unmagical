@@ -120,7 +120,7 @@ const pickrOptions = {
 
 const undroppableStyle = {opacity:0.26}
 
-const view = (store) => {
+const render = (store) => {
   console.log('view', store)
   const data = API.extract("", store)
   return (
@@ -224,4 +224,4 @@ const catalog = {
 
 const containerEl = document.getElementById('app')
 
-const {onUpdate} = start({data, schema, view, catalog, containerEl, updates})
+const {onUpdate} = start({data, schema, render, catalog, containerEl, updates})

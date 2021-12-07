@@ -42,7 +42,7 @@ const updates = {
 
 const messageProps = {style:{color:"#FF0000"}}
 const callOnUpdate = (x) => onUpdate(x)
-const view = (store) => {
+const render = (store) => {
   return (
     <sl-form novalidate>
       <Input path="/name" label="お名前" messageProps={messageProps}>
@@ -91,4 +91,4 @@ const view = (store) => {
 
 console.log(updates)
 const containerEl = document.getElementById('app')
-const {onUpdate} = start({schema, data, view, containerEl, updates})
+const {onUpdate} = start({schema, data, render, containerEl, updates})

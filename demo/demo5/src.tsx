@@ -136,7 +136,7 @@ const ContactModal = ({store}:{store:Store}) => {
   )
 }
 
-const view = (store:Store) => {
+const render = (store:Store) => {
   const contacts = API.extract('/contacts', store) as Data["contacts"]
   const from = (contacts.query._page - 1) * contacts.query._limit + 1
   const to = from + contacts.items.length - 1
@@ -210,6 +210,6 @@ const view = (store:Store) => {
 }
 
 const containerEl = document.getElementById('app')
-const {onUpdate} = start({data, schema, view, containerEl, updates})
+const {onUpdate} = start({data, schema, render, containerEl, updates})
 
 onUpdate({update:'loadItems', context:['/contacts', {}]})

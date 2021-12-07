@@ -121,7 +121,7 @@ const TodoButton = () => {
   )
 }
 
-const view = (store) => {
+const render = (store) => {
   const form = API.extract('/form', store)
   return (
     <div class="container my-3">
@@ -138,4 +138,4 @@ const view = (store) => {
 }
 
 const containerEl = document.getElementById('app')
-const {onUpdate} = start({data, schema, view, containerEl, updates})
+const {onUpdate} = start({data, schema, render, containerEl, updates})

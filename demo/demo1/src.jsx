@@ -107,7 +107,7 @@ const data = {
 
 const updates = makeEntityUpdates(makeRestRepository('http://localhost:3000/btopcs', {}))
 
-const view = (store) => {
+const render = (store) => {
   const flags = API.extract('/flags', store)
   const quotation = API.extract('/quotation', store)
   return (
@@ -245,5 +245,5 @@ const evolve = (store, _path, _prevStore) => {
 
 const containerEl = document.getElementById('app')
 
-start({data, schema, view, containerEl, updates, evolve})
+start({data, schema, render, containerEl, updates, evolve})
 

@@ -30,14 +30,14 @@ export type Validity = {invalid:boolean, error:MgError|null}
 export type Evolve = (store:Store, updatePointer:string|null, prevStore:Store|null) => Store
 
 /**
- * Developer-supplied view function.<br>
- * View function maps store to vdom.
+ * Developer-supplied render function.<br>
+ * Render function maps store to vdom.
  * 
  * @param store current store
  * @returns VDOM
  * @category Types
  */
-export type View = (store:Store) => VNode<{}> | HaView<UnmagicalState, UnmagicalActions>
+export type Render = (store:Store) => VNode<{}> | HaView<UnmagicalState, UnmagicalActions>
 
 /**
  * Type of update function.
@@ -96,7 +96,7 @@ export type UnmagicalAction<T> = ActionType<T, UnmagicalState, UnmagicalActions>
 export type StartParameter = {
   data: Json, 
   schema: Schema, 
-  view: View, 
+  render: Render, 
   containerEl: Element, 
   evolve?: Evolve, 
   updates?: Record<string,Update>
@@ -476,7 +476,7 @@ export const start = (
     {
       data, 
       schema, 
-      view, 
+      render, 
       containerEl, 
       evolve = null, 
       updates = {}, 
@@ -674,7 +674,7 @@ export const start = (
     store, 
     normalizeError
   }
-  const view1:HaView<UnmagicalState, UnmagicalActions> = (state, actions) => view(state.store) as VNode
+  const view1:HaView<UnmagicalState, UnmagicalActions> = (state, actions) => render(state.store) as VNode
   const actions = app(state, actions0, view1, containerEl)
   return {
     onUpdate: actions.onUpdate, 
