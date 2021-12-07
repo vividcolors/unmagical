@@ -115,7 +115,7 @@ const TodoButton = () => {
   return (
     <div class="media" key="add">
       <div class="media-content">
-        <UpdateButton class="is-primary" update="createPart" context={['/todos/-', {id:0, done:false, subject:'', context:''}, '/form']}>追加</UpdateButton>
+        <UpdateButton class="is-primary" update="makePart" context={['/todos/-', {id:0, done:false, subject:'', context:''}, '/form']}>追加</UpdateButton>
       </div>
     </div>
   )

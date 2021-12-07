@@ -24,10 +24,10 @@ export type Repository = {
  * Loads a specified entity to the form for editing.
  * @category For Entity List
  */
-export const editItem = (itemPath:string, formPath:string, store:Store):Store => {
+export const editEntity = (entityPath:string, formPath:string, store:Store):Store => {
   const form = {
     method: "replace", 
-    data: API.extract(itemPath, store)
+    data: API.extract(entityPath, store)
   }
   return API.add(formPath, form, store)
 }
@@ -36,7 +36,7 @@ export const editItem = (itemPath:string, formPath:string, store:Store):Store =>
  * Loads an initial data to the form for creating an entity.
  * @category For Entity List
  */
-export const createItem = (data:Json, formPath:string, store:Store):Store => {
+export const makeEntity = (data:Json, formPath:string, store:Store):Store => {
   const form = {
     method: "add", 
     data
@@ -47,7 +47,7 @@ export const createItem = (data:Json, formPath:string, store:Store):Store => {
 /**
  * @category For Entity List
  */
-export type CommitItemOptions = {
+export type CommitEntityOptions = {
   errorSelector?: string, 
   loadingName?: string, 
   successName?: string, 
@@ -58,9 +58,9 @@ export type CommitItemOptions = {
  * Stores the entity in the form into a repository.
  * @category For Entity List
  */
-export const commitItem = (repository:Repository) => (formPath:string, listPath:string, options:CommitItemOptions, store:Store):Store|Promise<any> => {
+export const commitEntity = (repository:Repository) => (formPath:string, listPath:string, options:CommitEntityOptions, store:Store):Store|Promise<any> => {
   const {enter, leave} = API.makePortal(store)
-  const opts:CommitItemOptions = {
+  const opts:CommitEntityOptions = {
     errorSelector: null, 
     loadingName: 'loading', 
     successName: 'success', 
@@ -115,7 +115,7 @@ export const commitItem = (repository:Repository) => (formPath:string, listPath:
  * Discard the entity in the form.
  * @category For Entity List
  */
-export const discardItem = (formPath:string, store:Store):Store => {
+export const discardEntity = (formPath:string, store:Store):Store => {
   store = API.replace(formPath, null, store)
   return store
 }
@@ -123,7 +123,7 @@ export const discardItem = (formPath:string, store:Store):Store => {
 /**
  * @category For Entity List
  */
-export type DeleteItemOptions = {
+export type DeleteEntityOptions = {
   confirmName?: string, 
   loadingName?: string, 
   successName?: string, 
@@ -134,9 +134,9 @@ export type DeleteItemOptions = {
  * Deletes an entity from a repository.
  * @category For Entity List
  */
-export const deleteItem = (repository:Repository) => (itemPath:string, listPath:string, options:DeleteItemOptions, store:Store):Store|Promise<any> => {
+export const deleteEntity = (repository:Repository) => (entityPath:string, listPath:string, options:DeleteEntityOptions, store:Store):Store|Promise<any> => {
   const {enter, leave} = API.makePortal(store)
-  const opts:DeleteItemOptions = {
+  const opts:DeleteEntityOptions = {
     confirmName: 'confirm', 
     loadingName: 'loading', 
     successName: 'success', 
@@ -148,7 +148,7 @@ export const deleteItem = (repository:Repository) => (itemPath:string, listPath:
   const totalCountPath = listPath + '/totalCount'
   return leave(API.openDialog(opts.confirmName, {}, store))
   .then(enter((ok, store) => {
-    const data = API.extract(itemPath, store)
+    const data = API.extract(entityPath, store)
     store = API.closeDialog(opts.confirmName, store)
     if (! ok) return store
     store = API.openProgress(opts.loadingName, null, store)
@@ -178,7 +178,7 @@ export const deleteItem = (repository:Repository) => (itemPath:string, listPath:
 /**
  * @category For Entity List
  */
-export type LoadItemsOptions = {
+export type LoadEntitiesOptions = {
   loadingName?: string, 
   failureName?: string, 
   page?: number, 
@@ -189,9 +189,9 @@ export type LoadItemsOptions = {
  * Fetches entities from a repository
  * @category For Entity List
  */
-export const loadItems = (repository:Repository) => (listPath:string, options:LoadItemsOptions, store:Store):Store|Promise<any> => {
+export const loadEntities = (repository:Repository) => (listPath:string, options:LoadEntitiesOptions, store:Store):Store|Promise<any> => {
   const {enter, leave} = API.makePortal(store)
-  const opts:LoadItemsOptions = {
+  const opts:LoadEntitiesOptions = {
     loadingName: 'loading', 
     failureName: 'failure', 
     page: null, 
@@ -227,7 +227,7 @@ export const loadItems = (repository:Repository) => (listPath:string, options:Lo
 /**
  * @category For Entity List
  */
-export type SearchItemsOptions = {
+export type SearchEntitiesOptions = {
   errorSelector?: string, 
   loadingName?: string, 
   failureName?: string
@@ -237,7 +237,7 @@ export type SearchItemsOptions = {
  * Searches entities from a repository
  * @category For Entity List
  */
-export const searchItems = (repository:Repository) => (formPath:string, listPath:string, options:SearchItemsOptions, store:Store):Store|Promise<any> => {
+export const searchEntities = (repository:Repository) => (formPath:string, listPath:string, options:SearchEntitiesOptions, store:Store):Store|Promise<any> => {
   let errorSelector = null
   if ("errorSelector" in options) {
     errorSelector = options.errorSelector
@@ -289,13 +289,13 @@ export const searchItems = (repository:Repository) => (formPath:string, listPath
  */
 export const makeEntityListUpdates = (repository:Repository):Record<string,Update> => {
   return {
-    editItem, 
-    createItem, 
-    commitItem: commitItem(repository), 
-    discardItem, 
-    deleteItem: deleteItem(repository), 
-    loadItems: loadItems(repository), 
-    searchItems: searchItems(repository)
+    editEntity, 
+    makeEntity, 
+    commitEntity: commitEntity(repository), 
+    discardEntity, 
+    deleteEntity: deleteEntity(repository), 
+    loadEntities: loadEntities(repository), 
+    searchEntities: searchEntities(repository)
   }
 }
 
@@ -401,7 +401,7 @@ export const editPart = (partPath:string, formPath:string, store:Store):Store =>
  * Loads data into the form for createing a part of the entity.
  * @category For Single Entity
  */
-export const createPart = (pathToAdd:string, data:Json, formPath:string, store:Store):Store => {
+export const makePart = (pathToAdd:string, data:Json, formPath:string, store:Store):Store => {
   const form = {
     method: 'add', 
     action: pathToAdd, 
@@ -538,7 +538,7 @@ export const makeEntityUpdates = (repository:Repository):Record<string,Update> =
     submit: submit(repository), 
     reset, 
     editPart, 
-    createPart, 
+    makePart, 
     commitPart, 
     discardPart, 
     removePart, 
