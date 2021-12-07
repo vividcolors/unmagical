@@ -1,6 +1,6 @@
 
 import * as U from './utils'
-import * as E from './env'
+import * as E from './store'
 import * as S from './schema'
 
 const assert = (ident, thunk, rv) => {
@@ -45,5 +45,5 @@ const callRun = (m, name) => {
 }
 
 callRun(U, 'utils')
-callRun(E, 'env')
+callRun(E, 'store')
 callRun(S, 'schema')

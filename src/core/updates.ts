@@ -2,7 +2,7 @@
 /** @module core/updates */
 
 import { API, Update } from './framework'
-import { Env } from './env'
+import { Store } from './store'
 import { Json } from './schema'
 import { MgError } from './errors'
 
@@ -24,24 +24,24 @@ export type Repository = {
  * Loads a specified entity to the form for editing.
  * @category For Entity List
  */
-export const editItem = (itemPath:string, formPath:string, env:Env):Env => {
+export const editItem = (itemPath:string, formPath:string, store:Store):Store => {
   const form = {
     method: "replace", 
-    data: API.extract(itemPath, env)
+    data: API.extract(itemPath, store)
   }
-  return API.add(formPath, form, env)
+  return API.add(formPath, form, store)
 }
 
 /**
  * Loads an initial data to the form for creating an entity.
  * @category For Entity List
  */
-export const createItem = (data:Json, formPath:string, env:Env):Env => {
+export const createItem = (data:Json, formPath:string, store:Store):Store => {
   const form = {
     method: "add", 
     data
   }
-  return API.add(formPath, form, env)
+  return API.add(formPath, form, store)
 }
 
 /**
@@ -58,8 +58,8 @@ export type CommitItemOptions = {
  * Stores the entity in the form into a repository.
  * @category For Entity List
  */
-export const commitItem = (repository:Repository) => (formPath:string, listPath:string, options:CommitItemOptions, env:Env):Env|Promise<any> => {
-  const {enter, leave} = API.makePortal(env)
+export const commitItem = (repository:Repository) => (formPath:string, listPath:string, options:CommitItemOptions, store:Store):Store|Promise<any> => {
+  const {enter, leave} = API.makePortal(store)
   const opts:CommitItemOptions = {
     errorSelector: null, 
     loadingName: 'loading', 
@@ -72,9 +72,9 @@ export const commitItem = (repository:Repository) => (formPath:string, listPath:
   const queryPath = listPath + '/query'
   const itemsPath = listPath + '/items'
   const totalCountPath = listPath + '/totalCount'
-  env = API.touchAll(dataPath, env)
-  env = API.validate(dataPath, env)
-  const numErrors = API.countValidationErrors(dataPath, env)
+  store = API.touchAll(dataPath, store)
+  store = API.validate(dataPath, store)
+  const numErrors = API.countValidationErrors(dataPath, store)
   if (numErrors) {
     if (opts.errorSelector) {
       window.setTimeout(() => {
@@ -82,31 +82,31 @@ export const commitItem = (repository:Repository) => (formPath:string, listPath:
         if (targetEl) targetEl.scrollIntoView()
       }, 100)
     }
-    return env
+    return store
   } else {
-    env = API.openProgress(opts.loadingName, null, env)
-    const data = API.extract(dataPath, env)
-    const action = (API.extract(methodPath, env)) as "add"|"replace"
-    return leave(repository[action](data), env)
-    .then(enter((_item, env) => {
-      const query = API.extract(queryPath, env) as Record<string,any>
-      return leave(repository.search(query), env)
+    store = API.openProgress(opts.loadingName, null, store)
+    const data = API.extract(dataPath, store)
+    const action = (API.extract(methodPath, store)) as "add"|"replace"
+    return leave(repository[action](data), store)
+    .then(enter((_item, store) => {
+      const query = API.extract(queryPath, store) as Record<string,any>
+      return leave(repository.search(query), store)
     }))
-    .then(enter(({entities, totalCount}, env) => {
-      env = API.replace(itemsPath, entities, env)
-      env = API.replace(formPath, null, env)
-      env = API.replace(totalCountPath, totalCount, env)
-      env = API.closeProgress(opts.loadingName, env)
-      return leave(API.sleep(500, env))
+    .then(enter(({entities, totalCount}, store) => {
+      store = API.replace(itemsPath, entities, store)
+      store = API.replace(formPath, null, store)
+      store = API.replace(totalCountPath, totalCount, store)
+      store = API.closeProgress(opts.loadingName, store)
+      return leave(API.sleep(500, store))
     }))
-    .then(enter((_unused, env) => {
-      return API.openFeedback(opts.successName, {}, env)
+    .then(enter((_unused, store) => {
+      return API.openFeedback(opts.successName, {}, store)
     }))
-    .catch(enter((error, env) => {
-      env = API.closeProgress(opts.loadingName, env)
+    .catch(enter((error, store) => {
+      store = API.closeProgress(opts.loadingName, store)
       console.error('commision failed', error)
       const mgerror:MgError = {code:error.name, detail:error.message}
-      return API.openFeedback(opts.failureName, mgerror, env)
+      return API.openFeedback(opts.failureName, mgerror, store)
     }))
   }
 }
@@ -115,9 +115,9 @@ export const commitItem = (repository:Repository) => (formPath:string, listPath:
  * Discard the entity in the form.
  * @category For Entity List
  */
-export const discardItem = (formPath:string, env:Env):Env => {
-  env = API.replace(formPath, null, env)
-  return env
+export const discardItem = (formPath:string, store:Store):Store => {
+  store = API.replace(formPath, null, store)
+  return store
 }
 
 /**
@@ -134,8 +134,8 @@ export type DeleteItemOptions = {
  * Deletes an entity from a repository.
  * @category For Entity List
  */
-export const deleteItem = (repository:Repository) => (itemPath:string, listPath:string, options:DeleteItemOptions, env:Env):Env|Promise<any> => {
-  const {enter, leave} = API.makePortal(env)
+export const deleteItem = (repository:Repository) => (itemPath:string, listPath:string, options:DeleteItemOptions, store:Store):Store|Promise<any> => {
+  const {enter, leave} = API.makePortal(store)
   const opts:DeleteItemOptions = {
     confirmName: 'confirm', 
     loadingName: 'loading', 
@@ -146,31 +146,31 @@ export const deleteItem = (repository:Repository) => (itemPath:string, listPath:
   const queryPath = listPath + '/query'
   const itemsPath = listPath + '/items'
   const totalCountPath = listPath + '/totalCount'
-  return leave(API.openDialog(opts.confirmName, {}, env))
-  .then(enter((ok, env) => {
-    const data = API.extract(itemPath, env)
-    env = API.closeDialog(opts.confirmName, env)
-    if (! ok) return env
-    env = API.openProgress(opts.loadingName, null, env)
-    return leave(repository.remove(data), env)
-    .then(enter((_unused, env) => {
-      const query = API.extract(queryPath, env) as Record<string,any>
-      return leave(repository.search(query), env)
+  return leave(API.openDialog(opts.confirmName, {}, store))
+  .then(enter((ok, store) => {
+    const data = API.extract(itemPath, store)
+    store = API.closeDialog(opts.confirmName, store)
+    if (! ok) return store
+    store = API.openProgress(opts.loadingName, null, store)
+    return leave(repository.remove(data), store)
+    .then(enter((_unused, store) => {
+      const query = API.extract(queryPath, store) as Record<string,any>
+      return leave(repository.search(query), store)
     }))
-    .then(enter(({entities, totalCount}, env) => {
-      env = API.closeProgress(opts.loadingName, env)
-      env = API.replace(itemsPath, entities, env)
-      env = API.replace(totalCountPath, totalCount, env)
-      return leave(API.sleep(500, env))
+    .then(enter(({entities, totalCount}, store) => {
+      store = API.closeProgress(opts.loadingName, store)
+      store = API.replace(itemsPath, entities, store)
+      store = API.replace(totalCountPath, totalCount, store)
+      return leave(API.sleep(500, store))
     }))
-    .then(enter((_unused, env) => {
-      return API.openFeedback(opts.successName, {}, env)
+    .then(enter((_unused, store) => {
+      return API.openFeedback(opts.successName, {}, store)
     }))
-    .catch(enter((error, env) => {
-      env = API.closeProgress(opts.loadingName, env)
+    .catch(enter((error, store) => {
+      store = API.closeProgress(opts.loadingName, store)
       console.error('deletion failed', error)
       const mgerror:MgError = {code:error.name, detail:error.message}
-      return API.openFeedback(opts.failureName, mgerror, env)
+      return API.openFeedback(opts.failureName, mgerror, store)
     }))
   }))
 }
@@ -189,8 +189,8 @@ export type LoadItemsOptions = {
  * Fetches entities from a repository
  * @category For Entity List
  */
-export const loadItems = (repository:Repository) => (listPath:string, options:LoadItemsOptions, env:Env):Env|Promise<any> => {
-  const {enter, leave} = API.makePortal(env)
+export const loadItems = (repository:Repository) => (listPath:string, options:LoadItemsOptions, store:Store):Store|Promise<any> => {
+  const {enter, leave} = API.makePortal(store)
   const opts:LoadItemsOptions = {
     loadingName: 'loading', 
     failureName: 'failure', 
@@ -201,26 +201,26 @@ export const loadItems = (repository:Repository) => (listPath:string, options:Lo
   const queryPath = listPath + '/query'
   const itemsPath = listPath + '/items'
   const totalCountPath = listPath + '/totalCount'
-  env = API.openProgress(opts.loadingName, null, env)
-  const query = API.extract(queryPath, env) as Record<string,any>
+  store = API.openProgress(opts.loadingName, null, store)
+  const query = API.extract(queryPath, store) as Record<string,any>
   if (opts.page !== null && opts.pageProperty) {
     query[opts.pageProperty] = opts.page
   }
-  return leave(repository.search(query), env)
-  .then(enter(({entities, totalCount}, env) => {
-    env = API.closeProgress(opts.loadingName, env)
+  return leave(repository.search(query), store)
+  .then(enter(({entities, totalCount}, store) => {
+    store = API.closeProgress(opts.loadingName, store)
     if (opts.page !== null && opts.pageProperty) {
-      env = API.replace(queryPath + '/' + opts.pageProperty, opts.page, env)
+      store = API.replace(queryPath + '/' + opts.pageProperty, opts.page, store)
     }
-    env = API.replace(itemsPath, entities, env)
-    env = API.replace(totalCountPath, totalCount, env)
-    return env
+    store = API.replace(itemsPath, entities, store)
+    store = API.replace(totalCountPath, totalCount, store)
+    return store
   }))
-  .catch(enter((error, env) => {
-    env = API.closeProgress(opts.loadingName, env)
+  .catch(enter((error, store) => {
+    store = API.closeProgress(opts.loadingName, store)
     console.error('loading failed', error)
     const mgerror:MgError = {code:error.name, detail:error.message}
-    return API.openFeedback(opts.failureName, mgerror, env)
+    return API.openFeedback(opts.failureName, mgerror, store)
   }))
 }
 
@@ -237,15 +237,15 @@ export type SearchItemsOptions = {
  * Searches entities from a repository
  * @category For Entity List
  */
-export const searchItems = (repository:Repository) => (formPath:string, listPath:string, options:SearchItemsOptions, env:Env):Env|Promise<any> => {
+export const searchItems = (repository:Repository) => (formPath:string, listPath:string, options:SearchItemsOptions, store:Store):Store|Promise<any> => {
   let errorSelector = null
   if ("errorSelector" in options) {
     errorSelector = options.errorSelector
     delete options.errorSelector
   }    
-  env = API.touchAll(formPath, env)
-  env = API.validate(formPath, env)
-  const numErrors = API.countValidationErrors(formPath, env)
+  store = API.touchAll(formPath, store)
+  store = API.validate(formPath, store)
+  const numErrors = API.countValidationErrors(formPath, store)
   if (numErrors) {
     if (errorSelector) {
       window.setTimeout(() => {
@@ -253,10 +253,10 @@ export const searchItems = (repository:Repository) => (formPath:string, listPath
         if (targetEl) targetEl.scrollIntoView()
       }, 100)
     }
-    return env
+    return store
   }
 
-  const {enter, leave} = API.makePortal(env)
+  const {enter, leave} = API.makePortal(store)
   const opts = {
     loadingName: 'loading', 
     failureName: 'failure', 
@@ -265,21 +265,21 @@ export const searchItems = (repository:Repository) => (formPath:string, listPath
   const queryPath = listPath + '/query'
   const itemsPath = listPath + '/items'
   const totalCountPath = listPath + '/totalCount'
-  env = API.openProgress(opts.loadingName, null, env)
-  const query = API.extract(formPath, env) as Record<string,any>
-  return leave(repository.search(query), env)
-  .then(enter(({entities, totalCount}, env) => {
-    env = API.closeProgress(opts.loadingName, env)
-    env = API.replace(queryPath, query, env)
-    env = API.replace(itemsPath, entities, env)
-    env = API.replace(totalCountPath, totalCount, env)
-    return env
+  store = API.openProgress(opts.loadingName, null, store)
+  const query = API.extract(formPath, store) as Record<string,any>
+  return leave(repository.search(query), store)
+  .then(enter(({entities, totalCount}, store) => {
+    store = API.closeProgress(opts.loadingName, store)
+    store = API.replace(queryPath, query, store)
+    store = API.replace(itemsPath, entities, store)
+    store = API.replace(totalCountPath, totalCount, store)
+    return store
   }))
-  .catch(enter((error, env) => {
-    env = API.closeProgress(opts.loadingName, env)
+  .catch(enter((error, store) => {
+    store = API.closeProgress(opts.loadingName, store)
     console.error('search failed', error)
     const mgerror:MgError = {code:error.name, detail:error.message}
-    return API.openFeedback(opts.failureName, mgerror, env)
+    return API.openFeedback(opts.failureName, mgerror, store)
   }))
 }
 
@@ -314,8 +314,8 @@ export type SubmitOptions = {
  * Submits data to a repository. The method can be "add" or "replace".
  * @category For Single Entity
  */
-export const submit = (repository:Repository) => (method:"add"|"replace", options:SubmitOptions, env:Env):Env|Promise<any> => {
-  const {enter, leave} = API.makePortal(env)
+export const submit = (repository:Repository) => (method:"add"|"replace", options:SubmitOptions, store:Store):Store|Promise<any> => {
+  const {enter, leave} = API.makePortal(store)
   const opts:SubmitOptions = {
     path: '', 
     errorSelector: null, 
@@ -324,9 +324,9 @@ export const submit = (repository:Repository) => (method:"add"|"replace", option
     failureName: 'failure', 
     ...options
   }
-  env = API.touchAll(opts.path, env)
-  env = API.validate(opts.path, env)
-  const numErrors = API.countValidationErrors(opts.path, env)
+  store = API.touchAll(opts.path, store)
+  store = API.validate(opts.path, store)
+  const numErrors = API.countValidationErrors(opts.path, store)
   if (numErrors) {
     if (opts.errorSelector) {
       window.setTimeout(() => {
@@ -334,23 +334,23 @@ export const submit = (repository:Repository) => (method:"add"|"replace", option
         if (targetEl) targetEl.scrollIntoView()
       }, 100)
     }
-    return env
+    return store
   } else {
-    const data = API.extract(opts.path, env)
-    env = API.openProgress(opts.loadingName, null, env)
-    return leave(repository[method](data), env)
-    .then(enter((data, env) => {
-      env = API.closeProgress(opts.loadingName, env)
-      return leave(API.sleep(500, env))
-      .then(enter((_unused, env) => {
-        return API.openFeedback(opts.successName, {data}, env)
+    const data = API.extract(opts.path, store)
+    store = API.openProgress(opts.loadingName, null, store)
+    return leave(repository[method](data), store)
+    .then(enter((data, store) => {
+      store = API.closeProgress(opts.loadingName, store)
+      return leave(API.sleep(500, store))
+      .then(enter((_unused, store) => {
+        return API.openFeedback(opts.successName, {data}, store)
       }))
     }))
-    .catch(enter((error, env) => {
-      env = API.closeProgress(opts.loadingName, env)
+    .catch(enter((error, store) => {
+      store = API.closeProgress(opts.loadingName, store)
       console.error('loading failed', error)
       const mgerror:MgError = {code:error.name, detail:error.message}
-      return API.openFeedback(opts.failureName, mgerror, env)
+      return API.openFeedback(opts.failureName, mgerror, store)
     }))
   }
 }
@@ -366,19 +366,19 @@ export type ResetOptions = {
  * Resets data.
  * @category For Single Entity
  */
-export const reset = (data:Json, options:ResetOptions, env:Env):Env|Promise<any> => {
-  const {enter, leave} = API.makePortal(env)
+export const reset = (data:Json, options:ResetOptions, store:Store):Store|Promise<any> => {
+  const {enter, leave} = API.makePortal(store)
   const opts:ResetOptions = {
     confirmName: 'confirm', 
     ...options
   }
-  return leave(API.openDialog(opts.confirmName, {}, env))
-  .then(enter((ok, env) => {
-    env = API.closeDialog(opts.confirmName, env)
+  return leave(API.openDialog(opts.confirmName, {}, store))
+  .then(enter((ok, store) => {
+    store = API.closeDialog(opts.confirmName, store)
     if (ok) {
-      return API.replace("", data, env)
+      return API.replace("", data, store)
     } else {
-      return env
+      return store
     }
   }))
 }
@@ -387,28 +387,28 @@ export const reset = (data:Json, options:ResetOptions, env:Env):Env|Promise<any>
  * Loads a part of the entity into the form for editing.
  * @category For Single Entity
  */
-export const editPart = (partPath:string, formPath:string, env:Env):Env => {
+export const editPart = (partPath:string, formPath:string, store:Store):Store => {
   const form = {
     method: 'replace', 
     action: partPath, 
-    data: API.extract(partPath, env)
+    data: API.extract(partPath, store)
   }
-  env = API.replace(formPath, form, env)
-  return env
+  store = API.replace(formPath, form, store)
+  return store
 }
 
 /**
  * Loads data into the form for createing a part of the entity.
  * @category For Single Entity
  */
-export const createPart = (pathToAdd:string, data:Json, formPath:string, env:Env):Env => {
+export const createPart = (pathToAdd:string, data:Json, formPath:string, store:Store):Store => {
   const form = {
     method: 'add', 
     action: pathToAdd, 
     data
   }
-  env = API.replace(formPath, form, env)
-  return env
+  store = API.replace(formPath, form, store)
+  return store
 }
 
 /**
@@ -423,7 +423,7 @@ export type CommitPartOptions = {
  * Stores the part in the form into the entity.
  * @category For Single Entity
  */
-export const commitPart = (formPath:string, nextIdPath:string, options:CommitPartOptions, env:Env):Env => {
+export const commitPart = (formPath:string, nextIdPath:string, options:CommitPartOptions, store:Store):Store => {
   const opts:CommitPartOptions = {
     errorSelector: null, 
     idProperty: 'id', 
@@ -432,9 +432,9 @@ export const commitPart = (formPath:string, nextIdPath:string, options:CommitPar
   const actionPath = formPath + '/action'
   const methodPath = formPath + '/method'
   const dataPath = formPath + '/data'
-  env = API.touchAll(dataPath, env)
-  env = API.validate(dataPath, env)
-  const numErrors = API.countValidationErrors(dataPath, env)
+  store = API.touchAll(dataPath, store)
+  store = API.validate(dataPath, store)
+  const numErrors = API.countValidationErrors(dataPath, store)
   if (numErrors) {
     if (opts.errorSelector) {
       window.setTimeout(() => {
@@ -442,23 +442,23 @@ export const commitPart = (formPath:string, nextIdPath:string, options:CommitPar
         if (targetEl) targetEl.scrollIntoView()
       }, 100)
     }
-    return env
+    return store
   } else {
-    const method = API.extract(methodPath, env) as "add"|"replace"
-    const path = API.extract(actionPath, env) as string
-    const data = API.extract(dataPath, env)
+    const method = API.extract(methodPath, store) as "add"|"replace"
+    const path = API.extract(actionPath, store) as string
+    const data = API.extract(dataPath, store)
     if (method == "add") {
       if (opts.idProperty && nextIdPath) {
-        const nextId = API.extract(nextIdPath, env) as number
-        env = API.replace(nextIdPath, nextId + 1, env)
+        const nextId = API.extract(nextIdPath, store) as number
+        store = API.replace(nextIdPath, nextId + 1, store)
         data[opts.idProperty] = nextId
       }
-      env = API.add(path, data, env)
+      store = API.add(path, data, store)
     } else {
-      env = API.replace(path, data, env)
+      store = API.replace(path, data, store)
     }
-    env = API.replace(formPath, null, env)
-    return env
+    store = API.replace(formPath, null, store)
+    return store
   }
 }
 
@@ -466,9 +466,9 @@ export const commitPart = (formPath:string, nextIdPath:string, options:CommitPar
  * Discards data in the form.
  * @category For Single Entity
  */
-export const discardPart = (formPath:string, env:Env):Env => {
-  env = API.replace(formPath, null, env)
-  return env
+export const discardPart = (formPath:string, store:Store):Store => {
+  store = API.replace(formPath, null, store)
+  return store
 }
 
 /**
@@ -482,20 +482,20 @@ export type RemovePartOptions = {
  * Removes a part of the entity.
  * @category For Single Entity
  */
-export const removePart = (partPath:string, options:RemovePartOptions, env:Env):Env|Promise<any> => {
-  const {enter, leave} = API.makePortal(env)
+export const removePart = (partPath:string, options:RemovePartOptions, store:Store):Store|Promise<any> => {
+  const {enter, leave} = API.makePortal(store)
   const opts:RemovePartOptions = {
     confirmName: 'confirm', 
     ...options
   }
-  return leave(API.openDialog(opts.confirmName, {}, env))
-  .then(enter((ok, env) => {
-    env = API.closeDialog(opts.confirmName, env)
+  return leave(API.openDialog(opts.confirmName, {}, store))
+  .then(enter((ok, store) => {
+    store = API.closeDialog(opts.confirmName, store)
     if (ok) {
-      env = API.remove(partPath, env)
-      return env
+      store = API.remove(partPath, store)
+      return store
     } else {
-      return env
+      return store
     }
   }))
 }
@@ -512,21 +512,21 @@ export type CopyPartOptions = {
  * Copies a part of the entity.
  * @category For Single Entity
  */
-export const copyPart = (partPath:string, nextIdPath:string, options:CopyPartOptions, env:Env):Env => {
+export const copyPart = (partPath:string, nextIdPath:string, options:CopyPartOptions, store:Store):Store => {
   const opts:CopyPartOptions = {
     pathToAdd: '', 
     idProperty: 'id', 
     ...options
   }
-  const data = API.extract(partPath, env)
+  const data = API.extract(partPath, store)
   if (opts.idProperty && nextIdPath) {
-    const nextId = API.extract(nextIdPath, env) as number
+    const nextId = API.extract(nextIdPath, store) as number
     data[opts.idProperty] = nextId
-    env = API.add(nextIdPath, nextId + 1, env)
+    store = API.add(nextIdPath, nextId + 1, store)
   }
   const pathToAdd = opts.pathToAdd || partPath
-  env = API.add(pathToAdd, data, env)
-  return env
+  store = API.add(pathToAdd, data, store)
+  return store
 }
 
 /**

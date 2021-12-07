@@ -42,8 +42,7 @@ const updates = {
 
 const messageProps = {style:{color:"#FF0000"}}
 const callOnUpdate = (x) => onUpdate(x)
-const view = (env) => {
-  console.log('view', env)
+const view = (store) => {
   return (
     <sl-form novalidate>
       <Input path="/name" label="お名前" messageProps={messageProps}>

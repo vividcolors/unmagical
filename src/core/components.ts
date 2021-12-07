@@ -112,7 +112,7 @@ export const playSmartControl = (C, map = {}) => {
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const path = props['mg-path']
-    const mdr = API.getMdr(path, state.env)
+    const mdr = API.getMdr(path, state.store)
     if (! mdr) return null
     attributes[map.onchange] = actions.onSmartControlChange
     addAttr(attributes, map.value, mdr.input)
@@ -179,7 +179,7 @@ export type TextboxAutoProps = {
 export const playTextbox = <OtherAttrs extends {}>(C:NodeName<TextboxAutoProps & OtherAttrs>):Component<TextboxExtraProps & OtherAttrs> => {
   return (props, children:Children[]) => (state:UnmagicalState, actions:UnmagicalActions) => {
     const {path, ...attributes} = props
-    const mdr = API.getMdr(path, state.env)
+    const mdr = API.getMdr(path, state.store)
     if (! mdr) return null
     const invalid = ((mdr.touched || false) && (mdr.invalid || false))
     const attrs:TextboxAutoProps = {
@@ -222,7 +222,7 @@ export type SliderAutoProps = {
 export const playSlider = <OtherAttrs extends {}>(C:NodeName<SliderAutoProps & OtherAttrs>):UnmagicalComponent<SliderExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, ...attributes} = props
-    const mdr = API.getMdr(path, state.env)
+    const mdr = API.getMdr(path, state.store)
     if (! mdr) return null
     const invalid = ((mdr.touched || false) && (mdr.invalid || false))
     const attrs:SliderAutoProps = {
@@ -267,7 +267,7 @@ export type ListboxAutoProps = {
 export const playListbox = <OtherAttrs extends {}>(C:NodeName<ListboxAutoProps & OtherAttrs>):UnmagicalComponent<ListboxExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, ...attributes} = props
-    const mdr = API.getMdr(path, state.env)
+    const mdr = API.getMdr(path, state.store)
     if (! mdr) return null
     const invalid = ((mdr.touched || false) && (mdr.invalid || false))
     const attrs:ListboxAutoProps = {
@@ -311,7 +311,7 @@ export type RadioAutoProps = {
 export const playRadio = <OtherAttrs extends {}>(C:NodeName<RadioAutoProps & OtherAttrs>):UnmagicalComponent<RadioExtraProps & OtherAttrs> => {
   return (props, children:Children[]) => (state, actions) => {
     const {path, value, ...attributes} = props
-    const mdr = API.getMdr(path, state.env)
+    const mdr = API.getMdr(path, state.store)
     if (! mdr) return null
     const invalid = ((mdr.touched || false) && (mdr.invalid || false))
     const attrs:RadioAutoProps = {
@@ -354,7 +354,7 @@ export type CheckboxAutoProps = {
 export const playCheckbox = <OtherAttrs extends {}>(C:NodeName<CheckboxAutoProps & OtherAttrs>):UnmagicalComponent<CheckboxExtraProps & OtherAttrs> => {
   return (props, children:Children[]) => (state, actions) => {
     const {path, ...attributes} = props
-    const mdr = API.getMdr(path, state.env)
+    const mdr = API.getMdr(path, state.store)
     if (! mdr) return null
     const invalid = ((mdr.touched || false) && (mdr.invalid || false))
     const attrs:CheckboxAutoProps = {
@@ -460,9 +460,9 @@ export type FieldAutoProps = {
 export const playField = <OtherAttrs extends {}>(C:NodeName<FieldAutoProps & OtherAttrs>):UnmagicalComponent<FieldExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, foldValidity = false, ...attributes} = props
-    if (! API.test(path, state.env)) return null
-    const mdr = API.getMdr(path, state.env)
-    const {invalid, error} = foldValidity ? API.foldValidity(path, state.env) : {invalid:mdr.invalid && mdr.touched, error:mdr.error}
+    if (! API.test(path, state.store)) return null
+    const mdr = API.getMdr(path, state.store)
+    const {invalid, error} = foldValidity ? API.foldValidity(path, state.store) : {invalid:mdr.invalid && mdr.touched, error:mdr.error}
     const attrs:FieldAutoProps = {
       ...attributes, 
       invalid, 
@@ -533,7 +533,7 @@ export const playDialog = (transition:"fade"|"scale", nullIfHidden:boolean) => <
   return (props, children) => (state, actions) => {
     const attributes = props
     const name = attributes.name
-    const data = API.getDialog(name, state.env)
+    const data = API.getDialog(name, state.store)
     if (nullIfHidden && data === null) return null
     const attrs:DialogAutoProps = {
       ...attributes, 
@@ -622,7 +622,7 @@ export const playFeedback = (transition:"fade"|"zoom"|"slide", nullIfHidden:bool
   return (props, children) => (state, actions) => {
     const {duration = 0, ...attributes} = props
     const name = attributes.name
-    const data = API.getFeedback(name, state.env)
+    const data = API.getFeedback(name, state.store)
     if (nullIfHidden && data === null) return null
     const attrs:FeedbackAutoProps = {
       ...attributes, 
@@ -705,7 +705,7 @@ export const playProgress = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:
   return (props, children) => (state, actions) => {
     const attributes = props
     const name = attributes.name
-    const current = API.getProgress(name, state.env)
+    const current = API.getProgress(name, state.store)
     if (current === null && nullIfHidden) return null
     const attrs = {
       ...attributes, 
@@ -741,7 +741,7 @@ export const playPage = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:Node
     const attributes = props
     const index = attributes.index
     const name = attributes.name
-    const current = API.getPage(name, state.env)
+    const current = API.getPage(name, state.store)
     const shown = (index == current)
     if (! shown && nullIfHidden) return null
     const attrs:PageAutoProps = {
@@ -810,7 +810,7 @@ export const playSwitch = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:No
   return (props, children) => (state, actions) => {
     const attributes = props
     const name = attributes.name
-    const shown = API.getSwitch(name, state.env)
+    const shown = API.getSwitch(name, state.store)
     if (! shown && nullIfHidden) return null
     const attrs = {
       ...attributes, 
@@ -887,8 +887,8 @@ export type PaginationAutoProps = {
 export const playPagination = <OtherAttrs extends {}>(C:NodeName<PaginationAutoProps & OtherAttrs>):UnmagicalComponent<PaginationExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {listPath, width = 2, pageProperty = 'page', limitProperty = 'limit', ...attributes} = props
-    const query = API.extract(listPath + '/query', state.env)
-    const totalCount = +API.extract(listPath + '/totalCount', state.env)
+    const query = API.extract(listPath + '/query', state.store)
+    const totalCount = +API.extract(listPath + '/totalCount', state.store)
     const page = query[pageProperty]
     if (totalCount > 0) {
       const first = 1
@@ -975,7 +975,7 @@ export type FlatpickrAutoProps = {
 export const playFlatpickr = <OtherAttrs extends {}>(C:NodeName<FlatpickrAutoProps & OtherAttrs>):UnmagicalComponent<FlatpickrExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, clearerId = null, config = {}, ...attributes} = props
-    const mdr = API.getMdr(path, state.env)
+    const mdr = API.getMdr(path, state.store)
     if (! mdr) return null
     const {oncreate, ondestroy} = instantiateFlatpickr(path, actions.onSmartControlChange, mdr.input, clearerId, config)
     const invalid = ((mdr.touched || false) && (mdr.invalid || false))
@@ -1053,7 +1053,7 @@ export type PickrAutoProps = {
 export const playPickr = <OtherAttrs extends {}>(C:NodeName<PickrAutoProps & OtherAttrs>):UnmagicalComponent<PickrExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, clearerId = null, options = {}, ...attributes} = props
-    const mdr = API.getMdr(path, state.env)
+    const mdr = API.getMdr(path, state.store)
     if (! mdr) return null
     const {oncreate, ondestroy} = instantiatePickr(path, actions.onSmartControlChange, mdr.input, clearerId, options)
     const invalid = ((mdr.touched || false) && (mdr.invalid || false))
@@ -1146,7 +1146,7 @@ export type SortableAutoProps = {
 export const playSortable = <OtherAttrs extends {}>(C:NodeName<SortableAutoProps & OtherAttrs>):UnmagicalComponent<SortableExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {name, path, options = {}, ...attributes} = props
-    const extra = API.getExtra(name, state.env) as {itemPath:string, group:string}
+    const extra = API.getExtra(name, state.store) as {itemPath:string, group:string}
     const active = !!extra
     const {oncreate, ondestroy} = instantiateSortable(name, actions.onUpdate, actions.onPromiseSettle, options)
     const attrs:SortableAutoProps = {

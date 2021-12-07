@@ -1,6 +1,6 @@
 /**
  * This is the core data store object in Unmagical, and it is an abstract data type.
- * @module core/env
+ * @module core/store
  */
 
 import {normalizePath, typeOf, isIntStr, normalizePathArray, appendPath, Index} from './utils'
@@ -17,10 +17,10 @@ import {Json, Schema, Mdr, SchemaDb, Lookup, Validate} from './schema'
 
 
 /**
- * Env is the abstract data type.
+ * Store is the abstract data type.
  * @ignore
  */
-export type Env = {
+export type Store = {
   tree: Json, 
   trackUpdate: boolean, 
   updatePoint: Index[], 
@@ -146,8 +146,8 @@ const strip = (tree:Json):Json => {
 }
 
 /**
- * @en Makes env.
- * @ja Envを作る。
+ * @en Makes store.
+ * @ja storeを作る。
  * @param data
  * - `en` initial data
  * - `ja` 初期データ
@@ -158,15 +158,15 @@ const strip = (tree:Json):Json => {
  * - `en` validation function
  * - `ja` バリデーション関数
  * @param trackUpdate
- * - `en` if true, then env is created with update tracking in place.
- * - `ja` trueならenvはアップデートトラッキングをしている状態で作られます。
+ * - `en` if true, then store is created with update tracking in place.
+ * - `ja` trueならstoreはアップデートトラッキングをしている状態で作られます。
  * @returns 
- * - `en` newly created env
- * - `ja` 新しく作成されたenv
+ * - `en` newly created store
+ * - `ja` 新しく作成されたstore
  * 
  * @category Entries
  */
-export const makeEnv = (data:Json, schemaDb:SchemaDb, validate:Validate, trackUpdate:boolean):Env => {
+export const makeStore = (data:Json, schemaDb:SchemaDb, validate:Validate, trackUpdate:boolean):Store => {
   const tree = wrap(data) as Json
   return {
     tree, 
@@ -181,14 +181,14 @@ export const makeEnv = (data:Json, schemaDb:SchemaDb, validate:Validate, trackUp
 /**
  * 
  * @function
- * @param {Env} env0 
- * @param {Env} env1 
+ * @param {Store} store0 
+ * @param {Store} store1 
  * @returns {boolean}
  * 
  * @category Entries
  */
-export const isSame = (env0:Env, env1:Env):boolean => {
-  return (env0.tree === env1.tree && env0.extra === env1.extra)
+export const isSame = (store0:Store, store1:Store):boolean => {
+  return (store0.tree === store1.tree && store0.extra === store1.extra)
 }
 
 /**
@@ -247,60 +247,46 @@ const intersect = (path0:Index[]|null, path1:Index[]|null):Index[]|null => {
 
 /**
  * 
- * @function
- * @param {Env} env 
- * @returns {Env}
  * 
  * @category Entries
  */
-export const beginUpdateTracking = (env:Env):Env => {
+export const beginUpdateTracking = (store:Store):Store => {
   // Essentially, `updatePoint' should be set to null, but it can be omitted 
   // because the value when disabled is null.
-  return {...env, trackUpdate:true}
+  return {...store, trackUpdate:true}
 }
 
 /**
  * 
- * @function
- * @param {Env} env 
- * @returns {[string|null, Env]}
  * 
  * @category Entries
  */
-export const endUpdateTracking = (env:Env):[string|null, Env] => {
-  const updatePoint = env.updatePoint ? externPath(env.updatePoint) : null
+export const endUpdateTracking = (store:Store):[string|null, Store] => {
+  const updatePoint = store.updatePoint ? externPath(store.updatePoint) : null
   console.log('update occurred at ' + JSON.stringify(updatePoint))
   return [
     updatePoint, 
-    {...env, trackUpdate:false, updatePoint:null}
+    {...store, trackUpdate:false, updatePoint:null}
   ]
 }
 
 /**
  * 
- * @function
- * @param {string} path 
- * @param {Env} env 
- * @returns {boolean}
  * 
  * @category Entries
  */
-export const test = (path:string, env:Env):boolean => {
-  return hasPath(/** @type {string[]} */ (internPath(path)), env.tree)
+export const test = (path:string, store:Store):boolean => {
+  return hasPath(internPath(path), store.tree)
 }
 
 /**
- * Extracts a subtree of Env.
- * @function
- * @param {string} path
- * @param {Env} env
- * @returns {Json}
+ * Extracts a subtree of Store.
  * 
  * @category Entries
  */
-export const extract = (path:string, env:Env):Json => {
-  const epath = /** @type {string[]} */ (internPath(path))
-  const mdr = rpath(epath, env.tree)
+export const extract = (path:string, store:Store):Json => {
+  const epath = internPath(path)
+  const mdr = rpath(epath, store.tree)
   if (! mdr) {
     throw new Error('extract/1: not found: ' + path)
   }
@@ -309,16 +295,12 @@ export const extract = (path:string, env:Env):Json => {
 
 /**
  * Low-level api.
- * @function
- * @param {string} path 
- * @param {Env} env
- * @returns {Mdr} 
  * 
  * @category Entries
  */
-export const getMdr = (path:string, env:Env):Mdr => {
+export const getMdr = (path:string, store:Store):Mdr => {
   const epath = internPath(path)
-  const mdr = rpath(epath, env.tree)
+  const mdr = rpath(epath, store.tree)
   if (! mdr) {
     throw new Error('getMdr/1: not found: ' + path)
   }
@@ -327,19 +309,14 @@ export const getMdr = (path:string, env:Env):Mdr => {
 
 /**
  * Low-level api. This function executes neither validation nor coercion.
- * @function
- * @param {string} path 
- * @param {Mdr} mdr 
- * @param {Env} env
- * @returns {Env} 
  * 
  * The value of MDR must be a scalar.
  * 
  * @category Entries
  */
-export const setMdr = (path:string, mdr:Mdr, env:Env):Env => {
+export const setMdr = (path:string, mdr:Mdr, store:Store):Store => {
   const epath = internPath(path)
-  const mdr0 = rpath(epath, env.tree) as Mdr
+  const mdr0 = rpath(epath, store.tree) as Mdr
   if (! mdr0) {
     throw new Error('setMdr/1: not found: ' + path)
   }
@@ -353,26 +330,21 @@ export const setMdr = (path:string, mdr:Mdr, env:Env):Env => {
     default: 
       throw new Error('setMdr/2: not a scalar: ' + path)
   }
-  const tree = assocPath(epath, mdr, env.tree)
-  const updatePoint = env.trackUpdate ? intersect(env.updatePoint, epath) : env.updatePoint
-  return {...env, tree, updatePoint}
+  const tree = assocPath(epath, mdr, store.tree)
+  const updatePoint = store.trackUpdate ? intersect(store.updatePoint, epath) : store.updatePoint
+  return {...store, tree, updatePoint}
 }
 
 /**
- * Adds value to env. `add' function of JSON patch.
- * @function
- * @param {string} path 
- * @param {Json} value 
- * @param {Env} env 
- * @returns {Env}
+ * Adds value to store. `add' function of JSON patch.
  * 
  * @category Entries
  */
-export const add = (path:string, value:Json, env:Env):Env => {
+export const add = (path:string, value:Json, store:Store):Store => {
   const epath = internPath(path)
   const location = init2(epath)
   const name = last(epath)
-  const mdr0 = rpath(location, env.tree) as Mdr
+  const mdr0 = rpath(location, store.tree) as Mdr
   const type0 = typeOf(mdr0.value)
   if (type0 != 'object' && type0 != 'array') {
     throw new Error('add/1 neither an object nor an array: ' + path)
@@ -389,10 +361,10 @@ export const add = (path:string, value:Json, env:Env):Env => {
     const value1 = wrap(value) as Json
     const lis = insert(index, value1, mdr0.value as Json[])
     const mdr = makeMdr(lis)
-    const tree = assocPath(location, mdr, env.tree)
+    const tree = assocPath(location, mdr, store.tree)
     // Insertion to a list is an update not to an item but to the list.
-    const updatePoint = env.trackUpdate ? intersect(env.updatePoint, location) : env.updatePoint
-    return {...env, tree, updatePoint}
+    const updatePoint = store.trackUpdate ? intersect(store.updatePoint, location) : store.updatePoint
+    return {...store, tree, updatePoint}
   } else {
     // define or replace into object
     if (typeof name != 'string') {
@@ -401,27 +373,27 @@ export const add = (path:string, value:Json, env:Env):Env => {
     const value1 = wrap(value)
     const rec = {...(mdr0.value as {[prop:string]:Json}), [name]:value1} as Json
     const mdr = makeMdr(rec)
-    const tree = assocPath(location, mdr, env.tree)
+    const tree = assocPath(location, mdr, store.tree)
     // Adding a property is an update to an object, while replacing a property is an update to an property value.
-    const updatePoint = !env.trackUpdate ? env.updatePoint 
-      : intersect(env.updatePoint, (name in (mdr0.value as Object)) ? epath : location)
-    return {...env, tree, updatePoint}
+    const updatePoint = !store.trackUpdate ? store.updatePoint 
+      : intersect(store.updatePoint, (name in (mdr0.value as Object)) ? epath : location)
+    return {...store, tree, updatePoint}
   }
 }
 
 /**
- * Removes a value specified by path from env. `remove' function of JSON patch.
+ * Removes a value specified by path from store. `remove' function of JSON patch.
  * @function
  * @param {string} path 
- * @param {Env} env 
- * @returns {Env}
+ * @param {store} store 
+ * @returns {store}
  * @category Entries
  */
-export const remove = (path:string, env:Env):Env => {
+export const remove = (path:string, store:Store):Store => {
   const epath = internPath(path)
   const location = init2(epath)
   const name = last(epath)
-  const mdr0 = rpath(location, env.tree) as Mdr
+  const mdr0 = rpath(location, store.tree) as Mdr
   const type0 = typeOf(mdr0.value)
   if (type0 != 'object' && type0 != 'array') {
     throw new Error('remove/1 neither an object nor an array: ' + path)
@@ -436,9 +408,9 @@ export const remove = (path:string, env:Env):Env => {
     }
     const lis = rremove(name, 1, mdr0.value as Json[])
     const mdr = makeMdr(lis)
-    const tree = assocPath(location, mdr, env.tree)
-    const updatePoint = env.trackUpdate ? intersect(env.updatePoint, location) : env.updatePoint
-    return {...env, tree, updatePoint}
+    const tree = assocPath(location, mdr, store.tree)
+    const updatePoint = store.trackUpdate ? intersect(store.updatePoint, location) : store.updatePoint
+    return {...store, tree, updatePoint}
   } else {
     // delete property from object
     if (! mdr0.value.hasOwnProperty(name)) {
@@ -446,9 +418,9 @@ export const remove = (path:string, env:Env):Env => {
     }
     const rec = dissoc(name as never, mdr0.value as object)
     const mdr = makeMdr(rec)
-    const tree = assocPath(location, mdr, env.tree)
-    const updatePoint = env.trackUpdate ? intersect(env.updatePoint, location) : env.updatePoint
-    return {...env, tree, updatePoint}
+    const tree = assocPath(location, mdr, store.tree)
+    const updatePoint = store.trackUpdate ? intersect(store.updatePoint, location) : store.updatePoint
+    return {...store, tree, updatePoint}
   }
 }
 
@@ -457,21 +429,21 @@ export const remove = (path:string, env:Env):Env => {
  * @function
  * @param {string} path 
  * @param {Json} value 
- * @param {Env} env 
- * @returns {Env}
+ * @param {Store} store 
+ * @returns {Store}
  * @category Entries
  */
-export const replace = (path:string, value:Json, env:Env):Env => {
+export const replace = (path:string, value:Json, store:Store):Store => {
   const epath = internPath(path)
   if (epath.length == 0) {
     // replace whole data
     const tree = wrap(value) as Json
-    const updatePoint = env.trackUpdate ? [] : env.updatePoint
-    return {...env, tree, updatePoint}
+    const updatePoint = store.trackUpdate ? [] : store.updatePoint
+    return {...store, tree, updatePoint}
   }
   const location = init2(epath)
   const name = last(epath)
-  const mdr0 = rpath(location, env.tree) as Mdr
+  const mdr0 = rpath(location, store.tree) as Mdr
   const type0 = typeOf(mdr0.value)
   if (type0 != 'object' && type0 != 'array') {
     throw new Error('replace/1 neither an object nor an array: ' + path)
@@ -487,9 +459,9 @@ export const replace = (path:string, value:Json, env:Env):Env => {
     const value1 = wrap(value) as Json
     const lis = update(name, value1, mdr0.value as Json[])
     const mdr = makeMdr(lis)
-    const tree = assocPath(location, mdr, env.tree)
-    const updatePoint = env.trackUpdate ? intersect(env.updatePoint, epath) : env.updatePoint
-    return {...env, tree, updatePoint}
+    const tree = assocPath(location, mdr, store.tree)
+    const updatePoint = store.trackUpdate ? intersect(store.updatePoint, epath) : store.updatePoint
+    return {...store, tree, updatePoint}
   } else {
     // replace a property of object
     if (typeof name != 'string') {
@@ -501,9 +473,9 @@ export const replace = (path:string, value:Json, env:Env):Env => {
     const value1 = wrap(value)
     const rec = {...(mdr0.value as {[prop:string]:Json}), [name]:value1} as {[prop:string]:Json}
     const mdr = makeMdr(rec)
-    const tree = assocPath(location, mdr, env.tree)
-    const updatePoint = env.trackUpdate ? intersect(env.updatePoint, epath) : env.updatePoint
-    return {...env, tree, updatePoint}
+    const tree = assocPath(location, mdr, store.tree)
+    const updatePoint = store.trackUpdate ? intersect(store.updatePoint, epath) : store.updatePoint
+    return {...store, tree, updatePoint}
   }
 }
 
@@ -512,15 +484,15 @@ export const replace = (path:string, value:Json, env:Env):Env => {
  * @function
  * @param {string} from 
  * @param {string} path 
- * @param {Env} env
- * @returns {Env} 
+ * @param {Store} store
+ * @returns {Store} 
  * @category Entries
  */
-export const move = (from:string, path:string, env:Env):Env => {
-  const value = extract(from, env)
-  env = remove(from, env)
-  env = add(path, value, env)
-  return env
+export const move = (from:string, path:string, store:Store):Store => {
+  const value = extract(from, store)
+  store = remove(from, store)
+  store = add(path, value, store)
+  return store
 }
 
 /**
@@ -528,30 +500,30 @@ export const move = (from:string, path:string, env:Env):Env => {
  * @function
  * @param {string} from 
  * @param {string} path 
- * @param {Env} env
- * @returns {Env} 
+ * @param {Store} store
+ * @returns {Store} 
  * @category Entries
  */
-export const copy = (from:string, path:string, env:Env):Env => {
-  const value = extract(from, env)
-  env = add(path, value, env)
-  return env
+export const copy = (from:string, path:string, store:Store):Store => {
+  const value = extract(from, store)
+  store = add(path, value, store)
+  return store
 }
 
 /**
  * 
  * @function
  * @param {string} path 
- * @param {Env} env
- * @returns {Env} 
+ * @param {Store} store
+ * @returns {Store} 
  * @category Entries
  */
-export const validate = (path:string, env:Env):Env => {
+export const validate = (path:string, store:Store):Store => {
   let basePath = null
 
   const lookup = (path:string) => {
     const pathToLookup = appendPath(basePath, path)
-    return extract(pathToLookup, env)
+    return extract(pathToLookup, store)
   }
 
   const inner = (mdr0:Mdr, npath:string, path:string):Mdr => {
@@ -563,17 +535,17 @@ export const validate = (path:string, env:Env):Env => {
           lis[i] = inner(value0[i], npath + '/*', path + '/' + i)
         }
         basePath = path
-        return env.validate(lis, mdr0, env.schemaDb[npath], lookup)
+        return store.validate(lis, mdr0, store.schemaDb[npath], lookup)
       case 'object': 
         const rec = {}
         for (let p in  (value0 as Record<string,Json>)) {
           rec[p] = inner(value0[p], npath + '/' + p, path + '/' + p)
         }
         basePath = path
-        return env.validate(rec, mdr0, env.schemaDb[npath], lookup)
+        return store.validate(rec, mdr0, store.schemaDb[npath], lookup)
       default: 
         basePath = path
-        const mdr = env.validate(value0, mdr0, env.schemaDb[npath], lookup)
+        const mdr = store.validate(value0, mdr0, store.schemaDb[npath], lookup)
         if (mdr.value !== value0) {
           throw new Error('validate/0: value changed: ' + path)
         }
@@ -582,20 +554,20 @@ export const validate = (path:string, env:Env):Env => {
   }
 
   const epath = internPath(path)
-  const mdr0 = rpath(epath, env.tree)
+  const mdr0 = rpath(epath, store.tree)
   if (! mdr0) {
     throw new Error('validate/1: not found: ' + path)
   }
   const mdr = inner(mdr0, normalizePath(path), path)
-  const tree = assocPath(epath, mdr, env.tree)
-  return {...env, tree}
+  const tree = assocPath(epath, mdr, store.tree)
+  return {...store, tree}
 }
 
 /**
  * By f, maps every mdr descending to a location specified by path.
  * @category Entries
  */
-export const mapDeep = (f:(mdr:Mdr, path:string) => Mdr, path:string, env:Env):Env => {
+export const mapDeep = (f:(mdr:Mdr, path:string) => Mdr, path:string, store:Store):Store => {
   const inner = (mdr0:Mdr, path:string):Mdr => {
     const value0 = mdr0.value
     switch (typeOf(value0)) {
@@ -616,20 +588,20 @@ export const mapDeep = (f:(mdr:Mdr, path:string) => Mdr, path:string, env:Env):E
     }
   }
   const epath = internPath(path)
-  const mdr0 = rpath(epath, env.tree)
+  const mdr0 = rpath(epath, store.tree)
   if (! mdr0) {
     throw new Error('mapDeep/1: not found: ' + path)
   }
   const mdr = inner(mdr0, path)
-  const tree = assocPath(epath, mdr, env.tree)
-  return {...env, tree}
+  const tree = assocPath(epath, mdr, store.tree)
+  return {...store, tree}
 }
 
 /**
  * By f, deeply reduces a subtree of path.
  * @category Entries
  */
-export const reduceDeep = <T>(f:(cur:T, mdr:Mdr, path:string) => T, cur:T, path:string, env:Env):T => {
+export const reduceDeep = <T>(f:(cur:T, mdr:Mdr, path:string) => T, cur:T, path:string, store:Store):T => {
   const inner = (cur:T, mdr:Mdr, path:string):T => {
     const value0 = mdr.value
     switch (typeOf(value0)) {
@@ -648,7 +620,7 @@ export const reduceDeep = <T>(f:(cur:T, mdr:Mdr, path:string) => T, cur:T, path:
     }
   }
   const epath = internPath(path)
-  const mdr = rpath(epath, env.tree)
+  const mdr = rpath(epath, store.tree)
   if (! mdr) {
     throw new Error('reduceDeep/1: not found: ' + path)
   }
@@ -658,21 +630,21 @@ export const reduceDeep = <T>(f:(cur:T, mdr:Mdr, path:string) => T, cur:T, path:
 /**
  * 
  * @param path 
- * @param fromEnv 
- * @param toEnv 
+ * @param fromStore 
+ * @param toStore 
  * @category Entries
  */
-export const duplicate = (path:string, fromEnv:Env, toEnv:Env):Env => {
+export const duplicate = (path:string, fromStore:Store, toStore:Store):Store => {
   const epath = internPath(path)
   if (epath.length == 0) {
     // duplicate whole data
-    const tree = fromEnv.tree
-    const updatePoint = toEnv.trackUpdate ? [] : toEnv.updatePoint
-    return {...toEnv, tree, updatePoint}
+    const tree = fromStore.tree
+    const updatePoint = toStore.trackUpdate ? [] : toStore.updatePoint
+    return {...toStore, tree, updatePoint}
   }
   const location = init2(epath)
   const name = last(epath)
-  const mdr0 = rpath(location, fromEnv.tree) as Mdr
+  const mdr0 = rpath(location, fromStore.tree) as Mdr
   const type0 = typeOf(mdr0.value)
   if (type0 != 'object' && type0 != 'array') {
     throw new Error('duplicate/1 neither an object nor an array: ' + path)
@@ -688,9 +660,9 @@ export const duplicate = (path:string, fromEnv:Env, toEnv:Env):Env => {
     const value1 = mdr0.value[name]
     const lis = update(name, value1, mdr0.value as Json[])
     const mdr = makeMdr(lis)
-    const tree = assocPath(location, mdr, toEnv.tree)
-    const updatePoint = toEnv.trackUpdate ? intersect(toEnv.updatePoint, epath) : toEnv.updatePoint
-    return {...toEnv, tree, updatePoint}
+    const tree = assocPath(location, mdr, toStore.tree)
+    const updatePoint = toStore.trackUpdate ? intersect(toStore.updatePoint, epath) : toStore.updatePoint
+    return {...toStore, tree, updatePoint}
   } else {
     // duplicate a property of an object
     if (typeof name != 'string') {
@@ -702,9 +674,9 @@ export const duplicate = (path:string, fromEnv:Env, toEnv:Env):Env => {
     const value1 = mdr0.value[name]
     const rec = {...(mdr0.value as Record<string,Json>), [name]:value1}
     const mdr = makeMdr(rec)
-    const tree = assocPath(location, mdr, toEnv.tree)
-    const updatePoint = toEnv.trackUpdate ? intersect(toEnv.updatePoint, epath) : toEnv.updatePoint
-    return {...toEnv, tree, updatePoint}
+    const tree = assocPath(location, mdr, toStore.tree)
+    const updatePoint = toStore.trackUpdate ? intersect(toStore.updatePoint, epath) : toStore.updatePoint
+    return {...toStore, tree, updatePoint}
   }
 }
 
@@ -713,17 +685,17 @@ export const duplicate = (path:string, fromEnv:Env, toEnv:Env):Env => {
  * @function
  * @param {string} name 
  * @param {Object|null} info 
- * @param {Env} env
- * @returns {Env} 
+ * @param {Store} store
+ * @returns {Store} 
  * @category Entries
  */
-export const setExtra = (name:string, info:Object|null, env:Env):Env => {
+export const setExtra = (name:string, info:Object|null, store:Store):Store => {
   if (info === null) {
-    const {[name]:_unused, ...extra} = env.extra
-    return {...env, extra}
+    const {[name]:_unused, ...extra} = store.extra
+    return {...store, extra}
   } else {
-    const extra = {...env.extra, [name]:info}
-    return {...env, extra}
+    const extra = {...store.extra, [name]:info}
+    return {...store, extra}
   }
 }
 
@@ -731,12 +703,12 @@ export const setExtra = (name:string, info:Object|null, env:Env):Env => {
  * 
  * @function
  * @param {string} name 
- * @param {Env} env
+ * @param {Store} store
  * @returns {Object|null} 
  * @category Entries
  */
-export const getExtra = (name:string, env:Env):Object|null => {
-  return env.extra[name] || null
+export const getExtra = (name:string, store:Store):Object|null => {
+  return store.extra[name] || null
 }
 
 /**
@@ -744,26 +716,26 @@ export const getExtra = (name:string, env:Env):Object|null => {
  * @function
  * @param {any} ret 
  * @param {any} onPromiseThen
- * @param {Env} env 
- * @returns {Env}
+ * @param {Store} store 
+ * @returns {Store}
  * @category Entries
  */
-export const setPortal = (ret:any, onPromiseThen:any, env:Env):Env => {
-  if (ret) return {...env, ret, onPromiseThen}
-  const {ret:_unused, onPromiseThen:_unused2, ...env2} = env
-  return env2
+export const setPortal = (ret:any, onPromiseThen:any, store:Store):Store => {
+  if (ret) return {...store, ret, onPromiseThen}
+  const {ret:_unused, onPromiseThen:_unused2, ...store2} = store
+  return store2
 }
 
 /**
  * 
  * @function
- * @param {Env} env
+ * @param {Store} store
  * @returns {void} 
  * @category Entries
  */
-export const doReturn = (env:Env):void => {
-  if (env.ret) {
-    env.ret(env)
+export const doReturn = (store:Store):void => {
+  if (store.ret) {
+    store.ret(store)
   } else {
     throw new Error('doReturn/0: no ret')
   }
@@ -776,7 +748,7 @@ export const doReturn = (env:Env):void => {
  * @returns {boolean} 
  * @category Entries
  */
-export const isEnv = (x:any):boolean => {
+export const isStore = (x:any):boolean => {
   return (x != null 
     && typeof x == "object" 
     && "tree" in x)

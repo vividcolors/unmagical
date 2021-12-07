@@ -67,19 +67,19 @@ const data = {
 }
 
 const updates = {
-  complementAddress: (env) => {
-    const {enter, leave} = API.makePortal(env)
-    const zipMdr = API.getMdr('/address/zip', env)
+  complementAddress: (store) => {
+    const {enter, leave} = API.makePortal(store)
+    const zipMdr = API.getMdr('/address/zip', store)
     return leave(
       new Promise((fulfill, reject) => {
         new YubinBango.Core(zipMdr.input.replace('-', ''), fulfill)
       }), 
-      env
+      store
     )
-    .then(enter((result, env) => {
-      const bld = API.extract('/address/bld', env)
+    .then(enter((result, store) => {
+      const bld = API.extract('/address/bld', store)
       const address = {zip:zipMdr.input, pref:result.region, city:result.locality, street:result.street, bld}
-      return API.add('/address', address, env)
+      return API.add('/address', address, store)
     }))
   }
 }
@@ -120,9 +120,9 @@ const pickrOptions = {
 
 const undroppableStyle = {opacity:0.26}
 
-const view = (env) => {
-  console.log('view', env)
-  const data = API.extract("", env)
+const view = (store) => {
+  console.log('view', store)
+  const data = API.extract("", store)
   return (
     <div class="block">
       <h2>UI（拡張とブラウザネイティブ）</h2>

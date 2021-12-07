@@ -1,5 +1,5 @@
 
-import {h, API, start, Input, Textarea, UpdateButton, Field, Dialog, Notification, Pagination, Clickable, Modal, createRestRepository, makeEntityListUpdates, Env, StartParameter} from '../../src/unmagical-bulma'
+import {h, API, start, Input, Textarea, UpdateButton, Field, Dialog, Notification, Pagination, Clickable, Modal, createRestRepository, makeEntityListUpdates, Store, StartParameter} from '../../src/unmagical-bulma'
 
 const contactSchema = {
   type: 'object', 
@@ -98,8 +98,8 @@ const updates = {
   ...makeEntityListUpdates(createRestRepository('http://localhost:3000/contacts'))
 }
 
-const ContactModal = ({env}:{env:Env}) => {
-  const form = API.extract('/form', env) as Data["form"]
+const ContactModal = ({store}:{store:Store}) => {
+  const form = API.extract('/form', store) as Data["form"]
   if (! form) return null
   return (
     <Modal shown={true} key="contactModal" id="contactModal">
@@ -111,7 +111,7 @@ const ContactModal = ({env}:{env:Env}) => {
         </div>
         <div class="modal-card-body">
           <Notification name="failure2" title="エラー" message="エラーが発生しました（{message}）" />
-          <Field path="/form/data/id" env={env} label="ID">
+          <Field path="/form/data/id" store={store} label="ID">
             <div class="control">{form.data.id > 0 ? form.data.id : '（新規追加）'}</div>
           </Field>
           <Field path="/form/data/created" label="日時">
@@ -136,11 +136,11 @@ const ContactModal = ({env}:{env:Env}) => {
   )
 }
 
-const view = (env:Env) => {
-  const contacts = API.extract('/contacts', env) as Data["contacts"]
+const view = (store:Store) => {
+  const contacts = API.extract('/contacts', store) as Data["contacts"]
   const from = (contacts.query._page - 1) * contacts.query._limit + 1
   const to = from + contacts.items.length - 1
-  const tab = API.getPage("tab", env)
+  const tab = API.getPage("tab", store)
   return (
     <div class="container my-3">
       <Notification name="success" message="成功しました。" duration={5000} />
@@ -191,7 +191,7 @@ const view = (env:Env) => {
         </tbody>
       </table>
       <Dialog name="confirm" title="確認" message="削除しますよ？" />
-      <ContactModal env={env} />
+      <ContactModal store={store} />
       <div key="tabs">
         <div class="tabs">
           <ul>

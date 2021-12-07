@@ -43,8 +43,8 @@ const updates = {
   ...makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs'))
 }
 
-const TodoItem = (({path, editing, env, ...props}) => {
-  const id = API.extract(path + '/id', env)
+const TodoItem = (({path, editing, store, ...props}) => {
+  const id = API.extract(path + '/id', store)
   const handleStyle = editing ? {pointerEvents:'none', opacity:0.26} : {}
   return (
     <ListItem tag="div" class="list-item" key={'item-'+id} id={id} {...props}>
@@ -60,7 +60,7 @@ const TodoItem = (({path, editing, env, ...props}) => {
       </div>
       <div class="list-item-content">
         <p class="py-2 is-fullwidth">
-          <Clickable style={{cursor:'pointer'}} update="editPart" context={[path, '/form']}>{API.extract(path + '/subject', env)} @{API.extract(path + '/context', env)}</Clickable>
+          <Clickable style={{cursor:'pointer'}} update="editPart" context={[path, '/form']}>{API.extract(path + '/subject', store)} @{API.extract(path + '/context', store)}</Clickable>
         </p>
       </div>
       <div class="list-item-controls">
@@ -71,8 +71,8 @@ const TodoItem = (({path, editing, env, ...props}) => {
   )
 })
 
-const TodoForm = ({env}) => {
-  const id = API.extract('/form/data/id', env)
+const TodoForm = ({store}) => {
+  const id = API.extract('/form/data/id', store)
   return (
     <ListItem tag="div" class="list-item" key={`item-${id}`} id={id}>
       <div class="list-item-image">
@@ -121,17 +121,17 @@ const TodoButton = () => {
   )
 }
 
-const view = (env) => {
-  const form = API.extract('/form', env)
+const view = (store) => {
+  const form = API.extract('/form', store)
   return (
     <div class="container my-3">
       <ReorderableList tag="div" class="list has-visible-pointer-controls" name="todos" path="/todos" options={{group:'todos', handle:'.handle'}}>
-        {API.extract('/todos', env).map((item, i) => {
+        {API.extract('/todos', store).map((item, i) => {
           const path = '/todos/' + i
-          return (form && form.action == path) ? <TodoForm env={env} /> : <TodoItem path={path} editing={!!form} env={env} />
+          return (form && form.action == path) ? <TodoForm store={store} /> : <TodoItem path={path} editing={!!form} store={store} />
         })}
       </ReorderableList>
-      {(form && form.action.endsWith('-')) ? <TodoForm env={env} /> : <TodoButton />}
+      {(form && form.action.endsWith('-')) ? <TodoForm store={store} /> : <TodoButton />}
       <Dialog name="confirm" title="確認" message="このTODOを削除します。よろしいですか？" hideCancelButton={false} />
     </div>
   )

@@ -3,14 +3,14 @@
  */
 
 import { normalizePath } from './utils'
-import * as E from './env'
+import * as E from './store'
 import * as S from './schema'
 import * as X from './errors'
 import { app, h as h0, VNode, ActionType, View as HaView } from 'hyperapp'
 import {MgError, NormalizeError} from './errors'
 import {Json, Schema, Mdr, SchemaDb, Lookup, Rules} from './schema'
-import {Env} from './env'
-export {Env} from './env'
+import {Store} from './store'
+export {Store} from './store'
 
 /**
  * @category Types
@@ -21,33 +21,33 @@ export type Validity = {invalid:boolean, error:MgError|null}
  * Developer-supplied evolve function.<br>
  * In this function, derived data are calculated.
  * 
- * @param env an env before evolve
+ * @param store an store before evolve
  * @param updatePointer a common path of currently updated data
- * @param prevEnv an env before current update
- * @returns evolved env
+ * @param prevStore an store before current update
+ * @returns evolved store
  * @category Types
  */
-export type Evolve = (env:Env, updatePointer:string|null, prevEnv:Env|null) => Env
+export type Evolve = (store:Store, updatePointer:string|null, prevStore:Store|null) => Store
 
 /**
  * Developer-supplied view function.<br>
- * View function maps env to vdom.
+ * View function maps store to vdom.
  * 
- * @param env current env
+ * @param store current store
  * @returns VDOM
  * @category Types
  */
-export type View = (env:Env) => VNode<{}> | HaView<UnmagicalState, UnmagicalActions>
+export type View = (store:Store) => VNode<{}> | HaView<UnmagicalState, UnmagicalActions>
 
 /**
  * Type of update function.
- * @param args one or more arguments; The last parameter will be Env.
+ * @param args one or more arguments; The last parameter will be Store.
  * @category Types
  */
-export type Update = (...args:any[]) => Env|Promise<any>
+export type Update = (...args:any[]) => Store|Promise<any>
 
 type ThenHandler = (result:any) => any
-type XThenHandler = (result:any, env:Env) => any
+type XThenHandler = (result:any, store:Store) => any
 type DialogState = {
   data: any, 
   fulfill: (result:any) => undefined, 
@@ -63,8 +63,8 @@ type OnPromiseThenParam = {
  * @hidden
  */
 export type UnmagicalState = {
-  baseEnv: Env, 
-  env: Env, 
+  baseStore: Store, 
+  store: Store, 
   normalizeError: NormalizeError
 }
 
@@ -115,7 +115,7 @@ export type StartValue = {
  * @namespace
  */
 export namespace API {
-  // re-export from env
+  // re-export from store
   export const test = E.test
   export const extract = E.extract
   export const getMdr = E.getMdr
@@ -133,102 +133,102 @@ export namespace API {
   /**
    * 
    * @param {string} path 
-   * @param {Env} env
-   * @returns {Env} 
+   * @param {Store} store
+   * @returns {Store} 
    */
-  export const touchAll = (path:string, env:Env):Env => {
-    return E.mapDeep((mdr, _path) => ({...mdr, touched:true}), path, env)
+  export const touchAll = (path:string, store:Store):Store => {
+    return E.mapDeep((mdr, _path) => ({...mdr, touched:true}), path, store)
   }
 
   /**
    * 
    * @param {string} path 
-   * @param {Env} env
+   * @param {Store} store
    * @returns {number} 
    */
-  export const countValidationErrors = (path:string, env:Env):number => {
+  export const countValidationErrors = (path:string, store:Store):number => {
     return E.reduceDeep((cur, mdr, _path) => {
       const d = mdr.touched && mdr.invalid ? 1 : 0
       return cur + d
-    }, 0, path, env)
+    }, 0, path, store)
   }
 
   /**
    * 
    * @param {string} path 
-   * @param {Env} env
+   * @param {Store} store
    * @returns {string[]} 
    */
-  export const validationErrors = (path:string, env:Env):string[] => {
+  export const validationErrors = (path:string, store:Store):string[] => {
     const errors:string[] = []
     E.reduceDeep((_cur, mdr, path) => {
       if (mdr.touched && mdr.invalid) {
         errors.push(path)
       }
       return null
-    }, null, path, env)
+    }, null, path, store)
     return errors
   }
 
   /**
    * @param {string} path
-   * @param {Env} env
+   * @param {Store} store
    * @returns {{invalid:boolean, error:MgError|null}}
    */
-  export const foldValidity = (path:string, env:Env):Validity => {
+  export const foldValidity = (path:string, store:Store):Validity => {
     return API.reduceDeep<Validity>((cur, mdr, _path) => {
       if (cur.invalid) return cur
       if (mdr.touched && mdr.invalid) return {invalid:true, error:mdr.error}
       return cur
-    }, {invalid:false, error:null}, path, env)
+    }, {invalid:false, error:null}, path, store)
   }
 
   /**
    * @param {number} ms
-   * @param {Env} env
-   * @returns {[Promise, Env]}
+   * @param {Store} store
+   * @returns {[Promise, Store]}
    */
-  export const sleep = (ms:number, env:Env):[Promise<null>, Env] => {
+  export const sleep = (ms:number, store:Store):[Promise<null>, Store] => {
     const p = new Promise<null>((fulfill, reject) => {
       setTimeout(() => {
         fulfill(null)
       }, ms)
     })
-    return [p, env]
+    return [p, store]
   }
 
   /**
    * @param {string} name
    * @param {string} itemPath
    * @param {string} group
-   * @param {Env} env
-   * @returns {[Promise, Env]}
+   * @param {Store} store
+   * @returns {[Promise, Store]}
    */
-  export const startReordering = <T>(name:string, itemPath:string, group:string, env:Env):[Promise<T>, Env] => {
+  export const startReordering = <T>(name:string, itemPath:string, group:string, store:Store):[Promise<T>, Store] => {
     const p = new Promise<T>((fulfill, reject) => {
-      env = E.setExtra(name, {itemPath, group, fulfill, reject}, env)
+      store = E.setExtra(name, {itemPath, group, fulfill, reject}, store)
     })
-    return [p, env]
+    return [p, store]
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
-   * @returns {Env}
+   * @param {Store} store
+   * @returns {Store}
    */
-  export const endReordering = (name:string, env:Env):Env => {
-    const extra = E.getExtra(name, env)
-    if (! extra) return env
-    return E.setExtra(name, null, env)
+  export const endReordering = (name:string, store:Store):Store => {
+    const extra = E.getExtra(name, store)
+    if (! extra) return store
+    return E.setExtra(name, null, store)
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
+   * @param {Store} store
    * @returns {string|null}
    */
-  export const getReordering = (name:string, env:Env):string|null => {
-    const extra = E.getExtra(name, env) as {itemPath:string}|null
+  export const getReordering = (name:string, store:Store):string|null => {
+    const extra = E.getExtra(name, store) as {itemPath:string}|null
     if (! extra) return null
     return extra.itemPath
   }
@@ -236,34 +236,34 @@ export namespace API {
   /**
    * @param {string} name
    * @param {any} data
-   * @param {Env} env
-   * @returns {[Promise, Env]}
+   * @param {Store} store
+   * @returns {[Promise, Store]}
    */
-  export const openDialog = (name:string, data:any, env:Env):[Promise<boolean>,Env] => {
+  export const openDialog = (name:string, data:any, store:Store):[Promise<boolean>,Store] => {
     const p = new Promise<boolean>((fulfill, reject) => {
-      env = E.setExtra(name, {data, fulfill, reject}, env)
+      store = E.setExtra(name, {data, fulfill, reject}, store)
     })
-    return [p, env]
+    return [p, store]
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
-   * @returns {Env}
+   * @param {Store} store
+   * @returns {Store}
    */
-  export const closeDialog = (name:string, env:Env):Env => {
-    const extra = E.getExtra(name, env)
-    if (! extra) return env
-    return E.setExtra(name, null, env)
+  export const closeDialog = (name:string, store:Store):Store => {
+    const extra = E.getExtra(name, store)
+    if (! extra) return store
+    return E.setExtra(name, null, store)
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
+   * @param {Store} store
    * @returns {any|null}
    */
-  export const getDialog = (name:string, env:Env):any|null => {
-    const extra = E.getExtra(name, env) as DialogState|null
+  export const getDialog = (name:string, store:Store):any|null => {
+    const extra = E.getExtra(name, store) as DialogState|null
     if (! extra) return null
     return extra.data
   }
@@ -271,104 +271,104 @@ export namespace API {
   /**
    * @param {string} name
    * @param {any} data
-   * @param {Env} env
-   * @returns {Env}
+   * @param {Store} store
+   * @returns {Store}
    */
-  export const openFeedback = (name:string, data:any, env:Env):Env => {
-    return E.setExtra(name, data, env)
+  export const openFeedback = (name:string, data:any, store:Store):Store => {
+    return E.setExtra(name, data, store)
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
-   * @returns {Env}
+   * @param {Store} store
+   * @returns {Store}
    */
-  export const closeFeedback = (name:string, env:Env):Env => {
-    const extra = E.getExtra(name, env)
-    if (! extra) return env
-    return E.setExtra(name, null, env)
+  export const closeFeedback = (name:string, store:Store):Store => {
+    const extra = E.getExtra(name, store)
+    if (! extra) return store
+    return E.setExtra(name, null, store)
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
+   * @param {Store} store
    * @returns {any|null}
    */
-  export const getFeedback = (name:string, env:Env):any|null => {
-    return E.getExtra(name, env)
+  export const getFeedback = (name:string, store:Store):any|null => {
+    return E.getExtra(name, store)
   }
 
   /**
    * @param {string} name
    * @param {number} current
-   * @param {Env} env
-   * @returns {Env}
+   * @param {Store} store
+   * @returns {Store}
    */
-  export const setPage = (name:string, current:number, env:Env):Env => {
-    return E.setExtra(name, current, env)
+  export const setPage = (name:string, current:number, store:Store):Store => {
+    return E.setExtra(name, current, store)
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
+   * @param {Store} store
    * @returns {number}
    */
-  export const getPage = (name:string, env:Env):number => {
-    const extra = E.getExtra(name, env) as number|null
+  export const getPage = (name:string, store:Store):number => {
+    const extra = E.getExtra(name, store) as number|null
     return (extra !== null) ? extra : 0
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
-   * @returns {Env}
+   * @param {Store} store
+   * @returns {Store}
    */
-  export const nextPage = (name:string, env:Env):Env => {
-    const extra = E.getExtra(name, env) as number|null
+  export const nextPage = (name:string, store:Store):Store => {
+    const extra = E.getExtra(name, store) as number|null
     const current = (extra !== null) ? extra : 0
-    return E.setExtra(name, current + 1, env)
+    return E.setExtra(name, current + 1, store)
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
-   * @returns {Env}
+   * @param {Store} store
+   * @returns {Store}
    */
-  export const prevPage = (name:string, env:Env):Env => {
-    const extra = E.getExtra(name, env) as number|null
+  export const prevPage = (name:string, store:Store):Store => {
+    const extra = E.getExtra(name, store) as number|null
     const current = (extra !== null) ? extra : 0
-    return E.setExtra(name, current - 1, env)
+    return E.setExtra(name, current - 1, store)
   }
 
   /**
    * @param {string} name
    * @param {boolean} shown
-   * @param {Env} env
-   * @returns {Env}
+   * @param {Store} store
+   * @returns {Store}
    */
-  export const setSwitch = (name:string, shown:boolean, env:Env):Env => {
-    return E.setExtra(name, shown, env)
+  export const setSwitch = (name:string, shown:boolean, store:Store):Store => {
+    return E.setExtra(name, shown, store)
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
+   * @param {Store} store
    * @returns {boolean}
    */
-  export const getSwitch = (name:string, env:Env):boolean => {
-    const extra = E.getExtra(name, env) as boolean|null
+  export const getSwitch = (name:string, store:Store):boolean => {
+    const extra = E.getExtra(name, store) as boolean|null
     return (extra !== null) ? extra : false
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
-   * @returns {Env}
+   * @param {Store} store
+   * @returns {Store}
    */
-  export const toggleSwitch = (name:string, env:Env):Env => {
-    const extra = E.getExtra(name, env) as boolean|null
+  export const toggleSwitch = (name:string, store:Store):Store => {
+    const extra = E.getExtra(name, store) as boolean|null
     const current = (extra !== null) ? extra : false
-    return E.setExtra(name, !current, env)
+    return E.setExtra(name, !current, store)
   }
 
   /*
@@ -377,29 +377,29 @@ export namespace API {
   /**
    * @param {string} name
    * @param {any} unknown
-   * @param {Env} env
-   * @returns {Env}
+   * @param {Store} store
+   * @returns {Store}
    */
-  export const openProgress = (name:string, unknown:any, env:Env):Env => {
-    return E.setExtra(name, {current:-1}, env)
+  export const openProgress = (name:string, unknown:any, store:Store):Store => {
+    return E.setExtra(name, {current:-1}, store)
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
-   * @returns {Env}
+   * @param {Store} store
+   * @returns {Store}
    */
-  export const closeProgress = (name:string, env:Env):Env => {
-    return E.setExtra(name, null, env)
+  export const closeProgress = (name:string, store:Store):Store => {
+    return E.setExtra(name, null, store)
   }
 
   /**
    * @param {string} name
-   * @param {Env} env
+   * @param {Store} store
    * @returns {number|null}
    */
-  export const getProgress = (name:string, env:Env):number|null => {
-    const extra = E.getExtra(name, env) as {current:number}|null
+  export const getProgress = (name:string, store:Store):number|null => {
+    const extra = E.getExtra(name, store) as {current:number}|null
     if (! extra) return null
     return extra.current
   }
@@ -408,45 +408,45 @@ export namespace API {
    * @param {string} name 
    * @param {string} fromPath 
    * @param {string} group
-   * @param {Env} env
-   * @returns {Env|Promise}
+   * @param {Store} store
+   * @returns {Store|Promise}
    */
-  export const reorder = (name:string, fromPath:string, group:string, env:Env):Env|Promise<{path:string}> => {
-    const {enter, leave} = API.makePortal(env)
-    return leave(API.startReordering<{path:string}>(name, fromPath, group, env))
-    .then(enter(({path}, env) => {
-      env = API.endReordering(name, env)
-      return API.move(fromPath, path, env)
+  export const reorder = (name:string, fromPath:string, group:string, store:Store):Store|Promise<{path:string}> => {
+    const {enter, leave} = API.makePortal(store)
+    return leave(API.startReordering<{path:string}>(name, fromPath, group, store))
+    .then(enter(({path}, store) => {
+      store = API.endReordering(name, store)
+      return API.move(fromPath, path, store)
     }))
   }
 
   /**
-   * @param {Env} env
+   * @param {Store} store
    */
-  export const makePortal = (env:Env) => {
+  export const makePortal = (store:Store) => {
     return {
       /**
-       * @param {(result:any, env:Env) => any} handler
+       * @param {(result:any, store:Store) => any} handler
        * @returns {(result:any) => any}
        */
-      enter: (handler:XThenHandler):ThenHandler => {  // Our customized handler :: [result, env] => ...
+      enter: (handler:XThenHandler):ThenHandler => {  // Our customized handler :: [result, store] => ...
         return (result) => {  // This is the actual, standard promise handler
           let result1 = null  // We will get the result in this variable.
           const ret = (res1) => {result1 = res1}
-          (env.onPromiseThen as UnmagicalAction<OnPromiseThenParam>)({result, handler, ret})  // enter into hyperapp. Its result is undefined.
+          (store.onPromiseThen as UnmagicalAction<OnPromiseThenParam>)({result, handler, ret})  // enter into hyperapp. Its result is undefined.
           return result1
         }
       }, 
       /**
-       * @param {[(Promise|Error), Env] | (Promise|Error)} x
-       * @param {Env} [y]
+       * @param {[(Promise|Error), Store] | (Promise|Error)} x
+       * @param {Store} [y]
        * @returns {Promise|Error}
        */
-      leave: <T>(x:[T, Env]|T, y?:Env):T => {
+      leave: <T>(x:[T, Store]|T, y?:Store):T => {
         const p = Array.isArray(x) ? x[0] : x
-        const env = Array.isArray(x) ? x[1] : y
-        if (! E.isEnv(env)) throw new Error('exit/1: env required')
-        E.doReturn(env)
+        const store = Array.isArray(x) ? x[1] : y
+        if (! E.isStore(store)) throw new Error('exit/1: store required')
+        E.doReturn(store)
         return p
       }
     }
@@ -484,7 +484,7 @@ export const start = (
       catalog = null
     }:StartParameter):StartValue => {
   // complements reasonable defaults
-  if (! evolve) evolve = (env, _pointer, _prevEnv) => env
+  if (! evolve) evolve = (store, _pointer, _prevStore) => store
   const validate = S.validate(rules || S.defaultRules)
   const coerce = S.coerce
   const normalizeError = X.normalizeError(catalog || X.defaultCatalog)
@@ -495,146 +495,146 @@ export const start = (
     onTextboxInput: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
-      const mdr0 = E.getMdr(path, state.baseEnv)
+      const mdr0 = E.getMdr(path, state.baseStore)
       const mdr = {...mdr0, input:value}
-      const baseEnv = E.setMdr(path, mdr, state.baseEnv)
+      const baseStore = E.setMdr(path, mdr, state.baseStore)
       // We don't call evolve() here, because oninput is not a check point of evolve().
-      // Thus we update not only baseEnv but also env.
-      const mdrb0 = E.getMdr(path, state.env)
+      // Thus we update not only baseStore but also store.
+      const mdrb0 = E.getMdr(path, state.store)
       const mdrb = {...mdrb0, input:value}
-      const env = E.setMdr(path, mdrb, state.env)
-      return {...state, baseEnv, env}
+      const store = E.setMdr(path, mdrb, state.store)
+      return {...state, baseStore, store}
     }, 
     onTextboxBlur: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const mdr0 = {...E.getMdr(path, state.baseEnv), touched:true}
+      const mdr0 = {...E.getMdr(path, state.baseStore), touched:true}
       const mdr = coerce(value, mdr0, schemaDb[npath])
       let updatePointer
-      let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setMdr(path, mdr, baseEnv)
-      baseEnv = E.validate("", baseEnv);
-      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
-      let env = evolve(baseEnv, updatePointer, baseEnv)
-      env = E.validate("", env)
-      return {...state, baseEnv, env}
+      let baseStore = E.beginUpdateTracking(state.baseStore)
+      baseStore = E.setMdr(path, mdr, baseStore)
+      baseStore = E.validate("", baseStore);
+      [updatePointer, baseStore] = E.endUpdateTracking(baseStore)
+      let store = evolve(baseStore, updatePointer, baseStore)
+      store = E.validate("", store)
+      return {...state, baseStore, store}
     }, 
     onSliderInput: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
-      const mdr0 = E.getMdr(path, state.baseEnv)
+      const mdr0 = E.getMdr(path, state.baseStore)
       const mdr = {...mdr0, input:value}
-      const baseEnv = E.setMdr(path, mdr, state.baseEnv)
+      const baseStore = E.setMdr(path, mdr, state.baseStore)
       // We don't call evolve() here, because oninput is not a check point of evolve().
-      // Thus we update not only baseEnv but also env.
-      const mdrb0 = E.getMdr(path, state.env)
+      // Thus we update not only baseStore but also store.
+      const mdrb0 = E.getMdr(path, state.store)
       const mdrb = {...mdrb0, input:value}
-      const env = E.setMdr(path, mdrb, state.env)
-      return {...state, baseEnv, env}
+      const store = E.setMdr(path, mdrb, state.store)
+      return {...state, baseStore, store}
     }, 
     onSliderChange: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const mdr0 = {...E.getMdr(path, state.baseEnv), touched:true}
+      const mdr0 = {...E.getMdr(path, state.baseStore), touched:true}
       const mdr = coerce(value, mdr0, schemaDb[npath])
       let updatePointer
-      let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setMdr(path, mdr, baseEnv)
-      baseEnv = E.validate("", baseEnv);
-      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
-      let env = evolve(baseEnv, updatePointer, state.env)
-      env = E.validate("", env)
-      return {...state, baseEnv, env}
+      let baseStore = E.beginUpdateTracking(state.baseStore)
+      baseStore = E.setMdr(path, mdr, baseStore)
+      baseStore = E.validate("", baseStore);
+      [updatePointer, baseStore] = E.endUpdateTracking(baseStore)
+      let store = evolve(baseStore, updatePointer, state.store)
+      store = E.validate("", store)
+      return {...state, baseStore, store}
     }, 
     onListboxChange: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const mdr0 = {...E.getMdr(path, state.baseEnv), touched:true}
+      const mdr0 = {...E.getMdr(path, state.baseStore), touched:true}
       const mdr = coerce(value, mdr0, schemaDb[npath])
       let updatePointer
-      let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setMdr(path, mdr, baseEnv)
-      baseEnv = E.validate("", baseEnv);
-      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
-      let env = evolve(baseEnv, updatePointer, state.env)
-      env = E.validate("", env)
-      return {...state, baseEnv, env}
+      let baseStore = E.beginUpdateTracking(state.baseStore)
+      baseStore = E.setMdr(path, mdr, baseStore)
+      baseStore = E.validate("", baseStore);
+      [updatePointer, baseStore] = E.endUpdateTracking(baseStore)
+      let store = evolve(baseStore, updatePointer, state.store)
+      store = E.validate("", store)
+      return {...state, baseStore, store}
     }, 
     onRadioChange: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const mdr0 = {...E.getMdr(path, state.baseEnv), touched:true}
+      const mdr0 = {...E.getMdr(path, state.baseStore), touched:true}
       const mdr = coerce(value, mdr0, schemaDb[npath])
       let updatePointer
-      let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setMdr(path, mdr, baseEnv)
-      baseEnv = E.validate("", baseEnv);
-      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
-      let env = evolve(baseEnv, updatePointer, state.env)
-      env = E.validate("", env)
-      return {...state, baseEnv, env}
+      let baseStore = E.beginUpdateTracking(state.baseStore)
+      baseStore = E.setMdr(path, mdr, baseStore)
+      baseStore = E.validate("", baseStore);
+      [updatePointer, baseStore] = E.endUpdateTracking(baseStore)
+      let store = evolve(baseStore, updatePointer, state.store)
+      store = E.validate("", store)
+      return {...state, baseStore, store}
     }, 
     onCheckboxChange: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const checked = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgCheckedAttribute]
       const value = checked ? "true" : "false"
       const npath = normalizePath(path)
-      const mdr0 = {...E.getMdr(path, state.baseEnv), touched:true}
+      const mdr0 = {...E.getMdr(path, state.baseStore), touched:true}
       const mdr = coerce(value, mdr0, schemaDb[npath])
       let updatePointer
-      let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setMdr(path, mdr, baseEnv)
-      baseEnv = E.validate("", baseEnv);
-      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
-      let env = evolve(baseEnv, updatePointer, state.env)
-      env = E.validate("", env)
-      return {...state, baseEnv, env}
+      let baseStore = E.beginUpdateTracking(state.baseStore)
+      baseStore = E.setMdr(path, mdr, baseStore)
+      baseStore = E.validate("", baseStore);
+      [updatePointer, baseStore] = E.endUpdateTracking(baseStore)
+      let store = evolve(baseStore, updatePointer, state.store)
+      store = E.validate("", store)
+      return {...state, baseStore, store}
     }, 
     onSmartControlChange: (pair:{path:string,input:string}|[{path:string,input:string}]) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const pairs = Array.isArray(pair) ? pair : [pair]
       let updatePointer
-      let baseEnv = E.beginUpdateTracking(state.baseEnv)
+      let baseStore = E.beginUpdateTracking(state.baseStore)
       for (let i = 0; i < pairs.length; i++) {
         const {path, input} = pairs[i]
-        const mdr0 = {...E.getMdr(path, baseEnv), touched:true}
+        const mdr0 = {...E.getMdr(path, baseStore), touched:true}
         const mdr = coerce(input, mdr0, schemaDb[normalizePath(path)])
-        baseEnv = E.setMdr(path, mdr, baseEnv)
+        baseStore = E.setMdr(path, mdr, baseStore)
       }
-      baseEnv = E.validate("", baseEnv);
-      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
-      let env = evolve(baseEnv, updatePointer, state.env)
-      env = E.validate("", env)
-      return {...state, baseEnv, env}
+      baseStore = E.validate("", baseStore);
+      [updatePointer, baseStore] = E.endUpdateTracking(baseStore)
+      let store = evolve(baseStore, updatePointer, state.store)
+      store = E.validate("", store)
+      return {...state, baseStore, store}
     }, 
     onUpdate: (ev:Event|{update:string,context:any[]}) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const update = ('currentTarget' in ev) ? (ev.currentTarget as HTMLElement).dataset.mgUpdate : ev.update
       const context = ('currentTarget' in ev) ? JSON.parse((ev.currentTarget as HTMLElement).dataset.mgContext || "null") : ev.context
       let updatePointer:string
-      let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setPortal((env0) => {baseEnv = env0}, actions.onPromiseThen, baseEnv)
+      let baseStore = E.beginUpdateTracking(state.baseStore)
+      baseStore = E.setPortal((store0) => {baseStore = store0}, actions.onPromiseThen, baseStore)
       const func = updates[update] || updateEnabledApis[update]
       if (! func) throw new Error('onUpdate/0: no update or unknown update')
       if (! Array.isArray(context)) throw new Error('onUpdate/1: parameter must be an array')
       if (context.length + 1 != func.length) throw new Error('onUpdate/2: bad number of parameters')
-      const res = func.apply(null, [...context, baseEnv])
-      baseEnv = E.setPortal(null, null, E.isEnv(res) ? res : baseEnv)
-      baseEnv = E.validate("", baseEnv);
-      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
-      let env = state.env
-      if (! E.isSame(state.baseEnv, baseEnv)) {
-        env = evolve(baseEnv, updatePointer, env)
-        env = E.validate("", env)
+      const res = func.apply(null, [...context, baseStore])
+      baseStore = E.setPortal(null, null, E.isStore(res) ? res : baseStore)
+      baseStore = E.validate("", baseStore);
+      [updatePointer, baseStore] = E.endUpdateTracking(baseStore)
+      let store = state.store
+      if (! E.isSame(state.baseStore, baseStore)) {
+        store = evolve(baseStore, updatePointer, store)
+        store = E.validate("", store)
       }
-      return {...state, baseEnv, env}
+      return {...state, baseStore, store}
     }, 
     onPromiseSettle: (ev:Event|{name:string,result:any}) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const name = ('currentTarget' in ev) ? (ev.currentTarget as HTMLElement).dataset.mgName : ev.name
       const result = ('currentTarget' in ev) ? JSON.parse((ev.currentTarget as HTMLElement).dataset.mgResult || "null") : ev.result
-      const extra = E.getExtra(name, state.baseEnv) as DialogState
+      const extra = E.getExtra(name, state.baseStore) as DialogState
       if (! extra || ! extra.fulfill) throw new Error('onPromiseSettle/0: no callback or unknown callback')
       // Calling fulfill() will cause the process to re-enter the hyperapp, 
       // so we call fulfill() not now but in a different opportunity.
@@ -645,36 +645,36 @@ export const start = (
     }, 
     onPromiseThen: (context:OnPromiseThenParam) => (state:UnmagicalState, actions:UnmagicalActions) => {
       let updatePointer:string
-      let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setPortal((env0) => {baseEnv = env0}, actions.onPromiseThen, baseEnv)
-      const res = context.handler(context.result, baseEnv)
-      baseEnv = E.setPortal(null, null, E.isEnv(res) ? res : baseEnv)
-      baseEnv = E.validate("", baseEnv);
-      [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
-      let env = state.env
-      if (! E.isSame(state.baseEnv, baseEnv)) {
-        env = evolve(baseEnv, updatePointer, env)
-        env = E.validate("", env)
+      let baseStore = E.beginUpdateTracking(state.baseStore)
+      baseStore = E.setPortal((store0) => {baseStore = store0}, actions.onPromiseThen, baseStore)
+      const res = context.handler(context.result, baseStore)
+      baseStore = E.setPortal(null, null, E.isStore(res) ? res : baseStore)
+      baseStore = E.validate("", baseStore);
+      [updatePointer, baseStore] = E.endUpdateTracking(baseStore)
+      let store = state.store
+      if (! E.isSame(state.baseStore, baseStore)) {
+        store = evolve(baseStore, updatePointer, store)
+        store = E.validate("", store)
       }
-      if (! E.isEnv(res)) {
+      if (! E.isStore(res)) {
         context.ret(res)
       }
-      return {...state, baseEnv, env}
+      return {...state, baseStore, store}
     }
   }
 
   let updatePointer:string
-  let baseEnv = E.makeEnv(data, schemaDb, validate, true)
-  baseEnv = E.validate("", baseEnv);
-  [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
-  let env = evolve(baseEnv, updatePointer, null)
-  env = E.validate("", env)
+  let baseStore = E.makeStore(data, schemaDb, validate, true)
+  baseStore = E.validate("", baseStore);
+  [updatePointer, baseStore] = E.endUpdateTracking(baseStore)
+  let store = evolve(baseStore, updatePointer, null)
+  store = E.validate("", store)
   const state:UnmagicalState = {
-    baseEnv, 
-    env, 
+    baseStore, 
+    store, 
     normalizeError
   }
-  const view1:HaView<UnmagicalState, UnmagicalActions> = (state, actions) => view(state.env) as VNode
+  const view1:HaView<UnmagicalState, UnmagicalActions> = (state, actions) => view(state.store) as VNode
   const actions = app(state, actions0, view1, containerEl)
   return {
     onUpdate: actions.onUpdate, 
@@ -692,7 +692,7 @@ export type OnceParameter = {
 }
 
 /**
- * Runs headless Unmagical once. Thus you can obtain the evolved env from data.
+ * Runs headless Unmagical once. Thus you can obtain the evolved store from data.
  * @category once
  */
 export const once = (
@@ -701,20 +701,20 @@ export const once = (
       schema, 
       evolve = null, 
       rules = null
-    }:OnceParameter):Env => {
+    }:OnceParameter):Store => {
   // complements reasonable defaults
-  if (! evolve) evolve = (env, _pointer, _prevEnv) => env
+  if (! evolve) evolve = (store, _pointer, _prevStore) => store
   const validate = S.validate(rules || S.defaultRules)
 
   const schemaDb = S.buildDb(schema)
   
   let updatePointer
-  let baseEnv = E.makeEnv(data, schemaDb, validate, true)
-  baseEnv = E.validate("", baseEnv);
-  [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
-  let env = evolve(baseEnv, updatePointer, null)
-  env = E.validate("", env)
-  return env
+  let baseStore = E.makeStore(data, schemaDb, validate, true)
+  baseStore = E.validate("", baseStore);
+  [updatePointer, baseStore] = E.endUpdateTracking(baseStore)
+  let store = evolve(baseStore, updatePointer, null)
+  store = E.validate("", store)
+  return store
 }
 
 /**

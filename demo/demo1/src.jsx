@@ -107,9 +107,9 @@ const data = {
 
 const updates = makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs', {}))
 
-const view = (env) => {
-  const flags = API.extract('/flags', env)
-  const quotation = API.extract('/quotation', env)
+const view = (store) => {
+  const flags = API.extract('/flags', store)
+  const quotation = API.extract('/quotation', store)
   return (
     <div id="rootMarker" class="container">
       <Notification name="success" message="送信に成功しました。" duration={5000} />
@@ -186,61 +186,61 @@ const findByProp = (name, value, lis) => {
   }
   return undefined
 }
-const evolve = (env, path, prevEnv) => {
-  const addLine = (category, x, env) => {
+const evolve = (store, _path, _prevStore) => {
+  const addLine = (category, x, store) => {
     const line = {category, description:x.name, unitPrice:x.price, quantity:1, amount:x.price}
-    return API.add('/quotation/lines/-', line, env)
+    return API.add('/quotation/lines/-', line, store)
   }
   let subtotal = 0
   let isPro = false
-  let detail = API.extract('/detail', env)
+  let detail = API.extract('/detail', store)
   if (detail.frame) {
     const frame = findByProp('name', detail.frame, master.frame)
-    env = addLine('筐体', frame, env)
+    store = addLine('筐体', frame, store)
     subtotal += frame.price
   }
   if (detail.os) {
     const os = findByProp('name', detail.os, master.os)
-    env = addLine('OS', os, env)
+    store = addLine('OS', os, store)
     subtotal += os.price
     if (os.name == 'Windows10 Pro') isPro = true
   }
   if (detail.cpu) {
     const cpu = findByProp('name', detail.cpu, master.cpu)
-    env = addLine('CPU', cpu, env)
+    store = addLine('CPU', cpu, store)
     subtotal += cpu.price
   }
-  env = API.add('/flags/isPro', isPro, env)
+  store = API.add('/flags/isPro', isPro, store)
   if (! isPro && detail.memory && detail.memory == '32G') {
-    env = API.add('/detail/memory', '', env)
-    detail = API.extract('/detail', env)  // we modified `/detail' so load again.
+    store = API.add('/detail/memory', '', store)
+    detail = API.extract('/detail', store)  // we modified `/detail' so load again.
   }
   if (detail.memory) {
     const memory = findByProp('name', detail.memory, master.memory)
-    env = addLine('メモリ', memory, env)
+    store = addLine('メモリ', memory, store)
     subtotal += memory.price
   }
   master.accessory.forEach((a, i) => {
     if (detail.accessories[`a${i}`]) {
-      env = addLine('アクセサリ', a, env)
+      store = addLine('アクセサリ', a, store)
       subtotal += a.price
     }
   })
   const bigDeal = subtotal >= 70000
-  env = API.add('/flags/bigDeal', bigDeal, env)
+  store = API.add('/flags/bigDeal', bigDeal, store)
   if (! bigDeal) {
-    env = API.remove('/detail/bonus', env)
-    detail = API.extract('/detail', env)  // we modified `/detail' so load again.
+    store = API.remove('/detail/bonus', store)
+    detail = API.extract('/detail', store)  // we modified `/detail' so load again.
   }
   if (detail.bonus) {
     const bonus = findByProp('name', detail.bonus, master.bonus)
-    env = addLine('ボーナス', bonus, env)
+    store = addLine('ボーナス', bonus, store)
     subtotal += bonus.price
   }
-  env = API.add('/quotation/subtotal', subtotal, env)
-  env = API.add('/quotation/tax', subtotal / 10, env)
-  env = API.add('/quotation/total', subtotal + subtotal / 10, env)
-  return env
+  store = API.add('/quotation/subtotal', subtotal, store)
+  store = API.add('/quotation/tax', subtotal / 10, store)
+  store = API.add('/quotation/total', subtotal + subtotal / 10, store)
+  return store
 }
 
 const containerEl = document.getElementById('app')
