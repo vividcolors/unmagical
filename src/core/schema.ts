@@ -4,8 +4,8 @@
  * @module core/schema
  */
 
-import {typeOf, isJsonValue, appendPath} from './utils'
-import {MgError, Scalar} from './errors'
+import {isJsonValue} from './utils'
+import {MgError} from './errors'
 import * as R from './rules'
 
 /**
@@ -68,11 +68,11 @@ export type Schema = Record<string,Json>
 export type SchemaDb = Record<string,Schema>
 
 /**
- * Slot is where metadata of each value of the model data comes. 
+ * Mdr (abbreviation of Meta data record) is where meta data of each value of the model data comes. 
  * 
  * @category Types
  */
-export type Slot = {
+export type Mdr = {
   /**
    * `true` if the value is invalid.
    */
@@ -100,7 +100,7 @@ export type Slot = {
  * 
  * @category Types
  */
-export type Validate = (value:any, slot0:Slot, schema:Schema, lookup:Lookup) => Slot
+export type Validate = (value:any, mdr:Mdr, schema:Schema, lookup:Lookup) => Mdr
 
 
 /**
@@ -120,19 +120,19 @@ export const nullable = (type:string):boolean => {
  * @category Entries
  */
 export const buildDb = (schema:Schema):SchemaDb => {
-  const db = /** @type SchemaDb */ ({})
-  const inner = (schema, path) => {
+  const db = {}
+  const inner = (schema:Schema, path:string) => {
     db[path] = schema
     switch (schema.type) {
       case 'object': 
       case 'object?': 
-        for (let p in schema.properties) {
+        for (let p in schema.properties as Record<string,Json>) {
           inner(schema.properties[p], path + '/' + p)
         }
         break
       case 'array': 
       case 'array?': 
-        inner(schema.items, path + '/*')
+        inner(schema.items as Schema, path + '/*')
         break
       default: 
         break
@@ -161,24 +161,24 @@ export const defaultRules:Rules = {
  * 
  * @category Entries
  */
-export const validate = (rules:Rules):Validate => (value, slot, schema, lookup) => {
+export const validate = (rules:Rules):Validate => (value, mdr, schema, lookup) => {
   if (! isJsonValue(value)) {
     if (schema && schema.type) {
       const error = {code:'type.'+schema.type, detail:'given value: '+value}
-      return {...slot, value, invalid:true, error}
+      return {...mdr, value, invalid:true, error}
     } else {
       const error = {code:'value', detail:'given value: '+value}
-      return {...slot, value, invalid:true, error}
+      return {...mdr, value, invalid:true, error}
     }
   }
 
   if (schema) {
     const result = applyRules(value, schema, lookup, rules)
     if (result !== true) {
-      return {...slot, value, invalid:true, error:result}
+      return {...mdr, value, invalid:true, error:result}
     }
   }
-  return {...slot, value, invalid:false, error:null}
+  return {...mdr, value, invalid:false, error:null}
 }
 
 /**
@@ -202,7 +202,7 @@ export const applyRules = (value:any, schema:Schema, lookup:Lookup, rules:Rules)
  * 
  * @category Entries
  */
-export const coerce = (input:string, slot:Slot, schema:Schema):Slot => {
+export const coerce = (input:string, mdr:Mdr, schema:Schema):Mdr => {
   input = "" + input  // coerce to string
   if (! schema) {
     throw new Error('coerce/0: no schema')
@@ -222,29 +222,29 @@ export const coerce = (input:string, slot:Slot, schema:Schema):Slot => {
     case 'number?': 
       const n = +input
       if ("" + n === input) {
-        return {value:n, input, touched:slot.touched}
+        return {value:n, input, touched:mdr.touched}
       }
       break
     case 'integer': 
     case 'integer?': 
       const i = +input
       if ("" + i === input && i % 1 === 0) {
-        return {value:i, input, touched:slot.touched}
+        return {value:i, input, touched:mdr.touched}
       }
       break
     case 'boolean': 
     case 'boolean?': 
       if (input === "true" || input === "false") {
-        return {value:input==="true", input, touched:slot.touched}
+        return {value:input==="true", input, touched:mdr.touched}
       }
       break
     case 'string': 
-      return {value:input, input, touched:slot.touched}
+      return {value:input, input, touched:mdr.touched}
   }
   if (input == "" && nullable(type)) {
-    return {value:null, input, touched:slot.touched}
+    return {value:null, input, touched:mdr.touched}
   }
-  return {input, touched:slot.touched}
+  return {input, touched:mdr.touched}
 }
 
 

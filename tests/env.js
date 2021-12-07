@@ -42,11 +42,11 @@ export const run = (assert, assertError) => {
   assertError(7.1, () => E.remove('/email', env), 'remove/')
 
   assert(8, () => {
-    let slot80 = E.getSlot('/name', env)
-    slot80 = {...slot80, invalid:true}
-    env = E.setSlot('/name', slot80, env)
-    slot80 = E.getSlot('/name', env)
-    return slot80.invalid
+    let mdr80 = E.getMdr('/name', env)
+    mdr80 = {...mdr80, invalid:true}
+    env = E.setMdr('/name', mdr80, env)
+    mdr80 = E.getMdr('/name', env)
+    return mdr80.invalid
   }, true)
 
   env = E.replace('/age', 30, env)
@@ -71,15 +71,15 @@ export const run = (assert, assertError) => {
   env = E.copy('/buddies/0', '/buddies/2', env)  // Dad,Mam,Dad,Pochi
   assert(13, () => E.extract('/buddies', env), 'Dad,Mam,Dad,Pochi')
 
-  env = E.mapDeep((slot, path) => ({...slot, message:'yeah'}), '/buddies', env)
-  assert(14, () => E.getSlot('/buddies', env).message, 'yeah')
-  assert(14.1, () => E.getSlot('/buddies/0', env).message, 'yeah')
-  assert(14.2, () => E.getSlot('/name', env).message || '', '')
+  env = E.mapDeep((mdr, path) => ({...mdr, message:'yeah'}), '/buddies', env)
+  assert(14, () => E.getMdr('/buddies', env).message, 'yeah')
+  assert(14.1, () => E.getMdr('/buddies/0', env).message, 'yeah')
+  assert(14.2, () => E.getMdr('/name', env).message || '', '')
 
   assert(15, () => {
-    return E.reduceDeep((cur, slot, path) => {
+    return E.reduceDeep((cur, mdr, path) => {
       if (path == '/buddies') return cur
-      return cur + `[${slot.value}]`
+      return cur + `[${mdr.value}]`
     }, "", '/buddies', env)
   }, '[Dad][Mam][Dad][Pochi]')
 

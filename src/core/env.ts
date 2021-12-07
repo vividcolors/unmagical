@@ -13,7 +13,7 @@ import last from 'ramda/src/last'
 import dissoc from 'ramda/src/dissoc'
 import rremove from 'ramda/src/remove'
 import update from 'ramda/src/update'
-import {Json, Schema, Slot, SchemaDb, Lookup, Validate} from './schema'
+import {Json, Schema, Mdr, SchemaDb, Lookup, Validate} from './schema'
 
 
 /**
@@ -60,10 +60,10 @@ const init2 = <T>(list:T[]) => {
  * @function
  * @private
  * @param {Json} value 
- * @return {Slot} 
+ * @return {Mdr} 
  */
-const makeSlot = (value:Json):Slot => {
-  const rv:Slot = {value, invalid:false, error:null}
+const makeMdr = (value:Json):Mdr => {
+  const rv:Mdr = {value, invalid:false, error:null}
   switch (typeOf(value)) {
     case 'object': // FALLTHRU
     case 'array': 
@@ -93,27 +93,26 @@ const makeSlot = (value:Json):Slot => {
  * 
  * @function
  * @private
- * @param {Json} data 
- * @returns {Slot}
+ * @param data 
+ * @returns Mdr
  */
-const wrap = (data):Slot => {
-  /** @type {(data:Json) => Slot} */
-  const inner = (data:Json):Slot => {
+const wrap = (data):Mdr => {
+  const inner = (data:Json):Mdr => {
     switch (typeOf(data)) {
       case 'array': 
         const es = []
         for (let i = 0; i < (data as Json[]).length; i++) {
           es[i] = inner(data[i])
         }
-        return makeSlot(es)
+        return makeMdr(es)
       case 'object': 
         const rec = {}
         for (let p in (data as Object)) {
           rec[p] = inner(data[p])
         }
-        return makeSlot(rec)
+        return makeMdr(rec)
       default: 
-        return makeSlot(data)
+        return makeMdr(data)
     }
   }
   return inner(data)
@@ -127,7 +126,7 @@ const wrap = (data):Slot => {
  * @returns {Json}
  */
 const strip = (tree:Json):Json => {
-  const root = (tree as Slot).value
+  const root = (tree as Mdr).value
   switch (typeOf(root)) {
     case 'array': 
       const es = []
@@ -301,11 +300,11 @@ export const test = (path:string, env:Env):boolean => {
  */
 export const extract = (path:string, env:Env):Json => {
   const epath = /** @type {string[]} */ (internPath(path))
-  const slot = rpath(epath, env.tree)
-  if (! slot) {
+  const mdr = rpath(epath, env.tree)
+  if (! mdr) {
     throw new Error('extract/1: not found: ' + path)
   }
-  return strip(slot as Json)
+  return strip(mdr as Json)
 }
 
 /**
@@ -313,38 +312,38 @@ export const extract = (path:string, env:Env):Json => {
  * @function
  * @param {string} path 
  * @param {Env} env
- * @returns {Slot} 
+ * @returns {Mdr} 
  * 
  * @category Entries
  */
-export const getSlot = (path:string, env:Env):Slot => {
-  const epath = /** @type {string[]} */ (internPath(path))
-  const slot = rpath(epath, env.tree)
-  if (! slot) {
-    throw new Error('getSlot/1: not found: ' + path)
+export const getMdr = (path:string, env:Env):Mdr => {
+  const epath = internPath(path)
+  const mdr = rpath(epath, env.tree)
+  if (! mdr) {
+    throw new Error('getMdr/1: not found: ' + path)
   }
-  return slot
+  return mdr
 }
 
 /**
  * Low-level api. This function executes neither validation nor coercion.
  * @function
  * @param {string} path 
- * @param {Slot} slot 
+ * @param {Mdr} mdr 
  * @param {Env} env
  * @returns {Env} 
  * 
- * slot value must be a scalar.
+ * The value of MDR must be a scalar.
  * 
  * @category Entries
  */
-export const setSlot = (path:string, slot:Slot, env:Env):Env => {
+export const setMdr = (path:string, mdr:Mdr, env:Env):Env => {
   const epath = internPath(path)
-  const slot0 = rpath(epath, env.tree) as Slot
-  if (! slot0) {
-    throw new Error('setSlot/1: not found: ' + path)
+  const mdr0 = rpath(epath, env.tree) as Mdr
+  if (! mdr0) {
+    throw new Error('setMdr/1: not found: ' + path)
   }
-  switch (typeOf(slot0.value)) {
+  switch (typeOf(mdr0.value)) {
     case 'null': 
     case 'boolean': 
     case 'number': 
@@ -352,9 +351,9 @@ export const setSlot = (path:string, slot:Slot, env:Env):Env => {
     case 'undefined': 
       break
     default: 
-      throw new Error('setSlot/2: not a scalar: ' + path)
+      throw new Error('setMdr/2: not a scalar: ' + path)
   }
-  const tree = assocPath(epath, slot, env.tree)
+  const tree = assocPath(epath, mdr, env.tree)
   const updatePoint = env.trackUpdate ? intersect(env.updatePoint, epath) : env.updatePoint
   return {...env, tree, updatePoint}
 }
@@ -373,24 +372,24 @@ export const add = (path:string, value:Json, env:Env):Env => {
   const epath = internPath(path)
   const location = init2(epath)
   const name = last(epath)
-  const slot0 = rpath(location, env.tree) as Slot
-  const type0 = typeOf(slot0.value)
+  const mdr0 = rpath(location, env.tree) as Mdr
+  const type0 = typeOf(mdr0.value)
   if (type0 != 'object' && type0 != 'array') {
     throw new Error('add/1 neither an object nor an array: ' + path)
   }
   if (type0 == 'array') {
     // insert into array
-    const index = (name === '-') ? (slot0.value as Json[]).length : name
+    const index = (name === '-') ? (mdr0.value as Json[]).length : name
     if (typeof index != 'number' || index % 1 !== 0) {
       throw new Error('add/2 invalid index: ' + path)
     }
-    if (index < 0 || index > (slot0.value as Json[]).length) {
+    if (index < 0 || index > (mdr0.value as Json[]).length) {
       throw new Error('add/3 index out of range: ' + path)
     }
     const value1 = wrap(value) as Json
-    const lis = insert(index, value1, slot0.value as Json[])
-    const slot = makeSlot(lis)
-    const tree = assocPath(location, slot, env.tree)
+    const lis = insert(index, value1, mdr0.value as Json[])
+    const mdr = makeMdr(lis)
+    const tree = assocPath(location, mdr, env.tree)
     // Insertion to a list is an update not to an item but to the list.
     const updatePoint = env.trackUpdate ? intersect(env.updatePoint, location) : env.updatePoint
     return {...env, tree, updatePoint}
@@ -400,12 +399,12 @@ export const add = (path:string, value:Json, env:Env):Env => {
       throw new Error('add/4 invalid name: ' + path)
     }
     const value1 = wrap(value)
-    const rec = {...(slot0.value as {[prop:string]:Json}), [name]:value1} as Json
-    const slot = makeSlot(rec)
-    const tree = assocPath(location, slot, env.tree)
+    const rec = {...(mdr0.value as {[prop:string]:Json}), [name]:value1} as Json
+    const mdr = makeMdr(rec)
+    const tree = assocPath(location, mdr, env.tree)
     // Adding a property is an update to an object, while replacing a property is an update to an property value.
     const updatePoint = !env.trackUpdate ? env.updatePoint 
-      : intersect(env.updatePoint, (name in (slot0.value as Object)) ? epath : location)
+      : intersect(env.updatePoint, (name in (mdr0.value as Object)) ? epath : location)
     return {...env, tree, updatePoint}
   }
 }
@@ -422,8 +421,8 @@ export const remove = (path:string, env:Env):Env => {
   const epath = internPath(path)
   const location = init2(epath)
   const name = last(epath)
-  const slot0 = rpath(location, env.tree) as Slot
-  const type0 = typeOf(slot0.value)
+  const mdr0 = rpath(location, env.tree) as Mdr
+  const type0 = typeOf(mdr0.value)
   if (type0 != 'object' && type0 != 'array') {
     throw new Error('remove/1 neither an object nor an array: ' + path)
   }
@@ -432,22 +431,22 @@ export const remove = (path:string, env:Env):Env => {
     if (typeof name != 'number' || name % 1 !== 0) {
       throw new Error('remove/2 invalid index: ' + path)
     }
-    if (name < 0 || name >= (slot0.value as Json[]).length) {
+    if (name < 0 || name >= (mdr0.value as Json[]).length) {
       throw new Error('remove/3 out of range: ' + path)
     }
-    const lis = rremove(name, 1, slot0.value as Json[])
-    const slot = makeSlot(lis)
-    const tree = assocPath(location, slot, env.tree)
+    const lis = rremove(name, 1, mdr0.value as Json[])
+    const mdr = makeMdr(lis)
+    const tree = assocPath(location, mdr, env.tree)
     const updatePoint = env.trackUpdate ? intersect(env.updatePoint, location) : env.updatePoint
     return {...env, tree, updatePoint}
   } else {
     // delete property from object
-    if (! slot0.value.hasOwnProperty(name)) {
+    if (! mdr0.value.hasOwnProperty(name)) {
       throw new Error('remove/4: property not found: ' + path)
     }
-    const rec = dissoc(name as never, slot0.value as object)
-    const slot = makeSlot(rec)
-    const tree = assocPath(location, slot, env.tree)
+    const rec = dissoc(name as never, mdr0.value as object)
+    const mdr = makeMdr(rec)
+    const tree = assocPath(location, mdr, env.tree)
     const updatePoint = env.trackUpdate ? intersect(env.updatePoint, location) : env.updatePoint
     return {...env, tree, updatePoint}
   }
@@ -472,8 +471,8 @@ export const replace = (path:string, value:Json, env:Env):Env => {
   }
   const location = init2(epath)
   const name = last(epath)
-  const slot0 = rpath(location, env.tree) as Slot
-  const type0 = typeOf(slot0.value)
+  const mdr0 = rpath(location, env.tree) as Mdr
+  const type0 = typeOf(mdr0.value)
   if (type0 != 'object' && type0 != 'array') {
     throw new Error('replace/1 neither an object nor an array: ' + path)
   }
@@ -482,13 +481,13 @@ export const replace = (path:string, value:Json, env:Env):Env => {
     if (typeof name != 'number' || name % 1 !== 0) {
       throw new Error('replace/2 invalid index: ' + path)
     }
-    if (name < 0 || name >= (slot0.value as Json[]).length) {
+    if (name < 0 || name >= (mdr0.value as Json[]).length) {
       throw new Error('replace/3 out of range: ' + path)
     }
     const value1 = wrap(value) as Json
-    const lis = update(name, value1, slot0.value as Json[])
-    const slot = makeSlot(lis)
-    const tree = assocPath(location, slot, env.tree)
+    const lis = update(name, value1, mdr0.value as Json[])
+    const mdr = makeMdr(lis)
+    const tree = assocPath(location, mdr, env.tree)
     const updatePoint = env.trackUpdate ? intersect(env.updatePoint, epath) : env.updatePoint
     return {...env, tree, updatePoint}
   } else {
@@ -496,13 +495,13 @@ export const replace = (path:string, value:Json, env:Env):Env => {
     if (typeof name != 'string') {
       throw new Error('replace/4 invalid name: ' + path)
     }
-    if (!(name in (slot0.value as {[prop:string]:Json}))) {
+    if (!(name in (mdr0.value as {[prop:string]:Json}))) {
       throw new Error('replace/5 undefined property: ' + path)
     }
     const value1 = wrap(value)
-    const rec = {...(slot0.value as {[prop:string]:Json}), [name]:value1} as {[prop:string]:Json}
-    const slot = makeSlot(rec)
-    const tree = assocPath(location, slot, env.tree)
+    const rec = {...(mdr0.value as {[prop:string]:Json}), [name]:value1} as {[prop:string]:Json}
+    const mdr = makeMdr(rec)
+    const tree = assocPath(location, mdr, env.tree)
     const updatePoint = env.trackUpdate ? intersect(env.updatePoint, epath) : env.updatePoint
     return {...env, tree, updatePoint}
   }
@@ -550,25 +549,13 @@ export const copy = (from:string, path:string, env:Env):Env => {
 export const validate = (path:string, env:Env):Env => {
   let basePath = null
 
-  /**
-   * 
-   * @param {string} path 
-   * @returns {Json}
-   */
-  const lookup = (path) => {
+  const lookup = (path:string) => {
     const pathToLookup = appendPath(basePath, path)
     return extract(pathToLookup, env)
   }
 
-  /**
-   * 
-   * @param {Slot} slot0 
-   * @param {string} npath
-   * @param {string} path
-   * @returns {Slot} 
-   */
-  const inner = (slot0:Slot, npath:string, path:string):Slot => {
-    const value0 = slot0.value
+  const inner = (mdr0:Mdr, npath:string, path:string):Mdr => {
+    const value0 = mdr0.value
     switch (typeOf(value0)) {
       case 'array': 
         const lis = []
@@ -576,103 +563,96 @@ export const validate = (path:string, env:Env):Env => {
           lis[i] = inner(value0[i], npath + '/*', path + '/' + i)
         }
         basePath = path
-        return env.validate(lis, slot0, env.schemaDb[npath], lookup)
+        return env.validate(lis, mdr0, env.schemaDb[npath], lookup)
       case 'object': 
         const rec = {}
         for (let p in  (value0 as Record<string,Json>)) {
           rec[p] = inner(value0[p], npath + '/' + p, path + '/' + p)
         }
         basePath = path
-        return env.validate(rec, slot0, env.schemaDb[npath], lookup)
+        return env.validate(rec, mdr0, env.schemaDb[npath], lookup)
       default: 
         basePath = path
-        const slot = env.validate(value0, slot0, env.schemaDb[npath], lookup)
-        if (slot.value !== value0) {
+        const mdr = env.validate(value0, mdr0, env.schemaDb[npath], lookup)
+        if (mdr.value !== value0) {
           throw new Error('validate/0: value changed: ' + path)
         }
-        return slot
+        return mdr
     }
   }
 
   const epath = internPath(path)
-  const slot0 = rpath(epath, env.tree)
-  if (! slot0) {
+  const mdr0 = rpath(epath, env.tree)
+  if (! mdr0) {
     throw new Error('validate/1: not found: ' + path)
   }
-  const slot = inner(slot0, normalizePath(path), path)
-  const tree = assocPath(epath, slot, env.tree)
+  const mdr = inner(mdr0, normalizePath(path), path)
+  const tree = assocPath(epath, mdr, env.tree)
   return {...env, tree}
 }
 
 /**
- * By f, maps every slot descending to a location specified by path.
+ * By f, maps every mdr descending to a location specified by path.
  * @category Entries
  */
-export const mapDeep = (f:(slot:Slot, path:string) => Slot, path:string, env:Env):Env => {
-  const inner = (slot0:Slot, path:string):Slot => {
-    const value0 = slot0.value
+export const mapDeep = (f:(mdr:Mdr, path:string) => Mdr, path:string, env:Env):Env => {
+  const inner = (mdr0:Mdr, path:string):Mdr => {
+    const value0 = mdr0.value
     switch (typeOf(value0)) {
       case 'array': 
         const lis = []
         for (let i = 0; i < (value0 as Json[]).length; i++) {
           lis[i] = inner(value0[i], path + '/' + i)
         }
-        return {...f(slot0, path), value:lis}
+        return {...f(mdr0, path), value:lis}
       case 'object': 
         const rec = {}
         for (let p in (value0 as Record<string,Json>)) {
           rec[p] = inner(value0[p], path + '/' + p)
         }
-        return {...f(slot0, path), value:rec}
+        return {...f(mdr0, path), value:rec}
       default: 
-        return {...f(slot0, path), value:value0}
+        return {...f(mdr0, path), value:value0}
     }
   }
   const epath = internPath(path)
-  const slot0 = rpath(epath, env.tree)
-  if (! slot0) {
+  const mdr0 = rpath(epath, env.tree)
+  if (! mdr0) {
     throw new Error('mapDeep/1: not found: ' + path)
   }
-  const slot = inner(slot0, path)
-  const tree = assocPath(epath, slot, env.tree)
+  const mdr = inner(mdr0, path)
+  const tree = assocPath(epath, mdr, env.tree)
   return {...env, tree}
 }
 
 /**
  * By f, deeply reduces a subtree of path.
- * @function
- * @template T
- * @param {ReduceSlotFunc<T>} f 
- * @param {T} cur 
- * @param {string} path 
- * @param {Env} env 
- * @returns {T}
  * @category Entries
  */
-export const reduceDeep = <T>(f:(cur:T, slot:Slot, path:string) => T, cur:T, path:string, env:Env):T => {
-  const inner = (cur:T, slot:Slot, path:string):T => {
-    const value0 = slot.value
+export const reduceDeep = <T>(f:(cur:T, mdr:Mdr, path:string) => T, cur:T, path:string, env:Env):T => {
+  const inner = (cur:T, mdr:Mdr, path:string):T => {
+    const value0 = mdr.value
     switch (typeOf(value0)) {
       case 'array': 
         for (let i = 0; i < (value0 as Json[]).length; i++) {
           cur = inner(cur, value0[i], path + '/' + i)
         }
-        return f(cur, slot, path)
+        return f(cur, mdr, path)
       case 'object': 
         for (let p in (value0 as Record<string,Json>)) {
           cur = inner(cur, value0[p], path + '/' + p)
         }
-        return f(cur, slot, path)
+        return f(cur, mdr, path)
       default: 
-        return f(cur, slot, path)
+        return f(cur, mdr, path)
     }
   }
   const epath = internPath(path)
-  const slot = rpath(epath, env.tree)
-  if (! slot) {
+  const mdr = rpath(epath, env.tree)
+  if (! mdr) {
     throw new Error('reduceDeep/1: not found: ' + path)
   }
-  return inner(cur, slot, path)
+  return inner(cur, mdr, path)
 }
 
 /**
@@ -692,8 +672,8 @@ export const duplicate = (path:string, fromEnv:Env, toEnv:Env):Env => {
   }
   const location = init2(epath)
   const name = last(epath)
-  const slot0 = rpath(location, fromEnv.tree) as Slot
-  const type0 = typeOf(slot0.value)
+  const mdr0 = rpath(location, fromEnv.tree) as Mdr
+  const type0 = typeOf(mdr0.value)
   if (type0 != 'object' && type0 != 'array') {
     throw new Error('duplicate/1 neither an object nor an array: ' + path)
   }
@@ -702,13 +682,13 @@ export const duplicate = (path:string, fromEnv:Env, toEnv:Env):Env => {
     if (typeof name != 'number' || name % 1 !== 0) {
       throw new Error('duplicate/2 invalid index: ' + path)
     }
-    if (name < 0 || name >= (slot0.value as Json[]).length) {
+    if (name < 0 || name >= (mdr0.value as Json[]).length) {
       throw new Error('duplicate/3 out of range: ' + path)
     }
-    const value1 = slot0.value[name]
-    const lis = update(name, value1, slot0.value as Json[])
-    const slot = makeSlot(lis)
-    const tree = assocPath(location, slot, toEnv.tree)
+    const value1 = mdr0.value[name]
+    const lis = update(name, value1, mdr0.value as Json[])
+    const mdr = makeMdr(lis)
+    const tree = assocPath(location, mdr, toEnv.tree)
     const updatePoint = toEnv.trackUpdate ? intersect(toEnv.updatePoint, epath) : toEnv.updatePoint
     return {...toEnv, tree, updatePoint}
   } else {
@@ -716,13 +696,13 @@ export const duplicate = (path:string, fromEnv:Env, toEnv:Env):Env => {
     if (typeof name != 'string') {
       throw new Error('replace/4 invalid name: ' + path)
     }
-    if (!(name in (slot0.value as Record<string,Json>))) {
+    if (!(name in (mdr0.value as Record<string,Json>))) {
       throw new Error('replace/5 undefined property: ' + path)
     }
-    const value1 = slot0.value[name]
-    const rec = {...(slot0.value as Record<string,Json>), [name]:value1}
-    const slot = makeSlot(rec)
-    const tree = assocPath(location, slot, toEnv.tree)
+    const value1 = mdr0.value[name]
+    const rec = {...(mdr0.value as Record<string,Json>), [name]:value1}
+    const mdr = makeMdr(rec)
+    const tree = assocPath(location, mdr, toEnv.tree)
     const updatePoint = toEnv.trackUpdate ? intersect(toEnv.updatePoint, epath) : toEnv.updatePoint
     return {...toEnv, tree, updatePoint}
   }

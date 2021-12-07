@@ -112,10 +112,10 @@ export const playSmartControl = (C, map = {}) => {
   return (props, children) => (state, actions) => {
     const {...attributes} = props
     const path = props['mg-path']
-    const slot = API.getSlot(path, state.env)
-    if (! slot) return null
+    const mdr = API.getMdr(path, state.env)
+    if (! mdr) return null
     attributes[map.onchange] = actions.onSmartControlChange
-    addAttr(attributes, map.value, slot.input)
+    addAttr(attributes, map.value, mdr.input)
     addClass(attributes, map.class, map.fixedClass)
     return h(C, attributes, ...children)
   }
@@ -179,18 +179,18 @@ export type TextboxAutoProps = {
 export const playTextbox = <OtherAttrs extends {}>(C:NodeName<TextboxAutoProps & OtherAttrs>):Component<TextboxExtraProps & OtherAttrs> => {
   return (props, children:Children[]) => (state:UnmagicalState, actions:UnmagicalActions) => {
     const {path, ...attributes} = props
-    const slot = API.getSlot(path, state.env)
-    if (! slot) return null
-    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    const mdr = API.getMdr(path, state.env)
+    if (! mdr) return null
+    const invalid = ((mdr.touched || false) && (mdr.invalid || false))
     const attrs:TextboxAutoProps = {
       ...attributes, 
       'data-mg-path': path, 
       'data-mg-value-attribute': 'value', 
       oninput: actions.onTextboxInput, 
       onblur: actions.onTextboxBlur, 
-      value: slot.input, 
+      value: mdr.input, 
       invalid, 
-      message: slot.error ? state.normalizeError(slot.error).message : ''
+      message: mdr.error ? state.normalizeError(mdr.error).message : ''
     } 
     return h(C, attrs, ...children) as VNode
   }
@@ -222,18 +222,18 @@ export type SliderAutoProps = {
 export const playSlider = <OtherAttrs extends {}>(C:NodeName<SliderAutoProps & OtherAttrs>):UnmagicalComponent<SliderExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, ...attributes} = props
-    const slot = API.getSlot(path, state.env)
-    if (! slot) return null
-    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    const mdr = API.getMdr(path, state.env)
+    if (! mdr) return null
+    const invalid = ((mdr.touched || false) && (mdr.invalid || false))
     const attrs:SliderAutoProps = {
       ...attributes, 
       'data-mg-path': path, 
       'data-mg-value-attribute': 'value', 
       oninput: actions.onSliderInput, 
       onchange: actions.onSliderChange, 
-      value: slot.input, 
+      value: mdr.input, 
       invalid, 
-      message: slot.error ? state.normalizeError(slot.error).message : ''
+      message: mdr.error ? state.normalizeError(mdr.error).message : ''
     } 
     return h(C, attrs, ...children) as VNode
   }
@@ -267,17 +267,17 @@ export type ListboxAutoProps = {
 export const playListbox = <OtherAttrs extends {}>(C:NodeName<ListboxAutoProps & OtherAttrs>):UnmagicalComponent<ListboxExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, ...attributes} = props
-    const slot = API.getSlot(path, state.env)
-    if (! slot) return null
-    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    const mdr = API.getMdr(path, state.env)
+    if (! mdr) return null
+    const invalid = ((mdr.touched || false) && (mdr.invalid || false))
     const attrs:ListboxAutoProps = {
       ...attributes, 
       'data-mg-path': path, 
       'data-mg-value-attribute': 'value', 
       onchange: actions.onListboxChange, 
       invalid, 
-      message: slot.error ? state.normalizeError(slot.error).message : '', 
-      value: slot.input
+      message: mdr.error ? state.normalizeError(mdr.error).message : '', 
+      value: mdr.input
     }
     return h(C, attrs, ...children) as VNode
   }
@@ -311,17 +311,17 @@ export type RadioAutoProps = {
 export const playRadio = <OtherAttrs extends {}>(C:NodeName<RadioAutoProps & OtherAttrs>):UnmagicalComponent<RadioExtraProps & OtherAttrs> => {
   return (props, children:Children[]) => (state, actions) => {
     const {path, value, ...attributes} = props
-    const slot = API.getSlot(path, state.env)
-    if (! slot) return null
-    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    const mdr = API.getMdr(path, state.env)
+    if (! mdr) return null
+    const invalid = ((mdr.touched || false) && (mdr.invalid || false))
     const attrs:RadioAutoProps = {
       ...attributes, 
       'data-mg-path': path, 
       'data-mg-value-attribute': 'value', 
       onchange: actions.onRadioChange, 
-      checked: value == slot.value, 
+      checked: value == mdr.value, 
       invalid, 
-      message: slot.error ? state.normalizeError(slot.error).message : '', 
+      message: mdr.error ? state.normalizeError(mdr.error).message : '', 
       value
     }
     return h(C, attrs, ...children) as VNode
@@ -354,17 +354,17 @@ export type CheckboxAutoProps = {
 export const playCheckbox = <OtherAttrs extends {}>(C:NodeName<CheckboxAutoProps & OtherAttrs>):UnmagicalComponent<CheckboxExtraProps & OtherAttrs> => {
   return (props, children:Children[]) => (state, actions) => {
     const {path, ...attributes} = props
-    const slot = API.getSlot(path, state.env)
-    if (! slot) return null
-    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    const mdr = API.getMdr(path, state.env)
+    if (! mdr) return null
+    const invalid = ((mdr.touched || false) && (mdr.invalid || false))
     const attrs:CheckboxAutoProps = {
       ...attributes, 
       'data-mg-path': path, 
       'data-mg-checked-attribute': 'checked', 
       onchange: actions.onCheckboxChange, 
-      checked: slot.value as boolean, 
+      checked: mdr.value as boolean, 
       invalid, 
-      message: slot.error ? state.normalizeError(slot.error).message : ''
+      message: mdr.error ? state.normalizeError(mdr.error).message : ''
     }
     return h(C, attrs, ...children) as VNode
   }
@@ -461,8 +461,8 @@ export const playField = <OtherAttrs extends {}>(C:NodeName<FieldAutoProps & Oth
   return (props, children) => (state, actions) => {
     const {path, foldValidity = false, ...attributes} = props
     if (! API.test(path, state.env)) return null
-    const slot = API.getSlot(path, state.env)
-    const {invalid, error} = foldValidity ? API.foldValidity(path, state.env) : {invalid:slot.invalid && slot.touched, error:slot.error}
+    const mdr = API.getMdr(path, state.env)
+    const {invalid, error} = foldValidity ? API.foldValidity(path, state.env) : {invalid:mdr.invalid && mdr.touched, error:mdr.error}
     const attrs:FieldAutoProps = {
       ...attributes, 
       invalid, 
@@ -975,14 +975,14 @@ export type FlatpickrAutoProps = {
 export const playFlatpickr = <OtherAttrs extends {}>(C:NodeName<FlatpickrAutoProps & OtherAttrs>):UnmagicalComponent<FlatpickrExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, clearerId = null, config = {}, ...attributes} = props
-    const slot = API.getSlot(path, state.env)
-    if (! slot) return null
-    const {oncreate, ondestroy} = instantiateFlatpickr(path, actions.onSmartControlChange, slot.input, clearerId, config)
-    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    const mdr = API.getMdr(path, state.env)
+    if (! mdr) return null
+    const {oncreate, ondestroy} = instantiateFlatpickr(path, actions.onSmartControlChange, mdr.input, clearerId, config)
+    const invalid = ((mdr.touched || false) && (mdr.invalid || false))
     const attrs:FlatpickrAutoProps = {
       ...attributes, 
       invalid, 
-      message: slot.error ? state.normalizeError(slot.error).message : '', 
+      message: mdr.error ? state.normalizeError(mdr.error).message : '', 
       oncreate, 
       ondestroy
     }
@@ -1053,15 +1053,15 @@ export type PickrAutoProps = {
 export const playPickr = <OtherAttrs extends {}>(C:NodeName<PickrAutoProps & OtherAttrs>):UnmagicalComponent<PickrExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {path, clearerId = null, options = {}, ...attributes} = props
-    const slot = API.getSlot(path, state.env)
-    if (! slot) return null
-    const {oncreate, ondestroy} = instantiatePickr(path, actions.onSmartControlChange, slot.input, clearerId, options)
-    const invalid = ((slot.touched || false) && (slot.invalid || false))
+    const mdr = API.getMdr(path, state.env)
+    if (! mdr) return null
+    const {oncreate, ondestroy} = instantiatePickr(path, actions.onSmartControlChange, mdr.input, clearerId, options)
+    const invalid = ((mdr.touched || false) && (mdr.invalid || false))
     const attrs:PickrAutoProps = {
       ...attributes, 
-      value: slot.input, 
+      value: mdr.input, 
       invalid, 
-      message: slot.error ? state.normalizeError(slot.error).message : '', 
+      message: mdr.error ? state.normalizeError(mdr.error).message : '', 
       oncreate, 
       ondestroy
     }

@@ -69,16 +69,16 @@ const data = {
 const updates = {
   complementAddress: (env) => {
     const {enter, leave} = API.makePortal(env)
-    const zipSlot = API.getSlot('/address/zip', env)
+    const zipMdr = API.getMdr('/address/zip', env)
     return leave(
       new Promise((fulfill, reject) => {
-        new YubinBango.Core(zipSlot.input.replace('-', ''), fulfill)
+        new YubinBango.Core(zipMdr.input.replace('-', ''), fulfill)
       }), 
       env
     )
     .then(enter((result, env) => {
       const bld = API.extract('/address/bld', env)
-      const address = {zip:zipSlot.input, pref:result.region, city:result.locality, street:result.street, bld}
+      const address = {zip:zipMdr.input, pref:result.region, city:result.locality, street:result.street, bld}
       return API.add('/address', address, env)
     }))
   }

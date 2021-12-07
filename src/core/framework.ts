@@ -8,7 +8,7 @@ import * as S from './schema'
 import * as X from './errors'
 import { app, h as h0, VNode, ActionType, View as HaView } from 'hyperapp'
 import {MgError, NormalizeError} from './errors'
-import {Json, Schema, Slot, SchemaDb, Lookup, Rules} from './schema'
+import {Json, Schema, Mdr, SchemaDb, Lookup, Rules} from './schema'
 import {Env} from './env'
 export {Env} from './env'
 
@@ -118,7 +118,7 @@ export namespace API {
   // re-export from env
   export const test = E.test
   export const extract = E.extract
-  export const getSlot = E.getSlot
+  export const getMdr = E.getMdr
   export const add = E.add
   export const remove = E.remove
   export const replace = E.replace
@@ -137,7 +137,7 @@ export namespace API {
    * @returns {Env} 
    */
   export const touchAll = (path:string, env:Env):Env => {
-    return E.mapDeep((slot, _path) => ({...slot, touched:true}), path, env)
+    return E.mapDeep((mdr, _path) => ({...mdr, touched:true}), path, env)
   }
 
   /**
@@ -147,8 +147,8 @@ export namespace API {
    * @returns {number} 
    */
   export const countValidationErrors = (path:string, env:Env):number => {
-    return E.reduceDeep((cur, slot, _path) => {
-      const d = slot.touched && slot.invalid ? 1 : 0
+    return E.reduceDeep((cur, mdr, _path) => {
+      const d = mdr.touched && mdr.invalid ? 1 : 0
       return cur + d
     }, 0, path, env)
   }
@@ -161,8 +161,8 @@ export namespace API {
    */
   export const validationErrors = (path:string, env:Env):string[] => {
     const errors:string[] = []
-    E.reduceDeep((_cur, slot, path) => {
-      if (slot.touched && slot.invalid) {
+    E.reduceDeep((_cur, mdr, path) => {
+      if (mdr.touched && mdr.invalid) {
         errors.push(path)
       }
       return null
@@ -176,9 +176,9 @@ export namespace API {
    * @returns {{invalid:boolean, error:MgError|null}}
    */
   export const foldValidity = (path:string, env:Env):Validity => {
-    return API.reduceDeep<Validity>((cur, slot, _path) => {
+    return API.reduceDeep<Validity>((cur, mdr, _path) => {
       if (cur.invalid) return cur
-      if (slot.touched && slot.invalid) return {invalid:true, error:slot.error}
+      if (mdr.touched && mdr.invalid) return {invalid:true, error:mdr.error}
       return cur
     }, {invalid:false, error:null}, path, env)
   }
@@ -495,25 +495,25 @@ export const start = (
     onTextboxInput: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
-      const slot0 = E.getSlot(path, state.baseEnv)
-      const slot = {...slot0, input:value}
-      const baseEnv = E.setSlot(path, slot, state.baseEnv)
+      const mdr0 = E.getMdr(path, state.baseEnv)
+      const mdr = {...mdr0, input:value}
+      const baseEnv = E.setMdr(path, mdr, state.baseEnv)
       // We don't call evolve() here, because oninput is not a check point of evolve().
       // Thus we update not only baseEnv but also env.
-      const slotb0 = E.getSlot(path, state.env)
-      const slotb = {...slotb0, input:value}
-      const env = E.setSlot(path, slotb, state.env)
+      const mdrb0 = E.getMdr(path, state.env)
+      const mdrb = {...mdrb0, input:value}
+      const env = E.setMdr(path, mdrb, state.env)
       return {...state, baseEnv, env}
     }, 
     onTextboxBlur: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
-      const slot = coerce(value, slot0, schemaDb[npath])
+      const mdr0 = {...E.getMdr(path, state.baseEnv), touched:true}
+      const mdr = coerce(value, mdr0, schemaDb[npath])
       let updatePointer
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setSlot(path, slot, baseEnv)
+      baseEnv = E.setMdr(path, mdr, baseEnv)
       baseEnv = E.validate("", baseEnv);
       [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
       let env = evolve(baseEnv, updatePointer, baseEnv)
@@ -523,25 +523,25 @@ export const start = (
     onSliderInput: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
-      const slot0 = E.getSlot(path, state.baseEnv)
-      const slot = {...slot0, input:value}
-      const baseEnv = E.setSlot(path, slot, state.baseEnv)
+      const mdr0 = E.getMdr(path, state.baseEnv)
+      const mdr = {...mdr0, input:value}
+      const baseEnv = E.setMdr(path, mdr, state.baseEnv)
       // We don't call evolve() here, because oninput is not a check point of evolve().
       // Thus we update not only baseEnv but also env.
-      const slotb0 = E.getSlot(path, state.env)
-      const slotb = {...slotb0, input:value}
-      const env = E.setSlot(path, slotb, state.env)
+      const mdrb0 = E.getMdr(path, state.env)
+      const mdrb = {...mdrb0, input:value}
+      const env = E.setMdr(path, mdrb, state.env)
       return {...state, baseEnv, env}
     }, 
     onSliderChange: (ev:Event) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
-      const slot = coerce(value, slot0, schemaDb[npath])
+      const mdr0 = {...E.getMdr(path, state.baseEnv), touched:true}
+      const mdr = coerce(value, mdr0, schemaDb[npath])
       let updatePointer
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setSlot(path, slot, baseEnv)
+      baseEnv = E.setMdr(path, mdr, baseEnv)
       baseEnv = E.validate("", baseEnv);
       [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
       let env = evolve(baseEnv, updatePointer, state.env)
@@ -552,11 +552,11 @@ export const start = (
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
-      const slot = coerce(value, slot0, schemaDb[npath])
+      const mdr0 = {...E.getMdr(path, state.baseEnv), touched:true}
+      const mdr = coerce(value, mdr0, schemaDb[npath])
       let updatePointer
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setSlot(path, slot, baseEnv)
+      baseEnv = E.setMdr(path, mdr, baseEnv)
       baseEnv = E.validate("", baseEnv);
       [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
       let env = evolve(baseEnv, updatePointer, state.env)
@@ -567,11 +567,11 @@ export const start = (
       const path = (ev.currentTarget as HTMLElement).dataset.mgPath
       const value = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgValueAttribute]
       const npath = normalizePath(path)
-      const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
-      const slot = coerce(value, slot0, schemaDb[npath])
+      const mdr0 = {...E.getMdr(path, state.baseEnv), touched:true}
+      const mdr = coerce(value, mdr0, schemaDb[npath])
       let updatePointer
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setSlot(path, slot, baseEnv)
+      baseEnv = E.setMdr(path, mdr, baseEnv)
       baseEnv = E.validate("", baseEnv);
       [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
       let env = evolve(baseEnv, updatePointer, state.env)
@@ -583,11 +583,11 @@ export const start = (
       const checked = ev.currentTarget[(ev.currentTarget as HTMLElement).dataset.mgCheckedAttribute]
       const value = checked ? "true" : "false"
       const npath = normalizePath(path)
-      const slot0 = {...E.getSlot(path, state.baseEnv), touched:true}
-      const slot = coerce(value, slot0, schemaDb[npath])
+      const mdr0 = {...E.getMdr(path, state.baseEnv), touched:true}
+      const mdr = coerce(value, mdr0, schemaDb[npath])
       let updatePointer
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
-      baseEnv = E.setSlot(path, slot, baseEnv)
+      baseEnv = E.setMdr(path, mdr, baseEnv)
       baseEnv = E.validate("", baseEnv);
       [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
       let env = evolve(baseEnv, updatePointer, state.env)
@@ -600,9 +600,9 @@ export const start = (
       let baseEnv = E.beginUpdateTracking(state.baseEnv)
       for (let i = 0; i < pairs.length; i++) {
         const {path, input} = pairs[i]
-        const slot0 = {...E.getSlot(path, baseEnv), touched:true}
-        const slot = coerce(input, slot0, schemaDb[normalizePath(path)])
-        baseEnv = E.setSlot(path, slot, baseEnv)
+        const mdr0 = {...E.getMdr(path, baseEnv), touched:true}
+        const mdr = coerce(input, mdr0, schemaDb[normalizePath(path)])
+        baseEnv = E.setMdr(path, mdr, baseEnv)
       }
       baseEnv = E.validate("", baseEnv);
       [updatePointer, baseEnv] = E.endUpdateTracking(baseEnv)
