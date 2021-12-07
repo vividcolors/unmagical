@@ -1,5 +1,5 @@
 
-const {h, API, start, Input, Textarea, Select, Radio, Checkbox, Field, UpdateButton, DeleteButton, Clickable, SettleButton, Dialog, Notification, Progress, Modal, Pagination, DatePicker, ColorPicker, ReorderableList, ListItem, createRestRepository, makeEntityListUpdates, makeEntityUpdates, validate, defaultRules, defaultCatalog, normalizeError} = unmagical
+const {h, API, start, Input, Textarea, Select, Radio, Checkbox, Field, UpdateButton, DeleteButton, Clickable, SettleButton, Dialog, Notification, Progress, Modal, Pagination, DatePicker, ColorPicker, ReorderableList, ListItem, makeRestRepository, makeEntityListUpdates, makeEntityUpdates, validate, defaultRules, defaultCatalog, normalizeError} = unmagical
 
 const todoSchema = {
   type: 'object', 
@@ -40,7 +40,7 @@ const data = {
 }
 
 const updates = {
-  ...makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs'))
+  ...makeEntityUpdates(makeRestRepository('http://localhost:3000/btopcs'))
 }
 
 const TodoItem = (({path, editing, store, ...props}) => {

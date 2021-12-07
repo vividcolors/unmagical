@@ -1,5 +1,5 @@
 
-const {h, API, start, Input, Textarea, Select, Radio, Checkbox, Field, UpdateButton, DeleteButton, Clickable, SettleButton, Dialog, Notification, Progress, Modal, Pagination, DatePicker, ColorPicker, ReorderableMenuList, createRestRepository, makeEntityListUpdates, makeEntityUpdates, validate, defaultRules} = unmagical
+const {h, API, start, Input, Textarea, Select, Radio, Checkbox, Field, UpdateButton, DeleteButton, Clickable, SettleButton, Dialog, Notification, Progress, Modal, Pagination, DatePicker, ColorPicker, ReorderableMenuList, makeRestRepository, makeEntityListUpdates, makeEntityUpdates, validate, defaultRules} = unmagical
 
 const master = {
   frame: [
@@ -105,7 +105,7 @@ const data = {
   }
 }
 
-const updates = makeEntityUpdates(createRestRepository('http://localhost:3000/btopcs', {}))
+const updates = makeEntityUpdates(makeRestRepository('http://localhost:3000/btopcs', {}))
 
 const view = (store) => {
   const flags = API.extract('/flags', store)

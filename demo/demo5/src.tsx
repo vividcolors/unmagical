@@ -1,5 +1,5 @@
 
-import {h, API, start, Input, Textarea, UpdateButton, Field, Dialog, Notification, Pagination, Clickable, Modal, createRestRepository, makeEntityListUpdates, Store, StartParameter} from '../../src/unmagical-bulma'
+import {h, API, start, Input, Textarea, UpdateButton, Field, Dialog, Notification, Pagination, Clickable, Modal, makeRestRepository, makeEntityListUpdates, Store, StartParameter} from '../../src/unmagical-bulma'
 
 const contactSchema = {
   type: 'object', 
@@ -95,7 +95,7 @@ const data:Data = {
 }
 
 const updates = {
-  ...makeEntityListUpdates(createRestRepository('http://localhost:3000/contacts'))
+  ...makeEntityListUpdates(makeRestRepository('http://localhost:3000/contacts'))
 }
 
 const ContactModal = ({store}:{store:Store}) => {

@@ -1,5 +1,5 @@
 import {h, API, start, Input, Textarea, Range, Rating, Select, Radio, Checkbox, Switch, ColorPicker, UpdateButton, UpdateIconButton, SettleButton, Dialog, Alert, Drawer, Spinner} from './shoelace'
-import {createRestRepository} from '../../src/core/rest'
+import {makeRestRepository} from '../../src/core/rest'
 import {submit, reset} from '../../src/core/updates'
 import {StartParameter} from '../../src/core/framework'
 
@@ -33,8 +33,8 @@ const data = {
 }
 
 const updates = {
-  successSubmit: submit(createRestRepository('http://localhost:3000/things')), 
-  failureSubmit: submit(createRestRepository('http://localhost:3000/false')), 
+  successSubmit: submit(makeRestRepository('http://localhost:3000/things')), 
+  failureSubmit: submit(makeRestRepository('http://localhost:3000/false')), 
   reset
 }
 

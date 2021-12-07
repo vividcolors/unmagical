@@ -21,33 +21,23 @@ const responseToError = (response:Response):Error => {
   return error
 }
 
-export type CreateRestRepositoryOptions = {
+export type MakeRestRepositoryOptions = {
   idProperty?: string, 
   omitEmptyQueryParam?:boolean, 
   totalCountHeader?:string, 
   headers?:Record<string,string>, 
-  optionsForSearch?:CreateRestRepositoryOptions, 
-  optionsForAdd?:CreateRestRepositoryOptions, 
-  optionsForUpdate?:CreateRestRepositoryOptions, 
-  optionsForRemove?:CreateRestRepositoryOptions
+  optionsForSearch?:MakeRestRepositoryOptions, 
+  optionsForAdd?:MakeRestRepositoryOptions, 
+  optionsForUpdate?:MakeRestRepositoryOptions, 
+  optionsForRemove?:MakeRestRepositoryOptions
 }
 
 /**
  * 
- * @function
- * @param {string} baseUrl
- * @param {Object} options
- * @param {string} options.idProperty
- * @param {boolean} options.omitEmptyQueryParam
- * @param {string} options.totalCountHeader
- * @param {Object} options.optionsForSearch
- * @param {Object} options.optionsForAdd
- * @param {Object} options.optionsForUpdate
- * @param {Object} options.optionsForRemove
  * @returns {Repository}
  */
-export const createRestRepository = (baseUrl:string, options:CreateRestRepositoryOptions = {}):Repository => {
-  const opts:CreateRestRepositoryOptions = {
+export const makeRestRepository = (baseUrl:string, options:MakeRestRepositoryOptions = {}):Repository => {
+  const opts:MakeRestRepositoryOptions = {
     idProperty: 'id', 
     omitEmptyQueryParam: true, 
     totalCountHeader: 'X-Total-Count', 
