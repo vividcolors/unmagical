@@ -263,7 +263,6 @@ export const beginUpdateTracking = (store:Store):Store => {
  */
 export const endUpdateTracking = (store:Store):[string|null, Store] => {
   const updatePoint = store.updatePoint ? externPath(store.updatePoint) : null
-  console.log('update occurred at ' + JSON.stringify(updatePoint))
   return [
     updatePoint, 
     {...store, trackUpdate:false, updatePoint:null}
