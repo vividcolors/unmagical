@@ -161,17 +161,22 @@ export const Modal = C.playModal("fade", true)<AnyAttrs>(({class:clazz = '', ...
   )
 })
 
-export const Pagination = C.playPagination<{prevLabel?: string, nextLabel?: string, loadItemsOptions?: object} & AnyAttrs>(({current, prev, next, first, last, siblings, listPath, prevLabel = 'Previous', nextLabel = 'Next', loadEntitiesOptions = {}, ...props}) => {
+const defaultGenerateParams = (listPath:string, page:number):any[] => {
+  return [listPath, {page}]
+}
+
+export const Pagination = C.playPagination<{prevLabel?: string, nextLabel?: string, update?: string, generateParams?: (listPath:string, page:number) => any[]} & AnyAttrs>(({current, prev, next, first, last, siblings, listPath, prevLabel = 'Previous', nextLabel = 'Next', update = 'loadEntities', generateParams = null, ...props}) => {
+  if (! generateParams) generateParams = defaultGenerateParams
   return (
     <nav {...props} class="pagination" role="navigation" aria-label="pagination">
-      <Clickable class="pagination-previous" update="loadEntities" params={[listPath, {...loadEntitiesOptions, page:prev}]} disabled={! prev}>{prevLabel}</Clickable>
-      <Clickable class="pagination-next" update="loadEntities" params={[listPath, {...loadEntitiesOptions, page:next}]} disabled={! next}>{nextLabel}</Clickable>
+      <Clickable class="pagination-previous" update={update} params={generateParams(listPath, prev)} disabled={! prev}>{prevLabel}</Clickable>
+      <Clickable class="pagination-next" update="loadEntities" params={generateParams(listPath, next)} disabled={! next}>{nextLabel}</Clickable>
       <ul class="pagination-list">
-        {first ? (<li><Clickable class="pagination-link" update="loadEntities" params={[listPath, {...loadEntitiesOptions, page:first}]}>{first}</Clickable></li>) : null}
+        {first ? (<li><Clickable class="pagination-link" update="loadEntities" params={generateParams(listPath, first)}>{first}</Clickable></li>) : null}
         {first ? (<li><span class="pagination-ellipsis">&hellip;</span></li>) : null}
-        {siblings.map(pno => (<li><Clickable class={`pagination-link ${pno == current ? 'is-current' : ''}`} update="loadEntities" params={[listPath, {...loadEntitiesOptions, page:pno}]}>{pno}</Clickable></li>))}
+        {siblings.map(pno => (<li><Clickable class={`pagination-link ${pno == current ? 'is-current' : ''}`} update="loadEntities" params={generateParams(listPath, pno)}>{pno}</Clickable></li>))}
         {last ? (<li><span class="pagination-ellipsis">&hellip;</span></li>) : null}
-        {last ? (<li><Clickable class="pagination-link" update="loadEntities" params={[listPath, {...loadEntitiesOptions, page:last}]}>{last}</Clickable></li>) : null}
+        {last ? (<li><Clickable class="pagination-link" update="loadEntities" params={generateParams(listPath, last)}>{last}</Clickable></li>) : null}
       </ul>
     </nav>
   )

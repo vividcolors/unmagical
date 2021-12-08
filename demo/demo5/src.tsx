@@ -136,6 +136,10 @@ const ContactModal = ({store}:{store:Store}) => {
   )
 }
 
+const generateParams = (listPath:string, page:number):any[] => {
+  return [listPath, {totalCountHeader:'X-Total-Count', pageProperty:'_page', page}]
+}
+
 const render = (store:Store) => {
   const contacts = API.get('/contacts', store) as Data["contacts"]
   const from = (contacts.query._page - 1) * contacts.query._limit + 1
@@ -162,7 +166,7 @@ const render = (store:Store) => {
           </div>
         </div>
       </nav>
-      <Pagination width={1} pageProperty="_page" limitProperty="_limit" listPath="/contacts" loadEntitiesOptions={{totalCountHeader:'X-Total-Count', pageProperty:'_page'}} />
+      <Pagination width={1} pageProperty="_page" limitProperty="_limit" listPath="/contacts" generateParams={generateParams} />
       <table class="table is-hoverable">
         <thead>
           <th>ID</th>
