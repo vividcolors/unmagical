@@ -20,6 +20,11 @@ export type Repository = {
   remove: (entity:Json) => Promise<void>
 }
 
+export type SingularRepository = {
+  get: () => Promise<Json>, 
+  replace: (entity:Json) => Promise<Json>
+}
+
 
 /**
  * Loads a specified entity to the form for editing.

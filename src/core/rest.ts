@@ -1,11 +1,11 @@
 /**
- * REST client of Repository implmentation
+ * Repository implmentation by REST
  * 
  * @module core/rest
  */
 
 import {normalizeQuery} from './utils'
-import {Repository} from './updates'
+import {Repository, SingularRepository} from './updates'
 
 /**
  * 
@@ -29,7 +29,7 @@ export type MakeRestRepositoryOptions = {
   optionsForGet?:MakeRestRepositoryOptions, 
   optionsForSearch?:MakeRestRepositoryOptions, 
   optionsForAdd?:MakeRestRepositoryOptions, 
-  optionsForUpdate?:MakeRestRepositoryOptions, 
+  optionsForReplace?:MakeRestRepositoryOptions, 
   optionsForRemove?:MakeRestRepositoryOptions
 }
 
@@ -45,7 +45,7 @@ export const makeRestRepository = (baseUrl:string, options:MakeRestRepositoryOpt
     optionsForGet: {}, 
     optionsForSearch: {}, 
     optionsForAdd: {}, 
-    optionsForUpdate: {}, 
+    optionsForReplace: {}, 
     optionsForRemove: {}, 
     ...options
   }
@@ -111,10 +111,10 @@ export const makeRestRepository = (baseUrl:string, options:MakeRestRepositoryOpt
       const fetchOptions = {
         method: 'PUT', 
         mode: 'cors', 
-        ...opts.optionsForUpdate, 
+        ...opts.optionsForReplace, 
         headers: {
           'Content-Type': 'application/json', 
-          ...(opts.optionsForUpdate.headers || {})
+          ...(opts.optionsForReplace.headers || {})
         }, 
         body: JSON.stringify(entity)
       }
@@ -139,6 +139,49 @@ export const makeRestRepository = (baseUrl:string, options:MakeRestRepositoryOpt
       return fetch(url, fetchOptions as RequestInit)
       .then((/** @type {Response} */ response) => {
         if (! response.ok) throw responseToError(response)
+      })
+    }
+  }
+}
+
+export const makeSingularRestRepository = (url:string, options:MakeRestRepositoryOptions = {}):SingularRepository => {
+  const opts:MakeRestRepositoryOptions = {
+    optionsForGet: {}, 
+    optionsForReplace: {}, 
+    ...options
+  }
+  return {
+    get: () => {
+      const fetchOptions = {
+        method: 'GET', 
+        mode: 'cors', 
+        ...opts.optionsForGet, 
+        headers: {
+          'Content-Type': 'application/json', 
+          ...(opts.optionsForGet.headers || {})
+        }
+      }
+      return fetch(url, fetchOptions as RequestInit) 
+      .then((/** @type {Response} */ response) => {
+        if (! response.ok) throw responseToError(response)
+        return response.json()
+      })
+    }, 
+    replace: (entity) => {
+      const fetchOptions = {
+        method: 'PUT', 
+        mode: 'cors', 
+        ...opts.optionsForReplace, 
+        headers: {
+          'Content-Type': 'application/json', 
+          ...(opts.optionsForReplace.headers || {})
+        }, 
+        body: JSON.stringify(entity)
+      }
+      return fetch(url, fetchOptions as RequestInit)
+      .then((/** @type {Response} */ response) => {
+        if (! response.ok) throw responseToError(response)
+        return response.json()
       })
     }
   }
