@@ -887,8 +887,8 @@ export type PaginationAutoProps = {
 export const playPagination = <OtherAttrs extends {}>(C:NodeName<PaginationAutoProps & OtherAttrs>):UnmagicalComponent<PaginationExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {listPath, width = 2, pageProperty = 'page', limitProperty = 'limit', ...attributes} = props
-    const query = API.extract(listPath + '/query', state.store)
-    const totalCount = +API.extract(listPath + '/totalCount', state.store)
+    const query = API.get(listPath + '/query', state.store)
+    const totalCount = +API.get(listPath + '/totalCount', state.store)
     const page = query[pageProperty]
     if (totalCount > 0) {
       const first = 1

@@ -283,11 +283,11 @@ export const test = (path:string, store:Store):boolean => {
  * 
  * @category Entries
  */
-export const extract = (path:string, store:Store):Json => {
+export const get = (path:string, store:Store):Json => {
   const epath = internPath(path)
   const mdr = rpath(epath, store.tree)
   if (! mdr) {
-    throw new Error('extract/1: not found: ' + path)
+    throw new Error('get/1: not found: ' + path)
   }
   return strip(mdr as Json)
 }
@@ -488,7 +488,7 @@ export const replace = (path:string, value:Json, store:Store):Store => {
  * @category Entries
  */
 export const move = (from:string, path:string, store:Store):Store => {
-  const value = extract(from, store)
+  const value = get(from, store)
   store = remove(from, store)
   store = add(path, value, store)
   return store
@@ -504,7 +504,7 @@ export const move = (from:string, path:string, store:Store):Store => {
  * @category Entries
  */
 export const copy = (from:string, path:string, store:Store):Store => {
-  const value = extract(from, store)
+  const value = get(from, store)
   store = add(path, value, store)
   return store
 }
@@ -522,7 +522,7 @@ export const validate = (path:string, store:Store):Store => {
 
   const lookup = (path:string) => {
     const pathToLookup = appendPath(basePath, path)
-    return extract(pathToLookup, store)
+    return get(pathToLookup, store)
   }
 
   const inner = (mdr0:Mdr, npath:string, path:string):Mdr => {

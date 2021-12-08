@@ -108,8 +108,8 @@ const data = {
 const updates = makeEntityUpdates(makeRestRepository('http://localhost:3000/btopcs', {}))
 
 const render = (store) => {
-  const flags = API.extract('/flags', store)
-  const quotation = API.extract('/quotation', store)
+  const flags = API.get('/flags', store)
+  const quotation = API.get('/quotation', store)
   return (
     <div id="rootMarker" class="container">
       <Notification name="success" message="送信に成功しました。" duration={5000} />
@@ -193,7 +193,7 @@ const evolve = (store, _path, _prevStore) => {
   }
   let subtotal = 0
   let isPro = false
-  let detail = API.extract('/detail', store)
+  let detail = API.get('/detail', store)
   if (detail.frame) {
     const frame = findByProp('name', detail.frame, master.frame)
     store = addLine('筐体', frame, store)
@@ -213,7 +213,7 @@ const evolve = (store, _path, _prevStore) => {
   store = API.add('/flags/isPro', isPro, store)
   if (! isPro && detail.memory && detail.memory == '32G') {
     store = API.add('/detail/memory', '', store)
-    detail = API.extract('/detail', store)  // we modified `/detail' so load again.
+    detail = API.get('/detail', store)  // we modified `/detail' so load again.
   }
   if (detail.memory) {
     const memory = findByProp('name', detail.memory, master.memory)
@@ -230,7 +230,7 @@ const evolve = (store, _path, _prevStore) => {
   store = API.add('/flags/bigDeal', bigDeal, store)
   if (! bigDeal) {
     store = API.remove('/detail/bonus', store)
-    detail = API.extract('/detail', store)  // we modified `/detail' so load again.
+    detail = API.get('/detail', store)  // we modified `/detail' so load again.
   }
   if (detail.bonus) {
     const bonus = findByProp('name', detail.bonus, master.bonus)

@@ -123,7 +123,7 @@ const evolve = (store, _path, _prevStore) => {
   }
   let subtotal = 0
   let isPro = false
-  let detail = API.extract('/detail', store)
+  let detail = API.get('/detail', store)
   if (detail.frame) {
     const frame = findByProp('name', detail.frame, master.frame)
     store = addLine('筐体', frame, store)
@@ -143,7 +143,7 @@ const evolve = (store, _path, _prevStore) => {
   store = API.add('/flags/isPro', isPro, store)
   if (! isPro && detail.memory && detail.memory == '32G') {
     store = API.add('/detail/memory', '', store)
-    detail = API.extract('/detail', store)  // we modified `/detail' so load again.
+    detail = API.get('/detail', store)  // we modified `/detail' so load again.
   }
   if (detail.memory) {
     const memory = findByProp('name', detail.memory, master.memory)
@@ -160,7 +160,7 @@ const evolve = (store, _path, _prevStore) => {
   store = API.add('/flags/bigDeal', bigDeal, store)
   if (! bigDeal) {
     store = API.remove('/detail/bonus', store)
-    detail = API.extract('/detail', store)  // we modified `/detail' so load again.
+    detail = API.get('/detail', store)  // we modified `/detail' so load again.
   }
   if (detail.bonus) {
     const bonus = findByProp('name', detail.bonus, master.bonus)
@@ -180,6 +180,6 @@ const numErrors = API.countValidationErrors("", store)
 if (numErrors) {
   console.error('ERROR: some validation errors occurred', store.tree)
 } else {
-  const result = API.extract("", store)
+  const result = API.get("", store)
   console.log("SUCCESS", result)
 }

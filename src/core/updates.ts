@@ -27,7 +27,7 @@ export type Repository = {
 export const editEntity = (entityPath:string, formPath:string, store:Store):Store => {
   const form = {
     method: "replace", 
-    data: API.extract(entityPath, store)
+    data: API.get(entityPath, store)
   }
   return API.add(formPath, form, store)
 }
@@ -85,11 +85,11 @@ export const commitEntity = (repository:Repository) => (formPath:string, listPat
     return store
   } else {
     store = API.openProgress(opts.loadingName, null, store)
-    const data = API.extract(dataPath, store)
-    const action = (API.extract(methodPath, store)) as "add"|"replace"
+    const data = API.get(dataPath, store)
+    const action = (API.get(methodPath, store)) as "add"|"replace"
     return leave(repository[action](data), store)
     .then(enter((_item, store) => {
-      const query = API.extract(queryPath, store) as Record<string,any>
+      const query = API.get(queryPath, store) as Record<string,any>
       return leave(repository.search(query), store)
     }))
     .then(enter(({entities, totalCount}, store) => {
@@ -148,13 +148,13 @@ export const deleteEntity = (repository:Repository) => (entityPath:string, listP
   const totalCountPath = listPath + '/totalCount'
   return leave(API.openDialog(opts.confirmName, {}, store))
   .then(enter((ok, store) => {
-    const data = API.extract(entityPath, store)
+    const data = API.get(entityPath, store)
     store = API.closeDialog(opts.confirmName, store)
     if (! ok) return store
     store = API.openProgress(opts.loadingName, null, store)
     return leave(repository.remove(data), store)
     .then(enter((_unused, store) => {
-      const query = API.extract(queryPath, store) as Record<string,any>
+      const query = API.get(queryPath, store) as Record<string,any>
       return leave(repository.search(query), store)
     }))
     .then(enter(({entities, totalCount}, store) => {
@@ -202,7 +202,7 @@ export const loadEntities = (repository:Repository) => (listPath:string, options
   const itemsPath = listPath + '/items'
   const totalCountPath = listPath + '/totalCount'
   store = API.openProgress(opts.loadingName, null, store)
-  const query = API.extract(queryPath, store) as Record<string,any>
+  const query = API.get(queryPath, store) as Record<string,any>
   if (opts.page !== null && opts.pageProperty) {
     query[opts.pageProperty] = opts.page
   }
@@ -266,7 +266,7 @@ export const searchEntities = (repository:Repository) => (formPath:string, listP
   const itemsPath = listPath + '/items'
   const totalCountPath = listPath + '/totalCount'
   store = API.openProgress(opts.loadingName, null, store)
-  const query = API.extract(formPath, store) as Record<string,any>
+  const query = API.get(formPath, store) as Record<string,any>
   return leave(repository.search(query), store)
   .then(enter(({entities, totalCount}, store) => {
     store = API.closeProgress(opts.loadingName, store)
@@ -336,7 +336,7 @@ export const submit = (repository:Repository) => (method:"add"|"replace", option
     }
     return store
   } else {
-    const data = API.extract(opts.path, store)
+    const data = API.get(opts.path, store)
     store = API.openProgress(opts.loadingName, null, store)
     return leave(repository[method](data), store)
     .then(enter((data, store) => {
@@ -391,7 +391,7 @@ export const editPart = (partPath:string, formPath:string, store:Store):Store =>
   const form = {
     method: 'replace', 
     action: partPath, 
-    data: API.extract(partPath, store)
+    data: API.get(partPath, store)
   }
   store = API.replace(formPath, form, store)
   return store
@@ -444,12 +444,12 @@ export const commitPart = (formPath:string, nextIdPath:string, options:CommitPar
     }
     return store
   } else {
-    const method = API.extract(methodPath, store) as "add"|"replace"
-    const path = API.extract(actionPath, store) as string
-    const data = API.extract(dataPath, store)
+    const method = API.get(methodPath, store) as "add"|"replace"
+    const path = API.get(actionPath, store) as string
+    const data = API.get(dataPath, store)
     if (method == "add") {
       if (opts.idProperty && nextIdPath) {
-        const nextId = API.extract(nextIdPath, store) as number
+        const nextId = API.get(nextIdPath, store) as number
         store = API.replace(nextIdPath, nextId + 1, store)
         data[opts.idProperty] = nextId
       }
@@ -518,9 +518,9 @@ export const copyPart = (partPath:string, nextIdPath:string, options:CopyPartOpt
     idProperty: 'id', 
     ...options
   }
-  const data = API.extract(partPath, store)
+  const data = API.get(partPath, store)
   if (opts.idProperty && nextIdPath) {
-    const nextId = API.extract(nextIdPath, store) as number
+    const nextId = API.get(nextIdPath, store) as number
     data[opts.idProperty] = nextId
     store = API.add(nextIdPath, nextId + 1, store)
   }

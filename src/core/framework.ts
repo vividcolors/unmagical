@@ -117,7 +117,7 @@ export type StartValue = {
 export namespace API {
   // re-export from store
   export const test = E.test
-  export const extract = E.extract
+  export const get = E.get
   export const getMdr = E.getMdr
   export const add = E.add
   export const remove = E.remove

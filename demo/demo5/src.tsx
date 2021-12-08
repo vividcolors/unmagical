@@ -99,7 +99,7 @@ const updates = {
 }
 
 const ContactModal = ({store}:{store:Store}) => {
-  const form = API.extract('/form', store) as Data["form"]
+  const form = API.get('/form', store) as Data["form"]
   if (! form) return null
   return (
     <Modal shown={true} key="contactModal" id="contactModal">
@@ -137,7 +137,7 @@ const ContactModal = ({store}:{store:Store}) => {
 }
 
 const render = (store:Store) => {
-  const contacts = API.extract('/contacts', store) as Data["contacts"]
+  const contacts = API.get('/contacts', store) as Data["contacts"]
   const from = (contacts.query._page - 1) * contacts.query._limit + 1
   const to = from + contacts.items.length - 1
   const tab = API.getPage("tab", store)

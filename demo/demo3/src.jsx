@@ -77,7 +77,7 @@ const updates = {
       store
     )
     .then(enter((result, store) => {
-      const bld = API.extract('/address/bld', store)
+      const bld = API.get('/address/bld', store)
       const address = {zip:zipMdr.input, pref:result.region, city:result.locality, street:result.street, bld}
       return API.add('/address', address, store)
     }))
@@ -122,7 +122,7 @@ const undroppableStyle = {opacity:0.26}
 
 const render = (store) => {
   console.log('view', store)
-  const data = API.extract("", store)
+  const data = API.get("", store)
   return (
     <div class="block">
       <h2>UI（拡張とブラウザネイティブ）</h2>
