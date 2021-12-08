@@ -1,5 +1,5 @@
 
-const {h, API, start, Input, Textarea, Select, Radio, Checkbox, Field, UpdateButton, DeleteButton, Clickable, SettleButton, Dialog, Notification, Progress, Modal, Pagination, DatePicker, ColorPicker, ReorderableList, ListItem, makeRestRepository, makeEntityListUpdates, makeEntityUpdates, validate, defaultRules, defaultCatalog, normalizeError} = unmagical
+const {h, API, start, Input, Textarea, Select, Radio, Checkbox, Field, UpdateButton, DeleteButton, Clickable, SettleButton, Dialog, Notification, Progress, Modal, Pagination, DatePicker, ColorPicker, ReorderableList, ListItem, makeRestRepository, makeStorageRepository, makeEntityListUpdates, makeEntityUpdates, validate, defaultRules, defaultCatalog, normalizeError} = unmagical
 
 const todoSchema = {
   type: 'object', 
@@ -30,7 +30,7 @@ const schema = {
   }
 }
 
-const data = {
+const initialData = {
   todos: [
     {id:1, done:false, subject:'牛乳を買う', context:'home'}, 
     {id:2, done:false, subject:'お金をおろす', context:'work'}
@@ -40,7 +40,7 @@ const data = {
 }
 
 const updates = {
-  ...makeEntityUpdates(makeRestRepository('http://localhost:3000/btopcs'))
+  ...makeEntityUpdates(makeStorageRepository(localStorage, 'todos'))
 }
 
 const TodoItem = (({path, editing, store, ...props}) => {
@@ -125,6 +125,9 @@ const render = (store) => {
   const form = API.get('/form', store)
   return (
     <div class="container my-3">
+      <Notification name="success" message="保存しました。" duration={5000} />
+      <Notification name="failure" title="エラー" message="エラーが発生しました（{message}）" />
+      <UpdateButton type="button" update="submit" params={["replace", {path:""}]} name="loading">ローカルに保存</UpdateButton>
       <ReorderableList tag="div" class="list has-visible-pointer-controls" name="todos" path="/todos" options={{group:'todos', handle:'.handle'}}>
         {API.get('/todos', store).map((item, i) => {
           const path = '/todos/' + i
@@ -137,5 +140,11 @@ const render = (store) => {
   )
 }
 
+const getData = () => {
+  const savedData = localStorage.getItem('todos')
+  const data = savedData ? JSON.parse(savedData) : initialData
+  return data
+}
+
 const containerEl = document.getElementById('app')
-const {onUpdate} = start({data, schema, render, containerEl, updates})
+const {onUpdate} = start({data:getData(), schema, render, containerEl, updates})
