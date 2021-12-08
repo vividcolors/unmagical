@@ -13,6 +13,7 @@ import { MgError } from './errors'
  * @category Types
  */
 export type Repository = {
+  get: (id:string|number) => Promise<Json>, 
   search: (query:Record<string,any>) => Promise<{entities:Json[], totalCount:number}>, 
   add: (entity:Json) => Promise<Json>, 
   replace: (entity:Json) => Promise<Json>, 

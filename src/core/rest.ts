@@ -26,6 +26,7 @@ export type MakeRestRepositoryOptions = {
   omitEmptyQueryParam?:boolean, 
   totalCountHeader?:string, 
   headers?:Record<string,string>, 
+  optionsForGet?:MakeRestRepositoryOptions, 
   optionsForSearch?:MakeRestRepositoryOptions, 
   optionsForAdd?:MakeRestRepositoryOptions, 
   optionsForUpdate?:MakeRestRepositoryOptions, 
@@ -41,6 +42,7 @@ export const makeRestRepository = (baseUrl:string, options:MakeRestRepositoryOpt
     idProperty: 'id', 
     omitEmptyQueryParam: true, 
     totalCountHeader: 'X-Total-Count', 
+    optionsForGet: {}, 
     optionsForSearch: {}, 
     optionsForAdd: {}, 
     optionsForUpdate: {}, 
@@ -48,6 +50,23 @@ export const makeRestRepository = (baseUrl:string, options:MakeRestRepositoryOpt
     ...options
   }
   return {
+    get: (id) => {
+      const fetchOptions = {
+        method: 'GET', 
+        mode: 'cors', 
+        ...opts.optionsForGet, 
+        headers: {
+          'Content-Type': 'application/json', 
+          ...(opts.optionsForGet.headers || {})
+        }
+      }
+      const url = baseUrl + '/' + id
+      return fetch(url, fetchOptions as RequestInit) 
+      .then((/** @type {Response} */ response) => {
+        if (! response.ok) throw responseToError(response)
+        return response.json()
+      })
+    }, 
     search: (query) => {
       const fetchOptions = {
         method: 'GET', 
