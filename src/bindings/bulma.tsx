@@ -133,7 +133,7 @@ export const Dialog = C.playDialog("fade", true)<{title: string, message: string
   )
 })
 
-export const Notification = C.playFeedback("slide", true)<{message: string} & AnyAttrs>(({name, data, shown, message, class:clazz = '', ...props}) => {
+export const Notification = C.playFeedback("collapse", true)<{message: string} & AnyAttrs>(({name, data, shown, message, class:clazz = '', ...props}) => {
   const effectiveMessage = showText(message, data)
   clazz += ' notification'
   return (
@@ -208,6 +208,6 @@ export const ReorderableList = C.playSortable<{showItem?: ShowItemFunc, items?: 
   return h(tag, props, ...children)
 })
 
-export const ListItem = C.playListItem("slide")<{tag?: string} & AnyAttrs>(({tag = 'li', ...props}, children) => {
+export const ListItem = C.playListItem("collapse")<{tag?: string} & AnyAttrs>(({tag = 'li', ...props}, children) => {
   return h(tag, props, children)
 })

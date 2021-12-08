@@ -554,14 +554,14 @@ const feedbackOnCreate:Record<string,OnCreateFunc> = {
     ], 200)
     el.scrollIntoView()
   }, 
-  zoom: (el) => {
+  scale: (el) => {
     el.animate([
       {transform: 'scale(0.8)'}, 
       {transform: 'scale(1)'}
     ], 200)
     el.scrollIntoView()
   }, 
-  slide: (el) => {
+  collapse: (el) => {
     const r = el.getBoundingClientRect()
     el.animate([
       {offset:0, maxHeight: 0}, 
@@ -579,14 +579,14 @@ const feedbackOnRemove:Record<string,OnRemoveFunc> = {
     ], 200)
     prepareToDestroy(el, anim, done)
   }, 
-  zoom: (el, done) => {
+  scale: (el, done) => {
     const anim = el.animate([
       {transform: 'scale(1)'}, 
       {transform: 'scale(0.8)'}
     ], 200)
     prepareToDestroy(el, anim, done)
   }, 
-  slide: (el, done) => {
+  collapse: (el, done) => {
     const r = el.getBoundingClientRect()
     const anim = el.animate([
       {maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
@@ -618,7 +618,7 @@ export type FeedbackAutoProps = {
 /**
  * @category Feedback
  */
-export const playFeedback = (transition:"fade"|"zoom"|"slide", nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<FeedbackAutoProps & OtherAttrs>):UnmagicalComponent<FeedbackExtraProps & OtherAttrs> => {
+export const playFeedback = (transition:"fade"|"scale"|"collapse", nullIfHidden:boolean) => <OtherAttrs extends {}>(C:NodeName<FeedbackAutoProps & OtherAttrs>):UnmagicalComponent<FeedbackExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
     const {duration = 0, ...attributes} = props
     const name = attributes.name
@@ -760,7 +760,7 @@ const listItemOnCreate:Record<string,OnCreateFunc> = {
     ], 200)
     el.scrollIntoView()
   }, 
-  slide: (el) => {
+  collapse: (el) => {
     const r = el.getBoundingClientRect()
     el.animate([
       {offset:0, maxHeight: 0}, 
@@ -778,13 +778,41 @@ const listItemOnRemove:Record<string,OnRemoveFunc> = {
     ], 200)
     prepareToDestroy(el, anim, done)
   }, 
-  slide: (el, done) => {
+  collapse: (el, done) => {
     const r = el.getBoundingClientRect()
     const anim = el.animate([
       {maxHeight: ((r.height * 1.2) + 30) + 'px'}, 
       {maxHeight: 0}
     ], 200)
     prepareToDestroy(el, anim, done)
+  }
+}
+
+/**
+ * @category ListItem
+ */
+export type ListItemExtraProps = {}
+
+/**
+ * @category ListItem
+ */
+export type ListItemAutoProps = {
+  oncreate: OnCreateFunc, 
+  onremove: OnRemoveFunc
+}
+
+/**
+ * @category ListItem
+ */
+export const playListItem = (transition:"fade"|"collapse") => <OtherAttrs extends {}>(C:NodeName<ListItemAutoProps & OtherAttrs>):UnmagicalComponent<ListItemExtraProps & OtherAttrs> => {
+  return (props, children) => (state, actions) => {
+    const attributes = props
+    const attrs:ListItemAutoProps = {
+      ...attributes, 
+      oncreate: listItemOnCreate[transition], 
+      onremove: listItemOnRemove[transition]
+    }
+    return h(C, attrs, ...children) as VNode
   }
 }
 
@@ -815,34 +843,6 @@ export const playSwitch = (nullIfHidden:boolean) => <OtherAttrs extends {}>(C:No
     const attrs = {
       ...attributes, 
       shown
-    }
-    return h(C, attrs, ...children) as VNode
-  }
-}
-
-/**
- * @category ListItem
- */
-export type ListItemExtraProps = {}
-
-/**
- * @category ListItem
- */
-export type ListItemAutoProps = {
-  oncreate: OnCreateFunc, 
-  onremove: OnRemoveFunc
-}
-
-/**
- * @category ListItem
- */
-export const playListItem = (transition:"fade"|"slide") => <OtherAttrs extends {}>(C:NodeName<ListItemAutoProps & OtherAttrs>):UnmagicalComponent<ListItemExtraProps & OtherAttrs> => {
-  return (props, children) => (state, actions) => {
-    const attributes = props
-    const attrs:ListItemAutoProps = {
-      ...attributes, 
-      oncreate: listItemOnCreate[transition], 
-      onremove: listItemOnRemove[transition]
     }
     return h(C, attrs, ...children) as VNode
   }
