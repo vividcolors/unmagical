@@ -375,7 +375,7 @@ export const playCheckbox = <OtherAttrs extends {}>(C:NodeName<CheckboxAutoProps
  */
 export type UpdateButtonExtraProps = {
   update: string, 
-  context: Json
+  params: Json
 }
 
 /**
@@ -383,7 +383,7 @@ export type UpdateButtonExtraProps = {
  */
 export type UpdateButtonAutoProps = {
   'data-mg-update': string, 
-  'data-mg-context': string, 
+  'data-mg-params': string, 
   onclick: UnmagicalAction<Event>
 }
 
@@ -392,11 +392,11 @@ export type UpdateButtonAutoProps = {
  */
 export const playUpdateButton = <OtherAttrs extends {}>(C:NodeName<UpdateButtonAutoProps & OtherAttrs>):UnmagicalComponent<UpdateButtonExtraProps & OtherAttrs> => {
   return (props, children) => (state, actions) => {
-    const {update, context, ...attributes} = props
+    const {update, params, ...attributes} = props
     const attrs:UpdateButtonAutoProps = {
       ...attributes, 
       'data-mg-update': update, 
-      'data-mg-context': JSON.stringify(typeof context == "undefined" ? null : context), 
+      'data-mg-params': JSON.stringify(typeof params == "undefined" ? null : params), 
       onclick: actions.onUpdate
     }
     return h(C, attrs, ...children) as VNode
@@ -635,7 +635,7 @@ export const playFeedback = (transition:"fade"|"zoom"|"slide", nullIfHidden:bool
       let timeoutId = null
       const oncreate = attrs.oncreate
       attrs.oncreate = (el) => {
-        timeoutId = setTimeout(() => actions.onUpdate({update:"closeFeedback", context:[name]}), duration)
+        timeoutId = setTimeout(() => actions.onUpdate({update:"closeFeedback", params:[name]}), duration)
         if (oncreate) oncreate(el)
       }
       const onremove = attrs.onremove
@@ -1076,7 +1076,7 @@ interface SortableEvent {
   newIndex: number
 }
 
-const instantiateSortable = (name:string, onStart:UnmagicalAction<{update:string,context:any[]}>, onEnd:UnmagicalAction<{name:string,result:any}>, options:object):{oncreate:OnCreateFunc, ondestroy:OnDestroyFunc} => {
+const instantiateSortable = (name:string, onStart:UnmagicalAction<{update:string,params:any[]}>, onEnd:UnmagicalAction<{name:string,result:any}>, options:object):{oncreate:OnCreateFunc, ondestroy:OnDestroyFunc} => {
   var instance = null;
   var marker = null;
   var group = null;
@@ -1087,7 +1087,7 @@ const instantiateSortable = (name:string, onStart:UnmagicalAction<{update:string
       marker = ev.item.nextElementSibling
       onStart({
         update: 'reorder', 
-        context: [name, fromPath + '/' + ev.oldIndex, group]
+        params: [name, fromPath + '/' + ev.oldIndex, group]
       })
     }, 
     onEnd: (ev:SortableEvent) => {

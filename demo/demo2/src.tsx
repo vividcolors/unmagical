@@ -71,12 +71,12 @@ const render = (store) => {
       <div><Switch path="/home">ホームボタンを表示する</Switch></div>
       <div><ColorPicker path="/bgcolor" /></div>
       <div>
-        <UpdateButton name="loading" update="successSubmit" context={["add", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信(成功)</UpdateButton>
-        <UpdateButton name="loading" update="failureSubmit" context={["add", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信(失敗)</UpdateButton>
-        <UpdateIconButton name="x-circle" update="reset" context={[data, {}]} />
-        <UpdateButton update="toggleSwitch" context={["drawer"]}>Open Drawer</UpdateButton>
-        <UpdateButton update="openProgress" context={['spinner', null]}>Show Progress</UpdateButton>
-        <UpdateButton update="closeProgress" context={['spinner']}>Hide Progress</UpdateButton>
+        <UpdateButton name="loading" update="successSubmit" params={["add", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信(成功)</UpdateButton>
+        <UpdateButton name="loading" update="failureSubmit" params={["add", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信(失敗)</UpdateButton>
+        <UpdateIconButton name="x-circle" update="reset" params={[data, {}]} />
+        <UpdateButton update="toggleSwitch" params={["drawer"]}>Open Drawer</UpdateButton>
+        <UpdateButton update="openProgress" params={['spinner', null]}>Show Progress</UpdateButton>
+        <UpdateButton update="closeProgress" params={['spinner']}>Hide Progress</UpdateButton>
       </div>
       <Dialog key="confirm" name="confirm" label="確認" message="リセットします。いいですか？" />
       <Alert key="success" name="success" type="success" message="やりました！" closable sl-duration={5000} onUpdate={callOnUpdate} />

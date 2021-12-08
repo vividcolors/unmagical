@@ -257,7 +257,7 @@ const instantiateToast = ({name, message, data, onUpdate, 'sl-duration':duration
   const oncreate = (el:Element) => {
     createToast()
     toast.addEventListener('sl-hide', ev => {
-      onUpdate({update:'closeFeedback', context:[name]})
+      onUpdate({update:'closeFeedback', params:[name]})
     })
   }
   const ondestroy = (el:Element) => {
@@ -279,7 +279,7 @@ export const Drawer = C.playSwitch(false)<{onUpdate:any}&AnyAttrs>(({name, shown
   delete props.oncreate
   const onDrawerCreate = (el:Element) => {
     el.addEventListener('sl-request-close', (ev) => {
-      window.requestAnimationFrame(() => onUpdate({update:'setSwitch', context:[name, false]}))
+      window.requestAnimationFrame(() => onUpdate({update:'setSwitch', params:[name, false]}))
     });
   }
   return (

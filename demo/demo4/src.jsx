@@ -60,12 +60,12 @@ const TodoItem = (({path, editing, store, ...props}) => {
       </div>
       <div class="list-item-content">
         <p class="py-2 is-fullwidth">
-          <Clickable style={{cursor:'pointer'}} update="editPart" context={[path, '/form']}>{API.get(path + '/subject', store)} @{API.get(path + '/context', store)}</Clickable>
+          <Clickable style={{cursor:'pointer'}} update="editPart" params={[path, '/form']}>{API.get(path + '/subject', store)} @{API.get(path + '/context', store)}</Clickable>
         </p>
       </div>
       <div class="list-item-controls">
-        <UpdateButton class="is-info is-inverted mx-1" update="copyPart" context={[path, '/nextId', {}]}><span class="icon"><span class="material-icons">content_copy</span></span></UpdateButton>
-        <UpdateButton class="is-danger is-inverted mx-1" update="removePart" context={[path, {}]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
+        <UpdateButton class="is-info is-inverted mx-1" update="copyPart" params={[path, '/nextId', {}]}><span class="icon"><span class="material-icons">content_copy</span></span></UpdateButton>
+        <UpdateButton class="is-danger is-inverted mx-1" update="removePart" params={[path, {}]}><span class="icon"><span class="material-icons">delete</span></span></UpdateButton>
       </div>
     </ListItem>
   )
@@ -104,8 +104,8 @@ const TodoForm = ({store}) => {
         </div>
       </div>
       <div class="list-item-controls">
-        <UpdateButton class="is-primary is-inverted mx-1" update="commitPart" context={['/form', '/nextId', {}]}><span class="icon"><span class="material-icons">check</span></span></UpdateButton>
-        <UpdateButton class="is-danger is-inverted mx-1" update="discardPart" context={['/form']}><span class="icon"><span class="material-icons">clear</span></span></UpdateButton>
+        <UpdateButton class="is-primary is-inverted mx-1" update="commitPart" params={['/form', '/nextId', {}]}><span class="icon"><span class="material-icons">check</span></span></UpdateButton>
+        <UpdateButton class="is-danger is-inverted mx-1" update="discardPart" params={['/form']}><span class="icon"><span class="material-icons">clear</span></span></UpdateButton>
       </div>
     </ListItem>
   )
@@ -115,7 +115,7 @@ const TodoButton = () => {
   return (
     <div class="media" key="add">
       <div class="media-content">
-        <UpdateButton class="is-primary" update="makePart" context={['/todos/-', {id:0, done:false, subject:'', context:''}, '/form']}>追加</UpdateButton>
+        <UpdateButton class="is-primary" update="makePart" params={['/todos/-', {id:0, done:false, subject:'', context:''}, '/form']}>追加</UpdateButton>
       </div>
     </div>
   )

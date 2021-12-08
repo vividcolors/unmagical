@@ -80,7 +80,7 @@ export type UnmagicalActions = {
   onRadioChange: UnmagicalAction<Event>, 
   onCheckboxChange: UnmagicalAction<Event>, 
   onSmartControlChange: UnmagicalAction<{path:string,input:string}|[{path:string,input:string}]>, 
-  onUpdate: UnmagicalAction<Event|{update:string,context:any[]}>, 
+  onUpdate: UnmagicalAction<Event|{update:string,params:any[]}>, 
   onPromiseSettle: UnmagicalAction<Event|{name:string,result:any}>, 
   onPromiseThen: UnmagicalAction<OnPromiseThenParam>
 }
@@ -108,7 +108,7 @@ export type StartParameter = {
  * @category start
  */
 export type StartValue = {
-  onUpdate: UnmagicalAction<Event|{update:string,context:any[]}>
+  onUpdate: UnmagicalAction<Event|{update:string,params:any[]}>
 }
 
 /**
@@ -610,17 +610,17 @@ export const start = (
       store = E.validate("", store)
       return {...state, baseStore, store}
     }, 
-    onUpdate: (ev:Event|{update:string,context:any[]}) => (state:UnmagicalState, actions:UnmagicalActions) => {
+    onUpdate: (ev:Event|{update:string,params:any[]}) => (state:UnmagicalState, actions:UnmagicalActions) => {
       const update = ('currentTarget' in ev) ? (ev.currentTarget as HTMLElement).dataset.mgUpdate : ev.update
-      const context = ('currentTarget' in ev) ? JSON.parse((ev.currentTarget as HTMLElement).dataset.mgContext || "null") : ev.context
+      const params = ('currentTarget' in ev) ? JSON.parse((ev.currentTarget as HTMLElement).dataset.mgParams || "null") : ev.params
       let updatePointer:string
       let baseStore = E.beginUpdateTracking(state.baseStore)
       baseStore = E.setPortal((store0) => {baseStore = store0}, actions.onPromiseThen, baseStore)
       const func = updates[update] || updateEnabledApis[update]
       if (! func) throw new Error('onUpdate/0: no update or unknown update')
-      if (! Array.isArray(context)) throw new Error('onUpdate/1: parameter must be an array')
-      if (context.length + 1 != func.length) throw new Error('onUpdate/2: bad number of parameters')
-      const res = func.apply(null, [...context, baseStore])
+      if (! Array.isArray(params)) throw new Error('onUpdate/1: params must be an array')
+      if (params.length + 1 != func.length) throw new Error('onUpdate/2: bad number of params')
+      const res = func.apply(null, [...params, baseStore])
       baseStore = E.setPortal(null, null, E.isStore(res) ? res : baseStore)
       baseStore = E.validate("", baseStore);
       [updatePointer, baseStore] = E.endUpdateTracking(baseStore)

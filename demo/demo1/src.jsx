@@ -175,7 +175,7 @@ const render = (store) => {
         </tr>
       </table>
       <hr />
-      <UpdateButton type="button" class="is-primary" name="loading" update="submit" context={["add", {path:"/detail", errorSelector:".is-danger", method:"POST"}]}>確定</UpdateButton>
+      <UpdateButton type="button" class="is-primary" name="loading" update="submit" params={["add", {path:"/detail", errorSelector:".is-danger", method:"POST"}]}>確定</UpdateButton>
     </div>
   )
 }
