@@ -17,7 +17,7 @@ export const makeStorageRepository = (storage:Storage, keyName:string):SingularR
       return new Promise((fulfill) => {
         const s = JSON.stringify(entity)
         storage.setItem(keyName, s)
-        fulfill()
+        fulfill(null)
       })
     }
   }
