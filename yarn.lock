@@ -4023,6 +4023,11 @@ gitbook-plugin-fontsettings@^2.0.0:
   resolved "https://registry.yarnpkg.com/gitbook-plugin-fontsettings/-/gitbook-plugin-fontsettings-2.0.0.tgz#835f900ae3dd111086fe7ed4425ee3de024861ab"
   integrity sha1-g1+QCuPdERCG/n7UQl7j3gJIYas=
 
+gitbook-plugin-hints@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/gitbook-plugin-hints/-/gitbook-plugin-hints-1.0.2.tgz#e6589983e3ea84749f16dc631e282fafd45ec39b"
+  integrity sha1-5liZg+PqhHSfFtxjHigvr9Rew5s=
+
 gitbook-plugin-language-picker@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/gitbook-plugin-language-picker/-/gitbook-plugin-language-picker-0.1.0.tgz#19aeaa08deb397345db4fd6c9bdb7f05aff0913d"

@@ -1,5 +1,5 @@
 {
     "root": "./docs", 
     "title": "Documentation | Unmagical", 
-    "plugins": ["language-picker"]
+    "plugins": ["language-picker", "hints"]
 }

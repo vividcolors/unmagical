@@ -27,8 +27,8 @@
     "test": "run-s buildtest runtest",
     "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.tsx",
     "demo5": "parcel build -d demo/demo5 --out-file index.js demo/demo5/src.tsx",
-    "honkit": "honkit build", 
-    "typedoc": "typedoc --options typedoc.json ./src", 
+    "honkit": "honkit build",
+    "typedoc": "typedoc --options typedoc.json ./src",
     "docs": "run-s honkit typedoc"
   },
   "devDependencies": {
@@ -38,6 +38,7 @@
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
     "cpx": "^1.5.0",
+    "gitbook-plugin-hints": "^1.0.2",
     "gitbook-plugin-language-picker": "^0.1.0",
     "honkit": "^3.6.23",
     "json-server": "^0.17.0",
