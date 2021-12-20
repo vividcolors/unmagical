@@ -11,12 +11,9 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "ajv": "^8.1.0",
     "hyperapp": "^1.2.10",
-    "rambda": "^6.7.0",
     "ramda": "^0.27.1",
-    "string-template": "^1.0.0",
-    "typescript": "4.4"
+    "string-template": "^1.0.0"
   },
   "scripts": {
     "buildbulma": "parcel build --global unmagical -d asset src/unmagical-bulma.ts",
@@ -46,6 +43,7 @@
     "parcel-bundler": "^1.12.5",
     "rimraf": "^3.0.0",
     "sass": "^1.22.1",
-    "typedoc": "^0.22.9"
+    "typedoc": "^0.22.9",
+    "typescript": "4.4"
   }
 }
