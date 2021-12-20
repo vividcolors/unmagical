@@ -137,3 +137,23 @@ React.jsやVueでは、あなたはコンポーネントを構成単位として
 また、UnmagicalでWebコンポーネントを使うこともできます。[Shoelace](https://shoelace.style/)のWebコンポーネントの半分近くは動作確認済みです。<br>
 ブラウザのWebコンポーネントへの対応が進むにつれ、今後はWebコンポーネントの利用も増えていきます。そのときのWebアプリケーション開発では、モノリシックなアプリケーション指向という手法も有力になるでしょう。
 {% endhint %}
+
+## インストール
+
+ローカルにインストールする場合。
+
+```
+npm install unmagical
+```
+
+または
+
+```
+yarn add unmagical
+```
+
+CDNでブラウザに直接読み込ませる場合。
+
+```
+<script src="//cdn.jsdelivr.net/npm/..."></script>
+```
