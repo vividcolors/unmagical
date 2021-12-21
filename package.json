@@ -1,7 +1,15 @@
 {
-  "name": "unmagical",
+  "name": "@vividcolors/unmagical",
   "version": "0.0.1",
   "description": "frontend framework for typical applications",
+  "author": "vividcolors, inc. (https://github.com/vividcolors)", 
+  "license": "MIT", 
+  "homepage": "https://github.com/vividcolors/unmagical", 
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vividcolors/unmagical.git"
+  },
+  "main": "index.js", 
   "keywords": [
     "jsx",
     "typescript",
@@ -9,24 +17,10 @@
     "frontend",
     "framework"
   ],
-  "license": "MIT",
   "dependencies": {
     "hyperapp": "^1.2.10",
     "ramda": "^0.27.1",
     "string-template": "^1.0.0"
-  },
-  "scripts": {
-    "buildbulma": "parcel build --global unmagical -d asset src/unmagical-bulma.ts",
-    "buildnode": "parcel build -d . src/index.ts --target node",
-    "build": "run-s buildbulma buildnode",
-    "buildtest": "parcel build --target node -d asset/test tests/_index.js",
-    "runtest": "node asset/test/_index",
-    "test": "run-s buildtest runtest",
-    "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.tsx",
-    "demo5": "parcel build -d demo/demo5 --out-file index.js demo/demo5/src.tsx",
-    "honkit": "honkit build",
-    "typedoc": "typedoc --options typedoc.json ./src",
-    "docs": "run-s honkit typedoc"
   },
   "devDependencies": {
     "@types/ramda": "^0.27.50",
@@ -45,5 +39,18 @@
     "sass": "^1.22.1",
     "typedoc": "^0.22.9",
     "typescript": "4.4"
+  }, 
+  "scripts": {
+    "buildbulma": "parcel build --global unmagical -d asset src/unmagical-bulma.ts",
+    "buildnode": "parcel build -d . src/index.ts --target node",
+    "build": "run-s buildbulma buildnode",
+    "buildtest": "parcel build --target node -d asset/test tests/_index.js",
+    "runtest": "node asset/test/_index",
+    "test": "run-s buildtest runtest",
+    "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.tsx",
+    "demo5": "parcel build -d demo/demo5 --out-file index.js demo/demo5/src.tsx",
+    "honkit": "honkit build",
+    "typedoc": "typedoc --options typedoc.json ./src",
+    "docs": "run-s honkit typedoc"
   }
 }
