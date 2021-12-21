@@ -143,17 +143,16 @@ React.jsやVueでは、あなたはコンポーネントを構成単位として
 ローカルにインストールする場合。
 
 ```
-npm install unmagical
+npm install @vividcolors/unmagical
 ```
 
 または
 
 ```
-yarn add unmagical
+yarn add @vividcolors/unmagical
 ```
 
 CDNでブラウザに直接読み込ませる場合。
-
-```
-<script src="//cdn.jsdelivr.net/npm/..."></script>
+```html
+<script src="https://cdn.jsdelivr.net/npm/@vividcolors/unmagical/asset/unmagical-bulma.js"></script>
 ```
