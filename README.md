@@ -17,11 +17,16 @@ Unmagical has the following features:
 ## Installation
 
 ```console
-npm install unmagical
+npm install @vividcolors/unmagical
 ```
 or
 ```console
-yarn add unmagical
+yarn add @vividcolors/unmagical
+```
+
+You can also load it via CDN.
+```html
+<script src="https://cdn.jsdelivr.net/npm/@vividcolors/unmagical/asset/unmagical-bulma.js"></script>
 ```
 
 ## Documentation
