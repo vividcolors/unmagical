@@ -49,8 +49,11 @@
     "test": "run-s buildtest runtest",
     "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.tsx",
     "demo5": "parcel build -d demo/demo5 --out-file index.js demo/demo5/src.tsx",
+    "copydemo": "cpx \"./demo/**/*.*\" ./_book/demo", 
+    "demo": "run-s demo2 demo5 copydemo", 
     "honkit": "honkit build",
+    "honkitx": "rimraf ./_book/index.html", 
     "typedoc": "typedoc --options typedoc.json ./src",
-    "docs": "run-s honkit typedoc"
+    "docs": "run-s honkit honkitx typedoc demo"
   }
 }
