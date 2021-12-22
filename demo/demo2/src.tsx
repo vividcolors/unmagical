@@ -33,8 +33,7 @@ const data = {
 }
 
 const updates = {
-  successSubmit: submit(makeRestRepository('http://localhost:3000/things')), 
-  failureSubmit: submit(makeRestRepository('http://localhost:3000/false')), 
+  failureSubmit: submit(makeRestRepository('https://www.vividcolors.co.jp/false')), 
   reset
 }
 
@@ -71,7 +70,6 @@ const render = (store) => {
       <div><Switch path="/home">ホームボタンを表示する</Switch></div>
       <div><ColorPicker path="/bgcolor" /></div>
       <div>
-        <UpdateButton name="loading" update="successSubmit" params={["add", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信(成功)</UpdateButton>
         <UpdateButton name="loading" update="failureSubmit" params={["add", {path:"/dummy", errorSelector:":invalid", method:"POST"}]}>送信(失敗)</UpdateButton>
         <UpdateIconButton name="x-circle" update="reset" params={[data, {}]} />
         <UpdateButton update="toggleSwitch" params={["drawer"]}>Open Drawer</UpdateButton>

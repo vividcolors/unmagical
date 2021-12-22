@@ -1,5 +1,5 @@
 
-const {h, API, start, Input, Textarea, Select, Radio, Checkbox, Field, UpdateButton, DeleteButton, Clickable, SettleButton, Dialog, Notification, Progress, Modal, Pagination, DatePicker, ColorPicker, ReorderableMenuList, makeRestRepository, makeEntityListUpdates, makeEntityUpdates, validate, defaultRules} = unmagical
+const {h, API, start, Input, Textarea, Select, Radio, Checkbox, Field, UpdateButton, DeleteButton, Clickable, SettleButton, Dialog, Notification, Progress, Modal, Pagination, DatePicker, ColorPicker, ReorderableMenuList, makeSingularStorageRepository, makeEntityListUpdates, makeEntityUpdates, validate, defaultRules} = unmagical
 
 const master = {
   frame: [
@@ -105,7 +105,7 @@ const data = {
   }
 }
 
-const updates = makeEntityUpdates(makeRestRepository('http://localhost:3000/btopcs', {}))
+const updates = makeEntityUpdates(makeSingularStorageRepository(window.sessionStorage, 'btopc', {}))
 
 const render = (store) => {
   const flags = API.get('/flags', store)
@@ -175,7 +175,7 @@ const render = (store) => {
         </tr>
       </table>
       <hr />
-      <UpdateButton type="button" class="is-primary" name="loading" update="submit" params={["add", {path:"/detail", errorSelector:".is-danger", method:"POST"}]}>確定</UpdateButton>
+      <UpdateButton type="button" class="is-primary" name="loading" update="submit" params={["replace", {path:"/detail", errorSelector:".is-danger", method:"POST"}]}>確定</UpdateButton>
     </div>
   )
 }

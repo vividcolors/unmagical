@@ -178,7 +178,8 @@ export const commonPath = (path1:string, path2:string):string => {
 export const normalizeQuery = (obj:Record<string,string>, omitEmptyParam:boolean):Record<string,string> => {
   const rv = /** @type {Record<string, string>} */ ({})
   for (let p in obj) {
-    switch (typeOf(p)) {
+    const val = obj[p]
+    switch (typeOf(val)) {
       case 'null': 
         if (!omitEmptyParam) rv[p] = ''
         break

@@ -5,7 +5,7 @@
 
 import {SingularRepository} from './updates'
 
-export const makeStorageRepository = (storage:Storage, keyName:string):SingularRepository => {
+export const makeSingularStorageRepository = (storage:Storage, keyName:string):SingularRepository => {
   return {
     get: () => {
       return new Promise((fulfill) => {
