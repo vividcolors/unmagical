@@ -10,7 +10,7 @@
 jsxをブラウザ上でjavascriptにコンパイルするために、Babelを使います。<br>
 以下のコードをindex.htmlとして保存します。
 
-```html:index.html
+```html
 <!DOCTYPE html>
 <html lang="ja">
   <head>
