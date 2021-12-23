@@ -1,7 +1,9 @@
 
 # Unmagical
 
-Unmagical is a web front-end framework that aims to build applications of up to medium size at high speed.
+**CAUTION: This software is in the development stage. Please note that the concept and specifications are subject to change.**
+
+Unmagical is a web front-end framework that aims to build applications of up to medium size quickly.
 Unmagical has the following features: 
 
 - It is written in TypeScript. You can build your application in JavaScript or TypeScript.
@@ -30,6 +32,10 @@ You can also load it via CDN.
 ```
 
 ## Documentation
+
+- [API Reference](https://vividcolors.github.io/unmagical/reference/)
+- [Document](https://vividcolors.github.io/unmagical/en/) ([Japanese](https://vividcolors.github.io/unmagical/ja/))
+- [Demo](https://vividcolors.github.io/unmagical/demo/)
 
 I'll write about it someday.  
 For now, take a look at some of the demos in the repository.
