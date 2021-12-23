@@ -125,8 +125,8 @@ const render = (store) => {
   const data = API.get("", store)
   return (
     <div class="block">
-      <h2>UI（拡張とブラウザネイティブ）</h2>
-      <Field path="/date" label="カレンダー">
+      <h2>Comparison of JS-made UI and browser native ones</h2>
+      <Field path="/date" label="Flatpickr">
         <div class="field has-addons">
           <div class="control">
             <DatePicker path="/date" class="input" clearerId="datepicker-clearer" />
@@ -141,7 +141,7 @@ const render = (store) => {
         <Input type="date" path="/date2" />
       </Field>
       <p>value: {data.date2}</p>
-      <Field path="/color" label="カラー">
+      <Field path="/color" label="Pickr">
         <div class="field has-addons">
           <div class="control">
             <ColorPicker path="/color" class="button" clearerId="colorpicker-clearer" options={pickrOptions} />
@@ -157,34 +157,34 @@ const render = (store) => {
       </Field>
       <p>value: {data.color2}</p>
       <hr />
-      <h2>数値入力とバリデーション</h2>
-      <Field path="/int" label="整数">
+      <h2>Numeric input and validation</h2>
+      <Field path="/int" label="Integer">
         <Input path="/int" />
       </Field>
       <hr />
-      <h2>同じアドレスを二度入力する</h2>
-      <Field path="/email" foldValidity label="メールアドレス">
+      <h2>Input twice (folding validity of multiple controls)</h2>
+      <Field path="/email" foldValidity label="Email address">
         <Input path="/email/firstTime" />
-        <Input path="/email/secondTime" placeholder="もう一度" />
+        <Input path="/email/secondTime" placeholder="again" />
       </Field>
       <hr />
-      <h2>住所の自動補完</h2>
-      <Field path="/address" foldValidity label="住所">
-        <Input path="/address/zip" oncreate={onZipCreated} />
+      <h2>Address completion (view-defined event handler)</h2>
+      <Field path="/address" foldValidity label="Japanese Address">
+        <Input path="/address/zip" oncreate={onZipCreated} placeholder="2610023" />
         <Input path="/address/pref" />
         <Input path="/address/city" />
         <Input path="/address/street" />
         <Input path="/address/bld" />
       </Field>
       <hr />
-      <h2>順序の入れ替え（基本）</h2>
+      <h2>Sortable.js -- Basic</h2>
       <div class="menu">
         <ReorderableList tag="ul" class="menu-list" name="reorder" path="/persons" options={{group:'persons'}}>
           {data.persons.map(p => (<li key={p}><a>{p}</a></li>))}
         </ReorderableList>
       </div>
       <hr />
-      <h2>順序の入れ替え（アドバンスト）</h2>
+      <h2>Sortable.js -- Nested</h2>
       <div class="menu">
         <ReorderableList tag="ul" class="menu-list" name="reorder" path="/members" options={{group:'members'}} items={data.members} showItem={(item, index, activePath, group) => {
           return (
@@ -204,6 +204,7 @@ const render = (store) => {
 }
 
 
+// Translating some texts into japanese.
 const catalog = {
   ...defaultCatalog, 
   'value': '不正な入力です', 

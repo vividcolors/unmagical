@@ -1,6 +1,6 @@
 
 <!DOCTYPE HTML>
-<html lang="ja" >
+<html lang="en" >
     <head>
         <meta charset="UTF-8">
         <title>First App · Documentation | Unmagical</title>
@@ -72,7 +72,7 @@
         
             
 <div id="book-search-input" role="search">
-    <input type="text" placeholder="検索ワードを入力" />
+    <input type="text" placeholder="Type to search" />
 </div>
 
             
@@ -123,7 +123,7 @@
 
     <li>
         <a href="https://github.com/honkit/honkit" target="blank" class="gitbook-link">
-            HonKitで公開 
+            Published with HonKit
         </a>
     </li>
 </ul>
@@ -162,38 +162,7 @@
                                 <section class="normal markdown-section">
                                 
                                 <h1 id="writing-your-first-app">Writing Your First App</h1>
-<p><strong>書き途中です。</strong></p>
-<p>この記事では、実際にUnmagicalでアプリケーションを作ります。<br>
-最低限のことから始めて、少しずつ発展させていきます。</p>
-<h2 id="htmlファイル">HTMLファイル</h2>
-<p>まずはHTMLファイルを準備しましょう。<br>
-jsxをブラウザ上でjavascriptにコンパイルするために、Babelを使います。<br>
-以下のコードをindex.htmlとして保存します。</p>
-<pre><code class="lang-html"><span class="hljs-meta">&lt;!DOCTYPE <span class="hljs-meta-keyword">html</span>&gt;</span>
-<span class="hljs-tag">&lt;<span class="hljs-name">html</span> <span class="hljs-attr">lang</span>=<span class="hljs-string">&quot;ja&quot;</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">charset</span>=<span class="hljs-string">&quot;utf-8&quot;</span> /&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;viewport&quot;</span> <span class="hljs-attr">content</span>=<span class="hljs-string">&quot;width=device-width, initial-scale=1&quot;</span> /&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">link</span> <span class="hljs-attr">rel</span>=<span class="hljs-string">&quot;stylesheet&quot;</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css&quot;</span>&gt;</span>
-  <span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span>
-  <span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;app&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;https://unpkg.com/@babel/standalone/babel.min.js&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;.../unmagical-bulma.js&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">type</span>=<span class="hljs-string">&quot;text/babel&quot;</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;src.jsx&quot;</span> <span class="hljs-attr">data-presets</span>=<span class="hljs-string">&quot;env-unmagical&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
-  <span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span>
-</code></pre>
-<ul>
-<li>6行目：bulmaのCSSを読み込みます。</li>
-<li>9行目：アプリケーションのコンテナ要素です。この中にアプリケーションが描画されます。</li>
-<li>10行目：Babelを読み込みます。</li>
-<li>11行目：Unmagical（bulmaバインディング）を読み込みます。</li>
-<li>12行目：アプリケーションのソースファイル（jsx）を読み込みます。</li>
-</ul>
-<p>10行目から12行目は、それぞれ依存関係がありますので、この順番を守ってください。</p>
-<h2 id="アプリケーションの雛形">アプリケーションの雛形</h2>
-<p><code>jsx</code></p>
+<p><strong>We&apos;ll write soon.</strong></p>
 
                                 
                                 </section>
@@ -233,7 +202,7 @@ jsxをブラウザ上でjavascriptにコンパイルするために、Babelを�
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"First App","level":"1.2","depth":1,"previous":{"title":"Overview","level":"1.1","depth":1,"path":"README.md","ref":"README.md","articles":[]},"dir":"ltr"},"config":{"plugins":["hints"],"root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"hints":{"info":"fa fa-info-circle","tip":"fa fa-mortar-board","danger":"fa fa-exclamation-circle","working":"fa fa-wrench"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Documentation | Unmagical","language":"ja","gitbook":"*"},"file":{"path":"firstapp.md","mtime":"2021-12-23T11:53:12.817Z","type":"markdown"},"gitbook":{"version":"3.6.23","time":"2021-12-23T11:54:03.667Z"},"basePath":".","book":{"language":"ja"}});
+            gitbook.page.hasChanged({"page":{"title":"First App","level":"1.2","depth":1,"previous":{"title":"Overview","level":"1.1","depth":1,"path":"README.md","ref":"README.md","articles":[]},"dir":"ltr"},"config":{"plugins":["hints"],"root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"hints":{"info":"fa fa-info-circle","tip":"fa fa-mortar-board","danger":"fa fa-exclamation-circle","working":"fa fa-wrench"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Documentation | Unmagical","language":"en","gitbook":"*"},"file":{"path":"firstapp.md","mtime":"2021-12-23T11:53:12.817Z","type":"markdown"},"gitbook":{"version":"3.6.23","time":"2021-12-23T11:54:03.667Z"},"basePath":".","book":{"language":"en"}});
         });
     </script>
 </div>

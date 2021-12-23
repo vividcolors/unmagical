@@ -32,8 +32,8 @@ const schema = {
 
 const initialData = {
   todos: [
-    {id:1, done:false, subject:'牛乳を買う', context:'home'}, 
-    {id:2, done:false, subject:'お金をおろす', context:'work'}
+    {id:1, done:false, subject:'Buy milk', context:'home'}, 
+    {id:2, done:false, subject:'Withdraw money', context:'work'}
   ], 
   form: null, 
   nextId: 3
@@ -115,7 +115,7 @@ const TodoButton = () => {
   return (
     <div class="media" key="add">
       <div class="media-content">
-        <UpdateButton class="is-primary" update="makePart" params={['/todos/-', {id:0, done:false, subject:'', context:''}, '/form']}>追加</UpdateButton>
+        <UpdateButton class="is-primary" update="makePart" params={['/todos/-', {id:0, done:false, subject:'', context:''}, '/form']}>Add New</UpdateButton>
       </div>
     </div>
   )
@@ -125,9 +125,9 @@ const render = (store) => {
   const form = API.get('/form', store)
   return (
     <div class="container my-3">
-      <Notification name="success" message="保存しました。" duration={5000} />
-      <Notification name="failure" title="エラー" message="エラーが発生しました（{message}）" />
-      <UpdateButton type="button" update="submit" params={["replace", {path:""}]} name="loading">ローカルに保存</UpdateButton>
+      <Notification name="success" message="TODOs saved." duration={5000} />
+      <Notification name="failure" title="Error" message="Error occurred: {message}" />
+      <UpdateButton type="button" update="submit" params={["replace", {path:""}]} name="loading">Save to local</UpdateButton>
       <ReorderableList tag="div" class="list has-visible-pointer-controls" name="todos" path="/todos" options={{group:'todos', handle:'.handle'}}>
         {API.get('/todos', store).map((item, i) => {
           const path = '/todos/' + i
@@ -135,7 +135,7 @@ const render = (store) => {
         })}
       </ReorderableList>
       {(form && form.action.endsWith('-')) ? <TodoForm store={store} /> : <TodoButton />}
-      <Dialog name="confirm" title="確認" message="このTODOを削除します。よろしいですか？" hideCancelButton={false} />
+      <Dialog name="confirm" title="Confirmation" message="Deleting a TODO. Are you sure?" hideCancelButton={false} />
     </div>
   )
 }

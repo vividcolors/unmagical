@@ -111,30 +111,30 @@ const render = (store) => {
   const flags = API.get('/flags', store)
   const quotation = API.get('/quotation', store)
   return (
-    <div id="rootMarker" class="container">
-      <Notification name="success" message="送信に成功しました。" duration={5000} />
-      <Notification name="failure" title="エラー" message="エラーが発生しました（{message}）" />
+    <div id="rootMarker">
+      <Notification name="success" message="Successfully submitted." duration={5000} />
+      <Notification name="failure" title="Error" message="An error occurred: {message}" />
       <Field path="/detail/os" label="OS">
         <div class="control">
-          {master.os.map(x => <Radio path="/detail/os" name="os" value={x.name}>{`${x.name} ${x.price}円`}</Radio>)}
+          {master.os.map(x => <Radio path="/detail/os" name="os" value={x.name}>{`${x.name} ${x.price}yen`}</Radio>)}
         </div>
       </Field>
       <Field path="/detail/cpu" label="CPU">
         <div class="control">
-          {master.cpu.map(x => <Radio path="/detail/cpu" name="cpu" value={x.name}>{`${x.name} ${x.price}円`}</Radio>)}
+          {master.cpu.map(x => <Radio path="/detail/cpu" name="cpu" value={x.name}>{`${x.name} ${x.price}yen`}</Radio>)}
         </div>
       </Field>
-      <Field path="/detail/memory" label="メモリ">
+      <Field path="/detail/memory" label="Memory">
         <div class="control">
-          {master.memory.map(x => <Radio path="/detail/memory" name="memory" value={x.name} disabled={x.name == '32G' && !flags.isPro}>{`${x.name} ${x.price}円`}</Radio>)}
+          {master.memory.map(x => <Radio path="/detail/memory" name="memory" value={x.name} disabled={x.name == '32G' && !flags.isPro}>{`${x.name} ${x.price}yen`}</Radio>)}
         </div>
       </Field>
-      <Field path="/detail/accessories" label="アクセサリー">
+      <Field path="/detail/accessories" label="Accessories">
         <div class="control">
-          {master.accessory.map((x,i) => <Checkbox path={`/detail/accessories/a${i}`}>{`${x.name} ${x.price}円`}</Checkbox>)}
+          {master.accessory.map((x,i) => <Checkbox path={`/detail/accessories/a${i}`}>{`${x.name} ${x.price}yen`}</Checkbox>)}
         </div>
       </Field>
-      <Field path="/detail/bonus" label="ボーナス">
+      <Field path="/detail/bonus" label="Bonus">
         <div class="control">
           {master.bonus.map(x => <Radio path="/detail/bonus" name="bonus" value={x.name}>{x.name}</Radio>)}
         </div>
@@ -142,11 +142,11 @@ const render = (store) => {
       <hr />
       <table class="table is-striped">
         <thead>
-          <th>カテゴリー</th>
-          <th>名前</th>
-          <th>単価</th>
-          <th>数量</th>
-          <th>金額</th>
+          <th>Category</th>
+          <th>Description</th>
+          <th>Unit Price</th>
+          <th>Quantity</th>
+          <th>Amount</th>
         </thead>
         <tbody>
           {quotation.lines.map(line => (
@@ -162,20 +162,20 @@ const render = (store) => {
       </table>
       <table class="table">
         <tr>
-          <th>小計</th>
+          <th>Subtotal</th>
           <td>{quotation.subtotal}</td>
         </tr>
         <tr>
-          <th>税</th>
+          <th>Tax</th>
           <td>{quotation.tax}</td>
         </tr>
         <tr>
-          <th>合計</th>
+          <th>Total</th>
           <td>{quotation.total}</td>
         </tr>
       </table>
       <hr />
-      <UpdateButton type="button" class="is-primary" name="loading" update="submit" params={["replace", {path:"/detail", errorSelector:".is-danger", method:"POST"}]}>確定</UpdateButton>
+      <UpdateButton type="button" class="is-primary" name="loading" update="submit" params={["replace", {path:"/detail", errorSelector:".is-danger", method:"POST"}]}>Submit</UpdateButton>
     </div>
   )
 }
@@ -196,7 +196,7 @@ const evolve = (store, _path, _prevStore) => {
   let detail = API.get('/detail', store)
   if (detail.frame) {
     const frame = findByProp('name', detail.frame, master.frame)
-    store = addLine('筐体', frame, store)
+    store = addLine('Machine', frame, store)
     subtotal += frame.price
   }
   if (detail.os) {
@@ -217,12 +217,12 @@ const evolve = (store, _path, _prevStore) => {
   }
   if (detail.memory) {
     const memory = findByProp('name', detail.memory, master.memory)
-    store = addLine('メモリ', memory, store)
+    store = addLine('Memory', memory, store)
     subtotal += memory.price
   }
   master.accessory.forEach((a, i) => {
     if (detail.accessories[`a${i}`]) {
-      store = addLine('アクセサリ', a, store)
+      store = addLine('Accessories', a, store)
       subtotal += a.price
     }
   })
@@ -234,7 +234,7 @@ const evolve = (store, _path, _prevStore) => {
   }
   if (detail.bonus) {
     const bonus = findByProp('name', detail.bonus, master.bonus)
-    store = addLine('ボーナス', bonus, store)
+    store = addLine('Bonus', bonus, store)
     subtotal += bonus.price
   }
   store = API.add('/quotation/subtotal', subtotal, store)

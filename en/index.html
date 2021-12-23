@@ -3,7 +3,7 @@
 <html lang="en" >
     <head>
         <meta charset="UTF-8">
-        <title>Introduction · Documentation | Unmagical</title>
+        <title>Overview · Documentation | Unmagical</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="HonKit 3.6.23">
@@ -60,6 +60,8 @@
     <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
 
     
+    <link rel="next" href="firstapp.html" />
+    
     
 
     </head>
@@ -93,7 +95,20 @@
                 <a href="./">
             
                     
-                    Introduction
+                    Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="firstapp.html">
+            
+                <a href="firstapp.html">
+            
+                    
+                    First App
             
                 </a>
             
@@ -131,7 +146,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href="." >Introduction</a>
+        <a href="." >Overview</a>
     </h1>
 </div>
 
@@ -146,8 +161,118 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h1 id="readme">README</h1>
-<p>read me</p>
+                                <h1 id="unmagical">Unmagical</h1>
+<p>Unmagical is a web front-end framework that aims to build applications of up to medium size quickly.<br>
+Unmagical has the following features: </p>
+<ul>
+<li>It is written in TypeScript. You can build your application in JavaScript or TypeScript.</li>
+<li>It has an architecture similar to redux or Elm.</li>
+<li>It has a schema and validation modeled after JSON Schema and JSON Schame Validation.</li>
+<li>Based on <a href="https://github.com/jorgebucaran/hyperapp" target="_blank">hyperapp</a> v1 (a view library similar to React.js), you can create pages in JSX.</li>
+<li>The update process ( updating the application state ) is promise-aware. You can write a single function to handle updates that mix domain data updates, UI updates, and external communication.</li>
+<li>It can be combined with any CSS framework. As a reference implementation, we provide a set of components that are combined with <a href="https://bulma.io/" target="_blank">bulma</a>.</li>
+<li>It has built-in validation rules, update processing, and external communication processing. A simple application can be completed just by combining them.</li>
+<li>It is written entirely in functional style, and you can benefit from it.</li>
+<li>Since the domain logic is cut out as a single function, it can be executed in Node.js.</li>
+</ul>
+<h2 id="architecture">Architecture</h2>
+<p><img src="../asset/architecture.png" alt="Concept diagram"></p>
+<p><strong>Store</strong> is a state of an application, and holds domain data and UI states.<br>
+You can transit the application state by updating the store.<br>
+Unlike redux, in Unmagical, we do not distinguish between the application state and the tore. You can think of the Store as an object that represents the application state.</p>
+<p>The domain data is the data itself that you want to handle in your application, excluding any supplementary data that was added to make it a viable application.<br>
+For example, in a TODO list application, the domain data would be the TODO list itself. In contrast, the supplementary data includes the contents of the dialog display, whether it is loading or not, the contents of validation errors, and so on.</p>
+<p>In Unmagical, the domain data is a JSON data.</p>
+<p><strong>View</strong> is a screen of an application. It is described in JSX, and represented by VDOM (Virtual DOM) at an execution time.</p>
+<p><strong>update</strong> converts the store to a different state based on user input, etc.<br>
+Although we call it &quot;update&quot; all together, it is actually a collection of functions, and each of these functions is called an <strong>update function</strong>.<br>
+Unmagical comes with a number of built-in update functions, ranging from openDialog() to show a dialog to submit() to submit domain data.<br>
+You can also define your own update functions for your application.</p>
+<p>Example of a simple update function: </p>
+<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> updateNum = <span class="hljs-function">(<span class="hljs-params">sign, store</span>) =&gt;</span> {  <span class="hljs-comment">// sign is either 1 or -1</span>
+    <span class="hljs-keyword">const</span> difference = API.get(<span class="hljs-string">&apos;/difference&apos;</span>, store)
+    <span class="hljs-keyword">const</span> num = API.get(<span class="hljs-string">&apos;/num&apos;</span>, store)
+    <span class="hljs-keyword">const</span> updatedStore = API.replace(<span class="hljs-string">&apos;/num&apos;</span>, num + sign * difference, store)
+    <span class="hljs-keyword">return</span> updatedStore
+}
+</code></pre>
+<p>As shown above, the update function takes a store as well as other arguments and returns the updated store.</p>
+<p><div class="alert alert-success hints-alert"><div class="hints-icon"><i class="fa fa-mortar-board"></i></div><div class="hints-container"><p>Since Unmagical is built in the functional style, Stores are immutable.<br>
+Updating a store is represented by &quot;creating a new Store and returning it as the result of the function&quot;</p>
+</div></div></p>
+<p><strong>render</strong> is a process of building a view from a store. Every application has one render function.<br>
+This function is called whenever the Store changes, to make the View follow it.</p>
+<p>In the render function, we usually use components, in the sense of React.js.<br>
+When written using Unmagical&apos;s built-in component set, the bulma binding, the render function looks like this.</p>
+<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> render = <span class="hljs-function">(<span class="hljs-params">store</span>) =&gt;</span> {
+    <span class="hljs-keyword">return</span> (
+        <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;container&quot;</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>Num: {API.get(&apos;/num&apos;, store)}<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">Field</span> <span class="hljs-attr">path</span>=<span class="hljs-string">&quot;/difference&quot;</span> <span class="hljs-attr">label</span>=<span class="hljs-string">&quot;Difference&quot;</span>&gt;</span>
+                <span class="hljs-tag">&lt;<span class="hljs-name">Input</span> <span class="hljs-attr">path</span>=<span class="hljs-string">&quot;/difference&quot;</span> /&gt;</span>
+            <span class="hljs-tag">&lt;/<span class="hljs-name">Field</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">UpdateButton</span> <span class="hljs-attr">update</span>=<span class="hljs-string">&quot;updateNum&quot;</span> <span class="hljs-attr">params</span>=<span class="hljs-string">{[-1]}</span>&gt;</span>-<span class="hljs-tag">&lt;/<span class="hljs-name">UpdateButton</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">UpdateButton</span> <span class="hljs-attr">update</span>=<span class="hljs-string">&quot;updateNum&quot;</span> <span class="hljs-attr">params</span>=<span class="hljs-string">{[1]}</span>&gt;</span>+<span class="hljs-tag">&lt;/<span class="hljs-name">UpdateButton</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
+    )
+}
+</code></pre>
+<p><div class="alert alert-info hints-alert"><div class="hints-icon"><i class="fa fa-info-circle"></i></div><div class="hints-container"><p>If you want to use a component set other than bulma, you can use the play functions provided by Unmagical to create the component set of your choice. The bulma component set is also made using the play functions.</p>
+</div></div></p>
+<p>Domain data coming in from user input or update process will be subject to <strong>validation</strong>.<br>
+Please provide Unmagical with a schema, a definition of what the data should look like, for your domain data. Unmagical&apos;s schema is modeled after JSON Schema. For example: </p>
+<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> schema = {
+    <span class="hljs-attr">type</span>: <span class="hljs-string">&apos;object&apos;</span>, 
+    <span class="hljs-attr">properties</span>: {
+        <span class="hljs-attr">num</span>: {<span class="hljs-attr">type</span>: <span class="hljs-string">&apos;integer&apos;</span>}, 
+        <span class="hljs-attr">difference</span>: {<span class="hljs-attr">type</span>: <span class="hljs-string">&apos;integer&apos;</span>, <span class="hljs-attr">minimum</span>: <span class="hljs-number">0</span>}
+    }, 
+    <span class="hljs-attr">required</span>: [<span class="hljs-string">&apos;num&apos;</span>, <span class="hljs-string">&apos;difference&apos;</span>]
+}
+</code></pre>
+<p>The validation of the domain data is done immediately after the update function is executed, and the result is also stored in the store. The stored validation results can also be displayed in the view.</p>
+<p><strong>evolve</strong> is the function to extend the domain data.<br>
+If all that an application can do is accept user input, update the UI, restructure data, and communicate with the outside world, then the application may not be worth much. This is because, in the end, all it does is move data in and out.<br>
+Instead, if the application uses the data it has to produce a completely different output, then it has its own value.</p>
+<p>evolve is where you calculate the new domain data from the domain data you have. If you want your application to do some unique calculation, write it in the evolve function and pass it to Unmagical.<br>
+Unmagical will then call the evolve function when it needs to.</p>
+<p>Example of a simple evolve function: </p>
+<pre><code class="lang-javascript"><span class="hljs-comment">// Calculate the average of the test scores. Very valuable.:)</span>
+<span class="hljs-keyword">const</span> evolve = <span class="hljs-function">(<span class="hljs-params">store</span>) =&gt;</span> {
+    <span class="hljs-keyword">const</span> scores = API.get(<span class="hljs-string">&apos;/scores&apos;</span>, store)  <span class="hljs-comment">// Get scores from store</span>
+    <span class="hljs-keyword">const</span> average = scores.reduce(<span class="hljs-function">(<span class="hljs-params">sum, score</span>) =&gt;</span> sum + score, <span class="hljs-number">0</span>) / scores.length  <span class="hljs-comment">// Calculate the average</span>
+    <span class="hljs-keyword">const</span> evolvedStore = API.add(<span class="hljs-string">&apos;/average&apos;</span>, average)  <span class="hljs-comment">// Add the average to store</span>
+    <span class="hljs-keyword">return</span> evolvedStore
+}
+</code></pre>
+<p><div class="alert alert-success hints-alert"><div class="hints-icon"><i class="fa fa-mortar-board"></i></div><div class="hints-container"><p>As a matter of fact, evolve is treated like a pre-processing step for render in Unmagical.<br>
+render is called every time the Store is updated, and it draws a similar screen over and over again. In the same way, evolve is called every time the Store is updated, and performs similar calculations over and over again.</p>
+</div></div></p>
+<p><div class="alert alert-info hints-alert"><div class="hints-icon"><i class="fa fa-info-circle"></i></div><div class="hints-container"><p>If you are creating an admin panel for your system, evolve will often not be needed.<br>
+Also, in many cases, evolve is not needed for communication tools, such as contact forms.</p>
+</div></div></p>
+<h2 id="differences-from-other-software">Differences from other software</h2>
+<p>We&apos;ll touch on how it differs from other choices, such as React.js and Vue.</p>
+<p>Unlike React.js and Vue, Unmagical comes with a set of validation rules and a set of update functions.<br>
+Unmagical is both a framework and a low-code tool, depending on how you look at it, and it tries to provide a one-stop solution for everything you need for application development.<br>
+A simple application can be created by defining only three things: a schema, initial data and screen rendering (render function).</p>
+<p>Another difference is that React.js and Vue are component-oriented, while Unmagical is application-oriented.<br>
+With React.js and Vue, you create components as building blocks, and then combine them to create an application. In Unmagical, on the other hand, you only create monolithic applications, and you are not expected to combine any components.</p>
+<p><div class="alert alert-success hints-alert"><div class="hints-icon"><i class="fa fa-mortar-board"></i></div><div class="hints-container"><p>Some of you may be worried when you hear, &quot;At Unmagical, you don&apos;t make the components&quot;.<br>
+So, what if I want to use a complex UI or a component that Unmagical doesn&apos;t support?</p>
+<p>First of all, Unmagical has some built-in components that are not in the HTML5 standard but are often used. Specifically, it has a calendar, a color picker, and a list item sorter.</p>
+<p>You can also use web components in Unmagical. half of the web components in <a href="https://shoelace.style/" target="_blank">Shoelace</a> have been tested and work.<br>
+As browsers become more and more compatible with web components, the use of web components will increase in the future. At that time, monolithic application-oriented approach will also become more popular in web application development.</p>
+</div></div></p>
+<h2 id="installation">Installation</h2>
+<pre><code class="lang-console">npm install @vividcolors/unmagical
+</code></pre>
+<p>or</p>
+<pre><code class="lang-console">yarn add @vividcolors/unmagical
+</code></pre>
+<p>You can also load it via CDN.</p>
+<pre><code class="lang-html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;https://cdn.jsdelivr.net/npm/@vividcolors/unmagical/asset/unmagical-bulma.js&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+</code></pre>
 
                                 
                                 </section>
@@ -176,6 +301,10 @@
             
                 
                 
+                <a href="firstapp.html" class="navigation navigation-next navigation-unique" aria-label="Next page: First App">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
             
         
     </div>
@@ -183,7 +312,7 @@
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Introduction","level":"1.1","depth":1,"dir":"ltr"},"config":{"plugins":["hints"],"root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"hints":{"info":"fa fa-info-circle","tip":"fa fa-mortar-board","danger":"fa fa-exclamation-circle","working":"fa fa-wrench"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Documentation | Unmagical","language":"en","gitbook":"*"},"file":{"path":"README.md","mtime":"2021-12-23T06:20:45.579Z","type":"markdown"},"gitbook":{"version":"3.6.23","time":"2021-12-23T06:21:49.257Z"},"basePath":".","book":{"language":"en"}});
+            gitbook.page.hasChanged({"page":{"title":"Overview","level":"1.1","depth":1,"next":{"title":"First App","level":"1.2","depth":1,"path":"firstapp.md","ref":"firstapp.md","articles":[]},"dir":"ltr"},"config":{"plugins":["hints"],"root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"hints":{"info":"fa fa-info-circle","tip":"fa fa-mortar-board","danger":"fa fa-exclamation-circle","working":"fa fa-wrench"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Documentation | Unmagical","language":"en","gitbook":"*"},"file":{"path":"README.md","mtime":"2021-12-23T11:53:12.817Z","type":"markdown"},"gitbook":{"version":"3.6.23","time":"2021-12-23T11:54:03.667Z"},"basePath":".","book":{"language":"en"}});
         });
     </script>
 </div>

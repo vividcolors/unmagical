@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,7 +8,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
   </head>
   <body>
-    <div id="app"></div>
+    <div class="container">
+      <div class="block">
+        <p>In this demo, you can create an quote based on your selection. The part that creates the quote is written in evolve().</p>
+        <small>250 LOC Total, 50 LOC Schema, 20 LOC Initial data, 70 LOC render(), 60 LOC evolve()</small>
+      </div>
+      <div id="app"></div>
+    </div>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="../asset/unmagical-bulma.js"></script>
     <script type="text/babel" src="src.jsx" data-presets="env-unmagical"></script>

@@ -126,7 +126,7 @@ const evolve = (store, _path, _prevStore) => {
   let detail = API.get('/detail', store)
   if (detail.frame) {
     const frame = findByProp('name', detail.frame, master.frame)
-    store = addLine('筐体', frame, store)
+    store = addLine('Machine', frame, store)
     subtotal += frame.price
   }
   if (detail.os) {
@@ -147,12 +147,12 @@ const evolve = (store, _path, _prevStore) => {
   }
   if (detail.memory) {
     const memory = findByProp('name', detail.memory, master.memory)
-    store = addLine('メモリ', memory, store)
+    store = addLine('Memory', memory, store)
     subtotal += memory.price
   }
   master.accessory.forEach((a, i) => {
     if (detail.accessories[`a${i}`]) {
-      store = addLine('アクセサリ', a, store)
+      store = addLine('Accessories', a, store)
       subtotal += a.price
     }
   })
@@ -164,7 +164,7 @@ const evolve = (store, _path, _prevStore) => {
   }
   if (detail.bonus) {
     const bonus = findByProp('name', detail.bonus, master.bonus)
-    store = addLine('ボーナス', bonus, store)
+    store = addLine('Bonus', bonus, store)
     subtotal += bonus.price
   }
   store = API.add('/quotation/subtotal', subtotal, store)

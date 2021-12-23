@@ -100,9 +100,9 @@ Unmagicalは必要なタイミングでevolve関数を呼び出すようにな�
 ```javascript
 // テストの点数の平均値を計算します。非常に価値がある:)
 const evolve = (store) => {
-    const scores = API.get('/scores', store)  // ドメインデータからscoresを取得
+    const scores = API.get('/scores', store)  // Storeからscoresを取得
     const average = scores.reduce((sum, score) => sum + score, 0) / scores.length  // 平均値を計算
-    const evolvedStore = API.add('/average', averate)  // 平均値をドメインデータに追加
+    const evolvedStore = API.add('/average', average)  // 平均値をStoreに追加
     return evolvedStore
 }
 ```
