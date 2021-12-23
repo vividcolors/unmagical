@@ -1,0 +1,33 @@
+name: Publish Documents to Github Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Use Node.js And Setup .npmrc
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+          registry-url: 'https://registry.npmjs.org'
+          scope       : '@vividcolors'
+          always-auth : true
+      - name: Install
+        run : npm install
+      - name: Build
+        run : npm run build
+      - name: Generate Documents
+        run : npm run docs
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.ref == 'refs/heads/main' }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_book
