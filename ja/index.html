@@ -1,0 +1,391 @@
+
+<!DOCTYPE HTML>
+<html lang="ja" >
+    <head>
+        <meta charset="UTF-8">
+        <title>Overview · Documentation | Unmagical</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="HonKit 3.6.23">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-hints/plugin-hints.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="firstapp.html" />
+    
+    
+
+    </head>
+    <body>
+        
+<div class="book honkit-cloak">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="検索ワードを入力" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter active" data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="firstapp.html">
+            
+                <a href="firstapp.html">
+            
+                    
+                    First App
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://github.com/honkit/honkit" target="blank" class="gitbook-link">
+            HonKitで公開 
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Overview</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="unmagical">Unmagical</h1>
+<p>UnmagicalはWebフロントエンドのフレームワークです。<br>
+中規模までのアプリケーションを、高速に構築することを目的にしています。<br>
+Unmagicalには下記のような特徴があります：</p>
+<ul>
+<li>TypeScriptで書かれています。あなたはJavaScriptかTypeScriptでアプリケーションを作れます</li>
+<li>reduxやElmに似たアーキテクチャを持っています</li>
+<li>JSON SchemaとJSON Schame Validationをお手本にしたスキーマとバリデーションがあります</li>
+<li>hyperapp v1（React.jsに似たビューライブラリ）をベースにしていて、あなたは画面をJSXで作れます</li>
+<li>アップデート処理（アプリケーション状態の更新）がプロミスに対応しています。あなたはドメインデータの更新・UIの更新・外部通信が混在するアップデート処理を関数1つで記述できます</li>
+<li>任意のCSSフレームワークと組み合わせられます。参考実装として、<a href="https://bulma.io/" target="_blank">bulma</a>に結合させたコンポーネントセットを提供しています</li>
+<li>組み込みのバリデーションルール・アップデート処理・外部通信処理を備えていて、簡単なアプリケーションならそれらを組み合わせるだけで完成します</li>
+<li>全面的に関数型スタイルで記述されていて、その恩恵を受けられます</li>
+<li>ドメインロジックを単一の関数として切り出せ、これをNode.jsで実行することもできます</li>
+</ul>
+<h2 id="アーキテクチャ">アーキテクチャ</h2>
+<p><img src="../asset/architecture.png" alt="概念図"></p>
+<p><strong>Store</strong>はアプリケーションのデータで、ドメインデータやUIの状態を保持しています。<br>
+このStoreを更新すればアプリケーションを別の状態に遷移させられます。<br>
+reduxとは違って、Unmagicalではアプリケーションの状態とStoreを区別しません。「アプリケーションの状態を表現するオブジェクトがStoreである」と考えてもいいでしょう。</p>
+<p>ドメインデータとは、そのアプリケーションで取り扱いたいデータそのもの、アプリケーションとして成立させるために追加された補足的なデータを除外したものです。<br>
+たとえば、TODOリストのアプリケーションでは、ドメインデータはTODOリストそのものになります。対して、補足的なデータには、ダイアログの表示内容、ローディングかどうか、バリデーションエラーの内容、などがあります。</p>
+<p>Unmagicalでは、ドメインデータはJSONデータです。</p>
+<p><strong>View</strong>はアプリケーションの画面です。JSXで記述され、実行時にはVDOM（仮想DOM）で表現されます。</p>
+<p><strong>update</strong>はユーザー入力等にもとづいてStoreを別の状態に変換します。<br>
+アップデートとひとまとめに呼んでいますが実際は関数の集合体で、それら個々の関数を<strong>アップデート関数</strong>と呼びます。<br>
+Unmagicalには組み込みのアップデート関数が用意されていて、ダイアログを表示するopenDialog()からドメインデータをサブミットするsubmit()までたくさんあります。<br>
+アプリケーション独自のアップデート関数を定義することもできます。</p>
+<p>簡単なアップデート関数の例：</p>
+<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> updateNum = <span class="hljs-function">(<span class="hljs-params">sign, store</span>) =&gt;</span> {  <span class="hljs-comment">// signは-1か1</span>
+    <span class="hljs-keyword">const</span> difference = API.get(<span class="hljs-string">&apos;/difference&apos;</span>, store)
+    <span class="hljs-keyword">const</span> num = API.get(<span class="hljs-string">&apos;/num&apos;</span>, store)
+    <span class="hljs-keyword">const</span> updatedStore = API.replace(<span class="hljs-string">&apos;/num&apos;</span>, num + sign * difference, store)
+    <span class="hljs-keyword">return</span> updatedStore
+}
+</code></pre>
+<p>上記のようにアップデート関数は、他の引数と同時にストアを受け取り、更新されたストアを返します。</p>
+<p><div class="alert alert-success hints-alert"><div class="hints-icon"><i class="fa fa-mortar-board"></i></div><div class="hints-container"><p>Unmagicalは関数型スタイルで作られているので、Storeはイミュータブル（不変）です。<br>
+Storeの更新は「新しいStoreを作って、関数の結果として返却すること」で表現されます。</p>
+</div></div></p>
+<p><strong>render</strong>はStoreからViewを構築する処理です。アプリケーションには常にrender関数が1つあります。<br>
+この関数は、Storeが変わるたびに、Viewをそれに追従させるために呼ばれます。</p>
+<p>render関数の中では通常（React.jsで使うような）コンポーネントを使います。<br>
+Unmagicalの組み込みのコンポーネントセット（bulmaバインディング）を使って書くと、render関数は次のようになります。</p>
+<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> render = <span class="hljs-function">(<span class="hljs-params">store</span>) =&gt;</span> {
+    <span class="hljs-keyword">return</span> (
+        <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;container&quot;</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">p</span>&gt;</span>Num: {API.get(&apos;/num&apos;, store)}<span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">Field</span> <span class="hljs-attr">path</span>=<span class="hljs-string">&quot;/difference&quot;</span> <span class="hljs-attr">label</span>=<span class="hljs-string">&quot;Difference&quot;</span>&gt;</span>
+                <span class="hljs-tag">&lt;<span class="hljs-name">Input</span> <span class="hljs-attr">path</span>=<span class="hljs-string">&quot;/difference&quot;</span> /&gt;</span>
+            <span class="hljs-tag">&lt;/<span class="hljs-name">Field</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">UpdateButton</span> <span class="hljs-attr">update</span>=<span class="hljs-string">&quot;updateNum&quot;</span> <span class="hljs-attr">params</span>=<span class="hljs-string">{[-1]}</span>&gt;</span>-<span class="hljs-tag">&lt;/<span class="hljs-name">UpdateButton</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">UpdateButton</span> <span class="hljs-attr">update</span>=<span class="hljs-string">&quot;updateNum&quot;</span> <span class="hljs-attr">params</span>=<span class="hljs-string">{[1]}</span>&gt;</span>+<span class="hljs-tag">&lt;/<span class="hljs-name">UpdateButton</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span></span>
+    )
+}
+</code></pre>
+<p><div class="alert alert-info hints-alert"><div class="hints-icon"><i class="fa fa-info-circle"></i></div><div class="hints-container"><p>bulma以外のコンポーネントセットを使いたい場合は、Unmagicalから提供されているplay関数群を使って好みのコンポーネントセットを作れます。各play関数は、HTMLのタグに特定の役割を与える効果を持っています。bulmaコンポーネントセットも、play関数を使って作られています。</p>
+</div></div></p>
+<p>ユーザー入力やupdate処理から入ってきたドメインデータは<strong>バリデーション</strong>の対象になります。<br>
+ドメインデータのスキーマ（データの形を定義したもの）をUnmagicalに提供してください。UnmagicalのスキーマはJSON Schemaをお手本に作られています。たとえば、次のようなものです。</p>
+<pre><code class="lang-javascript"><span class="hljs-keyword">const</span> schema = {
+    <span class="hljs-attr">type</span>: <span class="hljs-string">&apos;object&apos;</span>, 
+    <span class="hljs-attr">properties</span>: {
+        <span class="hljs-attr">num</span>: {<span class="hljs-attr">type</span>: <span class="hljs-string">&apos;integer&apos;</span>}, 
+        <span class="hljs-attr">difference</span>: {<span class="hljs-attr">type</span>: <span class="hljs-string">&apos;integer&apos;</span>, <span class="hljs-attr">minimum</span>: <span class="hljs-number">0</span>}
+    }, 
+    <span class="hljs-attr">required</span>: [<span class="hljs-string">&apos;num&apos;</span>, <span class="hljs-string">&apos;difference&apos;</span>]
+}
+</code></pre>
+<p>ドメインデータのバリデーションはupdate関数の実行直後に行われ、その結果もストアの中に保存されます。保存されたバリデーション結果をビューに表示することもできます。</p>
+<p><strong>evolve</strong>はStoreを拡張する関数です。<br>
+もしあるアプリケーションに出来ることが、ユーザーの入力を受け付け、UIを更新し、データを再構成し、外部と通信することだけだったら、そのアプリケーションの価値は乏しいかもしれません。なぜなら、結局のところそれはデータの出し入れしかしていないからです。<br>
+そうでなく、アプリケーションが手持ちのデータを駆使してまったく別の出力をしたら、それには独自の価値があります。</p>
+<p>evolveは、手持ちのドメインデータから新しいドメインデータを計算する場所です。アプリケーションに何か独自の計算をさせたい場合は、それをevolve関数に記述してUnmagicalに渡してください。<br>
+Unmagicalは必要なタイミングでevolve関数を呼び出すようになります。</p>
+<p>簡単なevolve関数の例：</p>
+<pre><code class="lang-javascript"><span class="hljs-comment">// テストの点数の平均値を計算します。非常に価値がある:)</span>
+<span class="hljs-keyword">const</span> evolve = <span class="hljs-function">(<span class="hljs-params">store</span>) =&gt;</span> {
+    <span class="hljs-keyword">const</span> scores = API.get(<span class="hljs-string">&apos;/scores&apos;</span>, store)  <span class="hljs-comment">// ドメインデータからscoresを取得</span>
+    <span class="hljs-keyword">const</span> average = scores.reduce(<span class="hljs-function">(<span class="hljs-params">sum, score</span>) =&gt;</span> sum + score, <span class="hljs-number">0</span>) / scores.length  <span class="hljs-comment">// 平均値を計算</span>
+    <span class="hljs-keyword">const</span> evolvedStore = API.add(<span class="hljs-string">&apos;/average&apos;</span>, averate)  <span class="hljs-comment">// 平均値をドメインデータに追加</span>
+    <span class="hljs-keyword">return</span> evolvedStore
+}
+</code></pre>
+<p><div class="alert alert-success hints-alert"><div class="hints-icon"><i class="fa fa-mortar-board"></i></div><div class="hints-container"><p>実際のところ、evolveはUnmagicalの中でrenderの前処理のように扱われます。<br>
+renderはStoreが更新される度に呼ばれて、似たような画面の描画を何度も何度も行います。それと同じように、evolveもStoreが更新される度に呼ばれて、似たような計算を何度も何度も行います。</p>
+</div></div></p>
+<p><div class="alert alert-info hints-alert"><div class="hints-icon"><i class="fa fa-info-circle"></i></div><div class="hints-container"><p>システムの管理画面を作るときにはevolveは不要になることが多いでしょう。<br>
+また、お問い合わせフォームのようなコミュニケーションツールでもevolveが不要なケースが多いです。</p>
+</div></div></p>
+<h2 id="他の選択肢との違い">他の選択肢との違い</h2>
+<p>React.jsやVueのような、他の選択肢との違いについて触れます。</p>
+<p>React.jsやVueとは違って、Unmagicalはバリデーションルール群やアップデート関数群が付属しています。<br>
+Unmagicalはフレームワークであり、見ようによってはローコードツールでもあり、アプリケーション開発に必要なものをワンストップに近い形で提供しようとしています。<br>
+簡単なアプリケーションは、スキーマ、初期データと画面描画（render関数）の3つを定義するだけで作れます。</p>
+<p>また、React.jsやVueがコンポーネント指向なのに対して、Unmagicalはアプリケーション指向である点も違います。<br>
+React.jsやVueでは、あなたはコンポーネントを構成単位として作り、それらを組み合わせることでアプリケーションを作り上げます。対してUnmagicalでは、あなたが作るのはモノリシックなアプリケーションだけで、何か部品のようなものを組み合わせることは想定していません。</p>
+<p><div class="alert alert-success hints-alert"><div class="hints-icon"><i class="fa fa-mortar-board"></i></div><div class="hints-container"><p>「Unmagicalでは、あなたは部品を作らない」と聞いて不安になった方もいるかもしれません。<br>
+「では、複雑なUIや、Unmagicalが対応してない部品が使いたくなったらどうすればいいのか」と。</p>
+<p>まず、UnmagicalはHTML5標準には無いがよく使われる部品をいくつか組み込みで持っています。具体的には、カレンダーとカラーピッカーとリストアイテムの並べ替えです。</p>
+<p>また、UnmagicalでWebコンポーネントを使うこともできます。<a href="https://shoelace.style/" target="_blank">Shoelace</a>のWebコンポーネントの半分近くは動作確認済みです。<br>
+ブラウザのWebコンポーネントへの対応が進むにつれ、今後はWebコンポーネントの利用も増えていきます。そのときのWebアプリケーション開発では、モノリシックなアプリケーション指向という手法も有力になるでしょう。</p>
+</div></div></p>
+<h2 id="インストール">インストール</h2>
+<p>ローカルにインストールする場合。</p>
+<pre><code>npm install @vividcolors/unmagical
+</code></pre><p>または</p>
+<pre><code>yarn add @vividcolors/unmagical
+</code></pre><p>CDNでブラウザに直接読み込ませる場合。</p>
+<pre><code class="lang-html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;https://cdn.jsdelivr.net/npm/@vividcolors/unmagical/asset/unmagical-bulma.js&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+</code></pre>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                
+                <a href="firstapp.html" class="navigation navigation-next navigation-unique" aria-label="Next page: First App">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Overview","level":"1.1","depth":1,"next":{"title":"First App","level":"1.2","depth":1,"path":"firstapp.md","ref":"firstapp.md","articles":[]},"dir":"ltr"},"config":{"plugins":["hints"],"root":".","styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"pluginsConfig":{"hints":{"info":"fa fa-info-circle","tip":"fa fa-mortar-board","danger":"fa fa-exclamation-circle","working":"fa fa-wrench"},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"theme":"default","pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"variables":{},"title":"Documentation | Unmagical","language":"ja","gitbook":"*"},"file":{"path":"README.md","mtime":"2021-12-23T06:20:45.579Z","type":"markdown"},"gitbook":{"version":"3.6.23","time":"2021-12-23T06:21:49.257Z"},"basePath":".","book":{"language":"ja"}});
+        });
+    </script>
+</div>
+
+        
+    <noscript>
+        <style>
+            .honkit-cloak {
+                display: block !important;
+            }
+        </style>
+    </noscript>
+    <script>
+        // Restore sidebar state as critical path for prevent layout shift
+        function __init__getSidebarState(defaultValue){
+            var baseKey = "";
+            var key = baseKey + ":sidebar";
+            try {
+                var value = localStorage[key];
+                if (value === undefined) {
+                    return defaultValue;
+                }
+                var parsed = JSON.parse(value);
+                return parsed == null ? defaultValue : parsed;
+            } catch (e) {
+                return defaultValue;
+            }
+        }
+        function __init__restoreLastSidebarState() {
+            var isMobile = window.matchMedia("(max-width: 600px)").matches;
+            if (isMobile) {
+                // Init last state if not mobile
+                return;
+            }
+            var sidebarState = __init__getSidebarState(true);
+            var book = document.querySelector(".book");
+            // Show sidebar if it enabled
+            if (sidebarState && book) {
+                book.classList.add("without-animation", "with-summary");
+            }
+        }
+
+        try {
+            __init__restoreLastSidebarState();
+        } finally {
+            var book = document.querySelector(".book");
+            book.classList.remove("honkit-cloak");
+        }
+    </script>
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
