@@ -104,9 +104,9 @@ const PostModal = ({store}:{store:Store}) => {
           </p>
         </div>
         <div class="modal-card-body">
-          <Notification name="failure2" title="エラー" message="エラーが発生しました（{message}）" />
+          <Notification name="failure2" title="Error" message="Error occurred: {message}" />
           <Field path="/form/data/id" store={store} label="ID">
-            <div class="control">{form.data.id > 0 ? form.data.id : '（新規追加）'}</div>
+            <div class="control">{form.data.id > 0 ? form.data.id : '(new)'}</div>
           </Field>
           <Field path="/form/data/userId" store={store} label="Author">
             <div class="control">
@@ -125,8 +125,8 @@ const PostModal = ({store}:{store:Store}) => {
           </Field>
         </div>
         <div class="modal-card-foot">
-          <UpdateButton name="loading2" class="button is-primary" update="commitEntity" params={['/form', '/posts', {failureName:'failure2', loadingName:'loading2'}]}>確定</UpdateButton>
-          <UpdateButton class="button" update="discardEntity" params={['/form']}>キャンセル</UpdateButton>
+          <UpdateButton name="loading2" class="button is-primary" update="commitEntity" params={['/form', '/posts', {failureName:'failure2', loadingName:'loading2'}]}>Commit</UpdateButton>
+          <UpdateButton class="button" update="discardEntity" params={['/form']}>Cancel</UpdateButton>
         </div>
       </div>
     </Modal>
@@ -143,22 +143,27 @@ const render = (store:Store) => {
   const to = from + posts.items.length - 1
   return (
     <div class="container my-3">
-      <Notification name="success" message="成功しました。" duration={5000} />
-      <Notification name="failure" title="エラー" message="エラーが発生しました（{message}）" />
-      <UpdateButton key="updateButton" class="button is-primary" update="makeEntity" params={[{id:0, userId:'', title:'', body:''}, '/form']}>新規追加</UpdateButton>
+      <Notification name="success" message="Succeeded." duration={5000} />
+      <Notification name="failure" title="Error" message="Error occurred: {message}" />
+      <UpdateButton key="updateButton" class="button is-primary" update="makeEntity" params={[{id:0, userId:'', title:'', body:''}, '/form']}>Add New</UpdateButton>
       <nav class="level" key="search">
         <div class="level-left">
-          <div class="level-item">{posts.totalCount ? `${posts.totalCount}件中 ${from}～${to}` : 'Postはありません'}</div>
+          <div class="level-item">{posts.totalCount ? `${from} to ${to} of ${posts.totalCount} items` : 'There are no posts.'}</div>
         </div>
         <div class="level-right">
           <div class="level-item">
             <Input path="/search/title_like" placeholder="Title" />
           </div>
           <div class="level-item">
-            <Input path="/search/userId" type="number" />
+            <Select path="/search/userId">
+              <option value="">Not selected</option>
+              {Object.keys(userDb).map(id => (
+                <option value={id}>{userDb[id].name}</option>
+              ))}
+            </Select>
           </div>
           <div class="level-item">
-            <UpdateButton update="searchEntities" params={["/search", "/posts", {}]}>検索</UpdateButton>
+            <UpdateButton update="searchEntities" params={["/search", "/posts", {}]}>Search</UpdateButton>
           </div>
         </div>
       </nav>
@@ -166,7 +171,7 @@ const render = (store:Store) => {
       <table class="table is-hoverable">
         <thead>
           <th>ID</th>
-          <th>User</th>
+          <th>Author</th>
           <th>Title</th>
           <th>Body</th>
           <th> </th>
@@ -188,7 +193,7 @@ const render = (store:Store) => {
           })}
         </tbody>
       </table>
-      <Dialog name="confirm" title="確認" message="削除しますよ？" />
+      <Dialog name="confirm" title="Confirmation" message="Delete a post. Are you sure?" />
       <PostModal store={store} />
     </div>
   )
