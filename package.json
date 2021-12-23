@@ -2,14 +2,14 @@
   "name": "@vividcolors/unmagical",
   "version": "0.0.2",
   "description": "frontend framework for typical applications",
-  "author": "vividcolors, inc. (https://github.com/vividcolors)", 
-  "license": "MIT", 
-  "homepage": "https://github.com/vividcolors/unmagical", 
+  "author": "vividcolors, inc. (https://github.com/vividcolors)",
+  "license": "MIT",
+  "homepage": "https://github.com/vividcolors/unmagical",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vividcolors/unmagical.git"
   },
-  "main": "index.js", 
+  "main": "index.js",
   "keywords": [
     "jsx",
     "typescript",
@@ -30,7 +30,6 @@
     "babel-preset-react": "^6.24.1",
     "cpx": "^1.5.0",
     "gitbook-plugin-hints": "^1.0.2",
-    "gitbook-plugin-language-picker": "^0.1.0",
     "honkit": "^3.6.23",
     "json-server": "^0.17.0",
     "npm-run-all": "^4.1.5",
@@ -39,7 +38,7 @@
     "sass": "^1.22.1",
     "typedoc": "^0.22.9",
     "typescript": "4.4"
-  }, 
+  },
   "scripts": {
     "buildbulma": "parcel build --global unmagical -d asset src/unmagical-bulma.ts",
     "buildnode": "parcel build -d . src/index.ts --target node",
@@ -47,13 +46,13 @@
     "buildtest": "parcel build --target node -d asset/test tests/_index.js",
     "runtest": "node asset/test/_index",
     "test": "run-s buildtest runtest",
-    "copyasset": "cpx \"./asset/*.*\" ./_book/demo/asset", 
+    "copyasset": "cpx \"./asset/*.*\" ./_book/demo/asset",
     "demo2": "parcel build -d demo/demo2 --out-file index.js demo/demo2/src.tsx",
     "demo5": "parcel build -d demo/demo5 --out-file index.js demo/demo5/src.tsx",
-    "copydemo": "cpx \"./demo/**/*.*\" ./_book/demo", 
-    "demo": "run-s demo2 demo5 copydemo copyasset", 
+    "copydemo": "cpx \"./demo/**/*.*\" ./_book/demo",
+    "demo": "run-s demo2 demo5 copydemo copyasset",
     "honkit": "honkit build",
-    "honkitx": "rimraf ./_book/index.html", 
+    "honkitx": "rimraf ./_book/index.html",
     "typedoc": "typedoc --options typedoc.json ./src",
     "docs": "run-s honkit honkitx typedoc demo"
   }
